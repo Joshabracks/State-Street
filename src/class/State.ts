@@ -1,24 +1,9 @@
-// function hash(str: string) {
-//   var hash = 0,
-//     i,
-//     chr;
-//   if (str.length === 0) return hash;
-//   for (i = 0; i < str.length; i++) {
-//     chr = str.charCodeAt(i);
-//     hash = (hash << 5) - hash + chr;
-//     hash |= 0; // Convert to 32bit integer
-//   }
-//   return hash;
-// }
 const valsRegex = /{{.[^{]+}}/g
 const cleanerRegex = /{{(.*)}}/
 
 function getValue(obj: any, values: string[]) {
-  console.log(obj);
-  console.log(values);
   if (values.length === 0) return obj;
   const key: string = values.shift() || ''
-  console.log(key);
   const value = obj[key]
   if (!value) return value;
   return getValue(value, values)
@@ -30,7 +15,11 @@ function constructElement(data: any, depth: string, state: State) {
     return Error("Failed to construct element: content object must be an Array");
   }
   const tag = data?.tag || 'div';
+  const classList = data?.class?.split(' ') || [];
   const element = document.createElement(tag);
+  classList.forEach((className: string) => {
+    element.classList.add(className);
+  })
   state.idMap[depth] = element;
   element.setAttribute('ststid', depth)
   for (let i = 0; i < content.length; i++) {
@@ -45,15 +34,14 @@ function constructElement(data: any, depth: string, state: State) {
       let innerText = '';
       const mapValues: any = {};
       if (type == 'string') {
+        innerText = child;
         const variables = child.match(valsRegex) || [];
-        console.log(variables)
         for (let j = 0; j < variables.length; j++) {
           const valuesString: string = variables[j].match(cleanerRegex)[1] || '';
           const values = valuesString.split('.');
-          console.log('values: ', values)
           const value = getValue(state.data, values);
           mapValues[valuesString] = JSON.parse(JSON.stringify(value || ''));
-          innerText = value;
+          innerText = innerText.replace(variables[j], value);
         }
       } else {
         innerText = JSON.stringify(child);
@@ -72,7 +60,6 @@ function constructDOM(state: State) {
   const elements = [];
   for (let i = 0; i < template.body.length; i++) {
     const element = constructElement(template.body[i], `${i}`, state);
-    console.log(element)
     elements.push(element);
   }
   document.body.innerHTML = '';

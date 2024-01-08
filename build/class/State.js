@@ -1,37 +1,26 @@
-// function hash(str: string) {
-//   var hash = 0,
-//     i,
-//     chr;
-//   if (str.length === 0) return hash;
-//   for (i = 0; i < str.length; i++) {
-//     chr = str.charCodeAt(i);
-//     hash = (hash << 5) - hash + chr;
-//     hash |= 0; // Convert to 32bit integer
-//   }
-//   return hash;
-// }
 const valsRegex = /{{.[^{]+}}/g;
 const cleanerRegex = /{{(.*)}}/;
 function getValue(obj, values) {
-    console.log(obj);
-    console.log(values);
     if (values.length === 0)
         return obj;
     const key = values.shift() || '';
-    console.log(key);
     const value = obj[key];
     if (!value)
         return value;
     return getValue(value, values);
 }
 function constructElement(data, depth, state) {
-    var _a;
+    var _a, _b;
     const content = (data === null || data === void 0 ? void 0 : data.content) || [];
     if (((_a = content === null || content === void 0 ? void 0 : content.constructor) === null || _a === void 0 ? void 0 : _a.name) !== "Array") {
         return Error("Failed to construct element: content object must be an Array");
     }
     const tag = (data === null || data === void 0 ? void 0 : data.tag) || 'div';
+    const classList = ((_b = data === null || data === void 0 ? void 0 : data.class) === null || _b === void 0 ? void 0 : _b.split(' ')) || [];
     const element = document.createElement(tag);
+    classList.forEach((className) => {
+        element.classList.add(className);
+    });
     state.idMap[depth] = element;
     element.setAttribute('ststid', depth);
     for (let i = 0; i < content.length; i++) {
@@ -47,15 +36,14 @@ function constructElement(data, depth, state) {
             let innerText = '';
             const mapValues = {};
             if (type == 'string') {
+                innerText = child;
                 const variables = child.match(valsRegex) || [];
-                console.log(variables);
                 for (let j = 0; j < variables.length; j++) {
                     const valuesString = variables[j].match(cleanerRegex)[1] || '';
                     const values = valuesString.split('.');
-                    console.log('values: ', values);
                     const value = getValue(state.data, values);
                     mapValues[valuesString] = JSON.parse(JSON.stringify(value || ''));
-                    innerText = value;
+                    innerText = innerText.replace(variables[j], value);
                 }
             }
             else {
@@ -75,7 +63,6 @@ function constructDOM(state) {
     const elements = [];
     for (let i = 0; i < template.body.length; i++) {
         const element = constructElement(template.body[i], `${i}`, state);
-        console.log(element);
         elements.push(element);
     }
     document.body.innerHTML = '';
