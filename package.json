@@ -1,0 +1,16 @@
+{
+  "name": "state-street",
+  "version": "0.0.1",
+  "description": "light weight single page framework",
+  "type": "module",
+  "main": "src/index.js",
+  "scripts": {
+    "build": "tsc"
+  },
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@types/node": "^20.10.7",
+    "typescript": "^5.3.3"
+  }
+}
