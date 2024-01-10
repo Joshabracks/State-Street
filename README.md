@@ -1,2 +1,42 @@
-# State Street
-A (mostly) JavaScript front-end framework build entirely within a Simple and Fast state object
+# State Street 
+Want to contribute or need help? [Join the State Street Discord!](https://discord.gg/a7AycPG2)
+
+A simple JavaScript single page application framework
+
+## Current Features
+* Renders simple single page application through use of a "State" controller that takes in a data and template object.
+* Customize class, tag and internal text on the DOM
+* Uses a render loop instead of triggers to update the DOM
+
+## Getting Started
+* Clone repo: 
+```
+git clone https://github.com/Joshabracks/State-Street.git
+```
+* Navigate to directory, install dependencies and build
+```
+cd state-street
+npm i
+npm run build
+```
+* Navigate to example, install dependencies and build
+```
+cd example
+npm i
+npm run build
+```
+* Open html file located at `./example/index.html`
+* You can access the State object in the console and make simple changes via `stateStreet.data`.  
+* Try changing the title: 
+```javascript
+stateStreet.data.title = 'Hello World!'
+```
+* The example package is very simple.  Explore the code via `./example/index.js`
+
+## TODO
+I have every intention of keeping this project open source and anyone is welcome contribute.  Here's a list of State Street's most immediate "TODOs"
+* :bow_and_arrow: Targeted Rendering: Currently whenever any variable within the State data is updated, the entire DOM is reconstructed.  Change the update loop to target elements at the most granular level possible and update only what's been effected by the change.
+* :memo: Attributes: Add attribute handling
+* :crayon: CSS: Add css handling
+* :running_woman: Event Based Rendering: By default, State Street runs on an update loop much in the way video games run.  This means that it's always checking for changes in State data and making changes to the DOM when appropriate.  This is easy, and in some cases, probably for the best, but it is not the most efficient use of resources, especially if there's a lot of data to check.  So, it would be nice to have an option to only run updates when specific events are triggered.  (which is how pretty much every other SPA framework does it)
+* :cupcake: Syntactic Sugar: At the core of things, the plan is to always use a JSON template.  However, that doesn't mean that State Street can't have its own HTML-like Markdown syntax, or not support other types of HTML-like languages.
