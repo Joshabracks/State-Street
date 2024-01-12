@@ -37,6 +37,7 @@ stateStreet.data.title = 'Hello World!'
 I have every intention of keeping this project open source and anyone is welcome contribute.  Here's a list of State Street's most immediate "TODOs"
 * :bow_and_arrow: Targeted Rendering: Currently whenever any variable within the State data is updated, the entire DOM is reconstructed.  Change the update loop to target elements at the most granular level possible and update only what's been effected by the change.
 * :memo: Attributes: Add attribute handling
+* :computer: Actions: Add function/action binding to elements
 * :crayon: CSS: Add css handling
 * :running_woman: Event Based Rendering: By default, State Street runs on an update loop much in the way video games run.  This means that it's always checking for changes in State data and making changes to the DOM when appropriate.  This is easy, and in some cases, probably for the best, but it is not the most efficient use of resources, especially if there's a lot of data to check.  So, it would be nice to have an option to only run updates when specific events are triggered.  (which is how pretty much every other SPA framework does it)
 * :cupcake: Syntactic Sugar: At the core of things, the plan is to always use a JSON template.  However, that doesn't mean that State Street can't have its own HTML-like Markdown syntax, or not support other types of HTML-like languages.
