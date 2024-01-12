@@ -1,3 +1,3 @@
-import State from './class/State.js';
+import State from './State/State.js';
 export default State;
 //# sourceMappingURL=index.js.map
