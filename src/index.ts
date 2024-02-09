@@ -1,3 +1,4 @@
 import State from './State/State.js'
+import {parseSST} from './Template/parseSST.js'
 
-export default State
+export { State, parseSST }
