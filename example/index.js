@@ -7,8 +7,8 @@ const template = parseSST(`
             {{title}}
         </h1>
         <span class="itallic">Message 1: {{message1}}</span>
+        <div>Message 2: {{message2}}</div>
     </div>
-    Message 2: {{message2}}
 </body>
 `);
 
