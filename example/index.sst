@@ -1,0 +1,13 @@
+<body title="stuff">
+    <div>
+        <h1 class="bold highlight">
+            {{title}}
+        </h1>
+        <div>
+            internal div
+        </div>
+        Open text element without tag enclosures
+        <span class="itallic monkey">Span enclosed element</span>
+    </div>
+    open message element with variable message: {{message1}}
+</body>
