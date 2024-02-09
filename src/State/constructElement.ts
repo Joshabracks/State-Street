@@ -18,11 +18,15 @@ function constructElement(data: any, depth: string, state: State) {
       "Failed to construct element: content object must be an Array"
     );
   }
-  const tag = data?.tag || "div";
-  const classList = data?.class?.split(" ") || [];
+  const tag = data?.type || "div";
   const element = document.createElement(tag);
-  classList.forEach((className: string) => {
-    element.classList.add(className);
+  // const classList = data?.class?.split(" ") || [];
+  // classList.forEach((className: string) => {
+  //   element.classList.add(className);
+  // });
+  const attributes = data?.attributes || [];
+  attributes.forEach((attribute: any) => {
+    element.setAttribute(attribute.name, attribute.value);
   });
   state.idMap[depth] = element;
   element.setAttribute("ststid", depth);

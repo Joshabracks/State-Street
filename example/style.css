@@ -1,0 +1,32 @@
+* {
+    margin: 0;
+    padding: 0;
+}
+
+div {
+    width: 100%;
+}
+
+h1 {
+    font-size: x-large;
+}
+
+.bold {
+    font-weight: bold;
+}
+
+.highlight {
+    color: royalblue;
+}
+
+.itallic {
+    font-style: italic;
+}
+
+.monkey {
+    color: brown;
+}
+
+.monkey::after {
+    content: "\1F648";
+}

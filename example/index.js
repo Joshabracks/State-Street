@@ -6,13 +6,9 @@ const template = parseSST(`
         <h1 class="bold highlight">
             {{title}}
         </h1>
-        <div>
-            internal div
-        </div>
-        Open text element without tag enclosures {{message1}}
-        <span class="itallic monkey">Span enclosed element</span>
+        <span class="itallic">Message 1: {{message1}}</span>
     </div>
-    open message element with variable message: {{message2}}
+    Message 2: {{message2}}
 </body>
 `);
 
@@ -23,8 +19,8 @@ const data = {
     message1: "... This is message 1!",
     message2: "... This is message 2!"
 }
-console.log('template: ', template);
-console.log('data: ', data);
+
+
 window.onload = () => {
     window.stateStreet = new State(template, data)
 }
