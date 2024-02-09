@@ -33,6 +33,9 @@ stateStreet.data.title = 'Hello World!'
 ```
 * The example package is very simple.  Explore the code via `./example/index.js`
 
+## Known Bugs :bug:
+* HTML Template parsing is buggy.  Multiple elements within the top level of the body render improperly, adding tags to the DOM as text.
+
 ## TODO
 I have every intention of keeping this project open source and anyone is welcome contribute.  Here's a list of State Street's most immediate "TODOs"
 * :bow_and_arrow: **Targeted Rendering**: Currently whenever any variable within the State data is updated, the entire DOM is reconstructed.  Change the update loop to target elements at the most granular level possible and update only what's been effected by the change.
