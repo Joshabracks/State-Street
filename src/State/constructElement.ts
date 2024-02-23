@@ -1,4 +1,5 @@
 import State from "./State.js";
+import { SSID } from "./const.js";
 
 const valsRegex = /{{.[^{]+}}/g;
 const cleanerRegex = /{{(.*)}}/;
@@ -20,16 +21,12 @@ function constructElement(data: any, depth: string, state: State) {
   }
   const tag = data?.type || "div";
   const element = document.createElement(tag);
-  // const classList = data?.class?.split(" ") || [];
-  // classList.forEach((className: string) => {
-  //   element.classList.add(className);
-  // });
   const attributes = data?.attributes || [];
   attributes.forEach((attribute: any) => {
     element.setAttribute(attribute.name, attribute.value);
   });
   state.idMap[depth] = element;
-  element.setAttribute("ststid", depth);
+  element.setAttribute(SSID, depth);
   for (let i = 0; i < content.length; i++) {
     const child = content[i];
     const type = typeof child;
@@ -38,11 +35,13 @@ function constructElement(data: any, depth: string, state: State) {
       element.appendChild(constructElement(child, subDepth, state));
     } else {
       const subElement = document.createElement("span");
-      subElement.setAttribute("ststid", subDepth);
+      subElement.setAttribute(SSID, subDepth);
       let innerText = "";
       const mapValues: any = {};
+      let stringTemplate;
       if (type == "string") {
         innerText = child;
+        stringTemplate = '' + innerText;
         const variables = child.match(valsRegex) || [];
         for (let j = 0; j < variables.length; j++) {
           const valuesString: string =
@@ -56,7 +55,7 @@ function constructElement(data: any, depth: string, state: State) {
         innerText = JSON.stringify(child);
       }
       subElement.innerText = innerText;
-      state.idMap[subDepth] = { element: subElement, values: mapValues };
+      state.idMap[subDepth] = { element: subElement, values: mapValues, template: stringTemplate };
       element.appendChild(subElement);
     }
   }
