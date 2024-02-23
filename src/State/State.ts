@@ -1,17 +1,20 @@
-import constructDOM from "./constructDom.js";
+import constructDOM from "./constructDOM.js";
+import updateDOM from "./updateDom.js";
 
 export default class State {
   data: any;
   template: any;
   idMap: any;
+  dataMap: any;
   previous: string;
   constructor(template: any, data: any) {
     this.data = data;
     this.template = template;
     this.previous = JSON.stringify(this.data);
     this.idMap = {};
+    this.dataMap = {};
     constructDOM(this);
-    this.update()
+    this.update();
   }
   sameState = () => {
     const current = JSON.stringify(this.data);
@@ -20,13 +23,13 @@ export default class State {
     }
     this.previous = current;
     return false;
-  }
+  };
   update = () => {
     if (this.sameState()) {
-      window.requestAnimationFrame(this.update)
-      return
+      window.requestAnimationFrame(this.update);
+      return;
     }
-    constructDOM(this);
-    window.requestAnimationFrame(this.update)
-  }
+    updateDOM(this);
+    window.requestAnimationFrame(this.update);
+  };
 }

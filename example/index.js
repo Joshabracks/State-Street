@@ -9,6 +9,9 @@ const template = parseSST(`
         <span class="itallic">Message 1: {{message1}}</span>
         <div>Message 2: {{message2}}</div>
     </div>
+    <div>  
+        Element with multiple values. {{value1}} :: {{value2}}
+    </div>
     <div>
         <button onclick="whatIsIt()">this is a {{whatItIs}}</button>
     </div>
@@ -22,6 +25,8 @@ const data = {
     title: "State Street",
     message1: "... This is message 1!",
     message2: "... This is message 2!",
+    value1: "value 1",
+    value2: "value 2",
     total: 0,
     whatItIs: 'button'
 }
