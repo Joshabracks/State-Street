@@ -24,7 +24,7 @@ function updateDOM(state: State) {
       if (!value && value !== 0) continue;
       template = template.replace(`{{${key}}}`, value);
     }
-    element!.innerHTML = template;
+    element!.innerText = template;
   }
 }
 
