@@ -41,7 +41,7 @@ function constructElement(data: any, depth: string, state: State) {
       let stringTemplate;
       if (type == "string") {
         innerText = child;
-        stringTemplate = '' + innerText;
+        stringTemplate = "" + innerText;
         const variables = child.match(valsRegex) || [];
         for (let j = 0; j < variables.length; j++) {
           const valuesString: string =
@@ -55,11 +55,15 @@ function constructElement(data: any, depth: string, state: State) {
         innerText = JSON.stringify(child);
       }
       subElement.innerText = innerText;
-      state.idMap[subDepth] = { element: subElement, values: mapValues, template: stringTemplate };
+      state.idMap[subDepth] = {
+        element: subElement,
+        values: mapValues,
+        template: stringTemplate,
+      };
       element.appendChild(subElement);
     }
   }
   return element;
 }
 
-export default constructElement
+export default constructElement;

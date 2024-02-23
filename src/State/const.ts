@@ -1,5 +1,3 @@
-const SSID = 'ssid';
+const SSID = "ssid";
 
-export {
-    SSID
-}
+export { SSID };

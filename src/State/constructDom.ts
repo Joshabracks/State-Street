@@ -13,4 +13,4 @@ function constructDOM(state: State) {
   elements.forEach((element: any) => document.body.appendChild(element));
 }
 
-export default constructDOM
+export default constructDOM;

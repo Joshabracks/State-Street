@@ -14,7 +14,7 @@ export default class State {
     this.idMap = {};
     this.dataMap = {};
     constructDOM(this);
-    this.update()
+    this.update();
   }
   sameState = () => {
     const current = JSON.stringify(this.data);
@@ -23,13 +23,13 @@ export default class State {
     }
     this.previous = current;
     return false;
-  }
+  };
   update = () => {
     if (this.sameState()) {
-      window.requestAnimationFrame(this.update)
-      return
+      window.requestAnimationFrame(this.update);
+      return;
     }
     updateDOM(this);
-    window.requestAnimationFrame(this.update)
-  }
+    window.requestAnimationFrame(this.update);
+  };
 }
