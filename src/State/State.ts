@@ -7,12 +7,14 @@ export default class State {
   idMap: any;
   dataMap: any;
   previous: string;
-  constructor(template: any, data: any) {
+  components: any;
+  constructor(template: any = [], data: any = {}, components: any = {}) {
     this.data = data;
     this.template = template;
     this.previous = JSON.stringify(this.data);
     this.idMap = {};
     this.dataMap = {};
+    this.components = components
     constructDOM(this);
     this.update();
   }
