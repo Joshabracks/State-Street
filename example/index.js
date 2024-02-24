@@ -49,7 +49,7 @@ function whatIsIt() {
 
 function TestComponent(){
     return `
-        <div>test component testing</div>
+        <div>test component testing: {{total}}</div>
     `
 }
 

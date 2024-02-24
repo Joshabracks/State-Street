@@ -1,5 +1,6 @@
 import State from "./State.js";
 import { SSID } from "./const.js";
+import { parseSST } from "../Template/parseSST.js";
 
 const valsRegex = /{{.[^{]+}}/g;
 const cleanerRegex = /{{(.*)}}/;
@@ -27,9 +28,11 @@ function constructElement(data: any, depth: string, state: State) {
       return null;
     }
     const componentBody = component(data?.componentProperties || {});
+    const parsedBody = parseSST(componentBody);
+    const subElement: any = constructElement(parsedBody[0], `${depth}0`, state);
     const element = document.createElement('div');
     element.setAttribute(SSID, depth);
-    element.innerHTML = componentBody;
+    element.appendChild(subElement);
     state.idMap[depth] = element;
     return element;
   }
@@ -49,7 +52,8 @@ function constructElement(data: any, depth: string, state: State) {
     const subDepth = `${depth}${i}`;
     if (type === "object" && type !== null) {
       element.appendChild(constructElement(child, subDepth, state));
-    } else {
+      continue;
+    }
       const subElement = document.createElement("span");
       subElement.setAttribute(SSID, subDepth);
       let innerText = "";
@@ -77,7 +81,6 @@ function constructElement(data: any, depth: string, state: State) {
         template: stringTemplate,
       };
       element.appendChild(subElement);
-    }
   }
   return element;
 }
