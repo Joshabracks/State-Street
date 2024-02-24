@@ -20,6 +20,19 @@ function constructElement(data: any, depth: string, state: State) {
     );
   }
   const tag = data?.type || "div";
+  if (tag === "_component") {
+    const component = state.components[data?.componentName];
+    if (!component) {
+      console.error(`invalid component: ${data?.componentName}`);
+      return null;
+    }
+    const componentBody = component(data?.componentProperties || {});
+    const element = document.createElement('div');
+    element.setAttribute(SSID, depth);
+    element.innerHTML = componentBody;
+    state.idMap[depth] = element;
+    return element;
+  }
   const element = document.createElement(tag);
   const attributes = data?.attributes || [];
   attributes.forEach((attribute: any) => {
@@ -27,6 +40,9 @@ function constructElement(data: any, depth: string, state: State) {
   });
   state.idMap[depth] = element;
   element.setAttribute(SSID, depth);
+  if (data?.selfClosing) {
+    return element;
+  }
   for (let i = 0; i < content.length; i++) {
     const child = content[i];
     const type = typeof child;

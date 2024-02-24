@@ -16,6 +16,7 @@ const template = parseSST(`
         <button onclick="whatIsIt()">this is a {{whatItIs}}</button>
     </div>
     <button onclick="increment()">{{total}}</button>
+    <:TestComponent/>
 </body>
 `);
 
@@ -38,6 +39,7 @@ function increment() {
 const THING_LIST = [
     'potato chips', 'pink blouse', 'protein shake', 'cat', 'football', 'elephant tusk', 'whiskers', 'button', 'trophy', 'one single grape', 'Robert Downey Jr'
 ]
+
 function whatIsIt() {
     const rando = Math.random();
     const val = Math.floor( rando * THING_LIST.length);
@@ -45,8 +47,14 @@ function whatIsIt() {
     stateStreet.data.whatItIs = thing;
 }
 
+function TestComponent(){
+    return `
+        <div>test component testing</div>
+    `
+}
+
 window.onload = () => {
-    window.stateStreet = new State(template, data)
+    window.stateStreet = new State(template, data, {TestComponent})
     window.increment = increment;
     window.whatIsIt = whatIsIt;
 }

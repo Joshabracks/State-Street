@@ -2,7 +2,6 @@ import State from "./State.js";
 import { SSID } from "./const.js";
 
 function updateDOM(state: State) {
-  console.log("updating dom");
   const { idMap }: any = state;
   for (const id in idMap) {
     const data = (idMap[id]?.values && idMap[id]) || null;
