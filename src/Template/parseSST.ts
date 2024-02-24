@@ -26,13 +26,6 @@ const ELEMENT_REGEX_MAP = {
   default: REGEX.TEXT,
 };
 
-// const OPEN_TAG_REGEX = /^<[^>\/]*>/;
-// const SELF_CLOSING_TAG_REGEX = /<[^>\/]*\/>/;
-// const COMPONENT_TAG_REGEX = /<:[^>\/]*\/>/;
-// const CLOSE_TAG_REGEX = /^<\/\w+>/;
-// const TEXT_REGEX = /^[^<]+/;
-// const WHITE_SPACE_TRIM_REGEX = /\n\s+/g;
-
 function getAttributes(tag: string) {
   let attributesMatch = (tag && ATTRIBUTE_REGEX.exec(tag)) || null;
   const attributes = [];
@@ -48,11 +41,11 @@ function getAttributes(tag: string) {
 }
 
 function getElementType(data: string): ELEMENT_TYPE {
-    if (data.match(REGEX.COMPONENT_TAG)) return ELEMENT_TYPE.COMPONENT;
-    if (data.match(REGEX.SELF_CLOSING_TAG)) return ELEMENT_TYPE.SELF_CLOSING;
-    if (data.match(REGEX.OPEN_TAG)) return ELEMENT_TYPE.OPEN;
-    if (data.match(REGEX.CLOSE_TAG)) return ELEMENT_TYPE.CLOSING;
-    return ELEMENT_TYPE.TEXT;
+  if (data.match(REGEX.COMPONENT_TAG)) return ELEMENT_TYPE.COMPONENT;
+  if (data.match(REGEX.SELF_CLOSING_TAG)) return ELEMENT_TYPE.SELF_CLOSING;
+  if (data.match(REGEX.OPEN_TAG)) return ELEMENT_TYPE.OPEN;
+  if (data.match(REGEX.CLOSE_TAG)) return ELEMENT_TYPE.CLOSING;
+  return ELEMENT_TYPE.TEXT;
 }
 
 const tagNameRegExp = /<\/*([\w:]+)/;
@@ -60,10 +53,7 @@ function getTagName(tag: string) {
   return tag.match(tagNameRegExp)?.[1];
 }
 
-function getElements(
-  data: string = "",
-  content: any[] = []
-): any {
+function getElements(data: string = "", content: any[] = []): any {
   let dataEdit = "" + data;
   while (dataEdit.length) {
     dataEdit = dataEdit.replace(REGEX.WHITE_SPACE_TRIM, "").trim();
@@ -84,7 +74,7 @@ function getElements(
     if (elementType === ELEMENT_TYPE.COMPONENT) {
       const element = {
         type: "_component",
-        componentName: getTagName(elementString)?.replace(":", ''),
+        componentName: getTagName(elementString)?.replace(":", ""),
         componentProperties: getAttributes(elementString),
       };
       content.push(element);
