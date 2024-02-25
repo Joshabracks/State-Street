@@ -29,10 +29,14 @@ function constructElement(data: any, depth: string, state: State) {
     }
     const componentBody = component(data?.componentProperties || {});
     const parsedBody = parseSST(componentBody);
-    const subElement: any = constructElement(parsedBody[0], `${depth}0`, state);
     const element = document.createElement('div');
     element.setAttribute(SSID, depth);
-    element.appendChild(subElement);
+    // const subElements = [];
+    for (let i = 0; i < parsedBody.length; i++) {
+      const subDepth = `${depth}${i}`
+      const subElement: any = constructElement(parsedBody[i], subDepth, state);
+      element.appendChild(subElement);
+    }
     state.idMap[depth] = element;
     return element;
   }

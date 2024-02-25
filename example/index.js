@@ -48,9 +48,13 @@ function whatIsIt() {
 }
 
 function TestComponent(){
-    return `
-        <div>test component testing: {{total}}</div>
-    `
+    console.log(data)
+    let res = ``
+    for ( let key in data) {
+        console.log(key)
+        res = `${res}<div>${key}: ${data[key]}</div>`
+    }
+    return res;
 }
 
 window.onload = () => {
