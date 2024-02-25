@@ -33,7 +33,7 @@ const data = {
 }
 
 function increment() {
-    stateStreet.data.total++;
+    data.total++;
 }
 
 const THING_LIST = [
@@ -42,23 +42,21 @@ const THING_LIST = [
 
 function whatIsIt() {
     const rando = Math.random();
-    const val = Math.floor( rando * THING_LIST.length);
+    const val = Math.floor(rando * THING_LIST.length);
     const thing = THING_LIST[val];
-    stateStreet.data.whatItIs = thing;
+    data.whatItIs = thing;
 }
 
-function TestComponent(){
-    console.log(data)
+function TestComponent() {
     let res = ``
-    for ( let key in data) {
-        console.log(key)
+    for (let key in data) {
         res = `${res}<div>${key}: ${data[key]}</div>`
     }
     return res;
 }
 
 window.onload = () => {
-    window.stateStreet = new State(template, data, {TestComponent})
+    new State(template, data, { TestComponent })
     window.increment = increment;
     window.whatIsIt = whatIsIt;
 }
