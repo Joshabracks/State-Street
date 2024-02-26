@@ -1,5 +1,3 @@
-const ATTRIBUTE_REGEX = /(\w+)=["']([^"']+)["']/g;
-
 enum ELEMENT_TYPE {
   COMPONENT,
   OPEN,
@@ -15,6 +13,8 @@ const REGEX = {
   CLOSE_TAG: /^<\/\w+>/,
   TEXT: /^[^<]+/,
   WHITE_SPACE_TRIM: /\n\s+/g,
+  ATTRIBUTE: /(\w+)=["']([^"']+)["']/g,
+  EVENT: /:(\w+)=(\w+)\(([^)]*)\)/g,
 };
 
 const ELEMENT_REGEX_MAP = {
@@ -26,8 +26,8 @@ const ELEMENT_REGEX_MAP = {
   default: REGEX.TEXT,
 };
 
-function getAttributes(tag: string) {
-  let attributesMatch = (tag && ATTRIBUTE_REGEX.exec(tag)) || null;
+function getAttributes(tag: string): any[] {
+  let attributesMatch = (tag && REGEX.ATTRIBUTE.exec(tag)) || null;
   const attributes = [];
   while (attributesMatch !== null) {
     const attribute = {
@@ -35,9 +35,24 @@ function getAttributes(tag: string) {
       value: attributesMatch[2],
     };
     attributes.push(attribute);
-    attributesMatch = (tag && ATTRIBUTE_REGEX.exec(tag)) || null;
+    attributesMatch = (tag && REGEX.ATTRIBUTE.exec(tag)) || null;
   }
   return attributes;
+}
+
+function getEvents(tag: string): any[] {
+  let eventsMatch = (tag && REGEX.EVENT.exec(tag)) || null;
+  const events = [];
+  while (eventsMatch !== null) {
+    const event = {
+      type: eventsMatch[1],
+      function: eventsMatch[2],
+      props: eventsMatch[3]?.split(',') || []
+    }
+    events.push(event);
+    eventsMatch = (tag && REGEX.EVENT.exec(tag)) || null;
+  }
+  return events;
 }
 
 function getElementType(data: string): ELEMENT_TYPE {
@@ -66,6 +81,7 @@ function getElements(data: string = "", content: any[] = []): any {
       const element = {
         type: getTagName(elementString),
         attributes: getAttributes(elementString),
+        events: getEvents(elementString),
         selfClosing: true,
       };
       content.push(element);
@@ -76,6 +92,7 @@ function getElements(data: string = "", content: any[] = []): any {
         type: "_component",
         componentName: getTagName(elementString)?.replace(":", ""),
         componentProperties: getAttributes(elementString),
+        events: getEvents(elementString),
       };
       content.push(element);
       dataEdit = dataEdit.replace(elementString, "");
@@ -84,10 +101,12 @@ function getElements(data: string = "", content: any[] = []): any {
     if (elementType === ELEMENT_TYPE.OPEN) {
       const tagName = getTagName(elementString);
       const attributes = getAttributes(elementString);
+      const events = getEvents(elementString);
       const elementContentData = getElements(dataEdit);
       const element = {
         type: tagName,
         attributes: attributes,
+        events: events,
         content: elementContentData.content,
       };
       content.push(element);

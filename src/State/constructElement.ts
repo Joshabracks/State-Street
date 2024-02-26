@@ -45,6 +45,17 @@ function constructElement(data: any, depth: string, state: State) {
   attributes.forEach((attribute: any) => {
     element.setAttribute(attribute.name, attribute.value);
   });
+  const events = data?.events || [];
+  events.forEach((event: any) => {
+    const eventProps: any = {};
+    event.props.forEach((prop: string) => {
+      const tuple = prop.split('=');
+      const key: string = tuple[0] || '';
+      const valueMatch = tuple[1]?.match(cleanerRegex) || null;
+      eventProps[key] = (valueMatch && state.data[valueMatch[1]]) || tuple[1];
+    })
+    element.addEventListener(event.type, () => state.methods[event.function](eventProps));
+  });
   state.idMap[depth] = element;
   element.setAttribute(SSID, depth);
   if (data?.selfClosing) {

@@ -13,37 +13,22 @@ const template = parseSST(`
         Element with multiple values. {{value1}} :: {{value2}}
     </div>
     <div>
-        <button onclick="whatIsIt()">this is a {{whatItIs}}</button>
+        <button :click=whatIsIt(thingList={{thingList}})>this is a {{whatItIs}}</button>
     </div>
-    <button onclick="increment()">{{total}}</button>
+    <button :click=increment()>{{total}}</button>
     <:TestComponent/>
 </body>
 `);
 
 
-// State data for regular access/manipulation used to render and update the State template
-const data = {
-    title: "State Street",
-    message1: "... This is message 1!",
-    message2: "... This is message 2!",
-    value1: "value 1",
-    value2: "value 2",
-    total: 0,
-    whatItIs: 'button'
-}
-
 function increment() {
     data.total++;
 }
 
-const THING_LIST = [
-    'potato chips', 'pink blouse', 'protein shake', 'cat', 'football', 'elephant tusk', 'whiskers', 'button', 'trophy', 'one single grape', 'Robert Downey Jr'
-]
-
-function whatIsIt() {
+function whatIsIt({thingList}) {
     const rando = Math.random();
-    const val = Math.floor(rando * THING_LIST.length);
-    const thing = THING_LIST[val];
+    const val = Math.floor(rando * thingList.length);
+    const thing = thingList[val];
     data.whatItIs = thing;
 }
 
@@ -55,8 +40,28 @@ function TestComponent() {
     return res;
 }
 
+// State data for regular access/manipulation used to render and update the State template
+const data = {
+    title: "State Street",
+    message1: "... This is message 1!",
+    message2: "... This is message 2!",
+    value1: "value 1",
+    value2: "value 2",
+    total: 0,
+    whatItIs: 'button',
+    thingList: [
+        'potato chips', 'pink blouse', 'protein shake', 'cat', 'football', 'elephant tusk', 'whiskers', 'button', 'trophy', 'one single grape', 'Robert Downey Jr'
+    ]
+}
+
+const methods = {
+    increment,
+    whatIsIt
+}
+
+
 window.onload = () => {
-    new State(template, data, { TestComponent })
+    new State(template, data, { TestComponent }, methods)
     window.increment = increment;
     window.whatIsIt = whatIsIt;
 }

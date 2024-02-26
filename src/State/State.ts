@@ -8,13 +8,15 @@ export default class State {
   dataMap: any;
   previous: string;
   components: any;
-  constructor(template: any = [], data: any = {}, components: any = {}) {
+  methods: any;
+  constructor(template: any = [], data: any = {}, components: any = {}, methods: any = {}) {
     this.data = data;
     this.template = template;
     this.previous = JSON.stringify(this.data);
     this.idMap = {};
     this.dataMap = {};
     this.components = components
+    this.methods = methods;
     constructDOM(this);
     this.update();
   }
