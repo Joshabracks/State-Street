@@ -1,4 +1,4 @@
-# State Street 
+# ![State Street](sstlogo.png)
 Want to contribute or need help? [Join the State Street Discord!](https://discord.gg/a7AycPG2)
 
 A simple JavaScript single page application framework
