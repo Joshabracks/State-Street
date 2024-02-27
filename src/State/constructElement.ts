@@ -31,7 +31,6 @@ function constructElement(data: any, depth: string, state: State) {
     const parsedBody = parseSST(componentBody);
     const element = document.createElement('div');
     element.setAttribute(SSID, depth);
-    // const subElements = [];
     for (let i = 0; i < parsedBody.length; i++) {
       const subDepth = `${depth}${i}`
       const subElement: any = constructElement(parsedBody[i], subDepth, state);

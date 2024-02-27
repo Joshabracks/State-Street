@@ -91,7 +91,10 @@ function getElements(data: string = "", content: any[] = []): any {
       const element = {
         type: "_component",
         componentName: getTagName(elementString)?.replace(":", ""),
-        componentProperties: getAttributes(elementString),
+        componentProperties: getAttributes(elementString).reduce((res, val) => {
+          res[val.name] = val.value
+          return res;
+        }, {}),
         events: getEvents(elementString),
       };
       content.push(element);

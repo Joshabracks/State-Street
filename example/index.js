@@ -16,7 +16,7 @@ const template = parseSST(`
         <button :click=whatIsIt(thingList={{thingList}})>this is a {{whatItIs}}</button>
     </div>
     <button :click=increment()>{{total}}</button>
-    <:TestComponent/>
+    <:TestComponent name="Test Component"/>
 </body>
 `);
 
@@ -32,11 +32,13 @@ function whatIsIt({thingList}) {
     data.whatItIs = thing;
 }
 
-function TestComponent() {
-    let res = ``
-    for (let key in data) {
-        res = `${res}<div>${key}: ${data[key]}</div>`
-    }
+// Components 
+// These are just functions that render and return templates.  
+// They are denoted inside of a template as self-closing element tags with a colon in front of the tag name like so...
+// <:ComponentName/>
+// Attributes added to components are the same 
+function TestComponent({name}) {
+    let res = `<div>${name}</div>`
     return res;
 }
 
