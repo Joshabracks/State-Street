@@ -32,14 +32,34 @@ function whatIsIt({thingList}) {
     data.whatItIs = thing;
 }
 
+function clickTab(_, event) {
+    console.log(event.target);
+    const active = document.querySelector('.tab[active="true"]');
+    if (active) active.setAttribute("active", "false");
+    if (event.target.classList.contains("tab")) {
+        event.target.setAttribute("active", "true");
+        return;
+    }
+    event.target.parentElement.setAttribute("active", "true");
+}
+
 // Components 
 // These are just functions that render and return templates.  
 // They are denoted inside of a template as self-closing element tags with a colon in front of the tag name like so...
 // <:ComponentName/>
-// Attributes added to components are the same 
+// Attributes added to components are passed into the component function as the componentProps object
 function TestComponent({name}) {
-    let res = `<div>${name}</div>`
+    let res = `<div>${name}</div>
+        <div class="bar">
+            <:Tab name="home" active="true" onclick="clickTab()"/>
+            <:Tab name="info" active="false" onclick="clickTab()"/>
+            <:Tab name="documentation" active="false" onclick="clickTab()"/>
+        </div>`
     return res;
+}
+
+function Tab({name, onclick}) {
+    return `<div class="tab" :click=${onclick}>${name}</div>`
 }
 
 // State data for regular access/manipulation used to render and update the State template
@@ -58,12 +78,13 @@ const data = {
 
 const methods = {
     increment,
-    whatIsIt
+    whatIsIt,
+    clickTab
 }
 
 
 window.onload = () => {
-    new State(template, data, { TestComponent }, methods)
+    new State(template, data, { TestComponent, Tab }, methods)
     window.increment = increment;
     window.whatIsIt = whatIsIt;
 }

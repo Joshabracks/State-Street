@@ -47,8 +47,8 @@ function getEvents(tag: string): any[] {
     const event = {
       type: eventsMatch[1],
       function: eventsMatch[2],
-      props: eventsMatch[3]?.split(',') || []
-    }
+      props: eventsMatch[3]?.split(",") || [],
+    };
     events.push(event);
     eventsMatch = (tag && REGEX.EVENT.exec(tag)) || null;
   }
@@ -92,7 +92,7 @@ function getElements(data: string = "", content: any[] = []): any {
         type: "_component",
         componentName: getTagName(elementString)?.replace(":", ""),
         componentProperties: getAttributes(elementString).reduce((res, val) => {
-          res[val.name] = val.value
+          res[val.name] = val.value;
           return res;
         }, {}),
         events: getEvents(elementString),
