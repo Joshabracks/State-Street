@@ -1,9 +1,9 @@
 {
-  "name": "state-street",
-  "version": "0.0.1",
+  "name": "@state-street/state-street",
+  "version": "0.0.3",
   "description": "light weight single page framework",
   "type": "module",
-  "main": "src/index.js",
+  "main": "build/index.js",
   "scripts": {
     "build": "tsc"
   },
