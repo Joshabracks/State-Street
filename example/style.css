@@ -31,3 +31,17 @@ h1 {
 .monkey::after {
     content: "\1F648";
 }
+
+div.bar div {
+    max-width: 200px;
+    display: inline-block;
+    color: white;
+    background-color: black;
+    outline: 1px solid gray;
+}
+
+div.tab[active="true"] {
+    font-weight: 900;
+    background-color: white;
+    color: black;
+}

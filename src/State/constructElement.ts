@@ -29,11 +29,10 @@ function constructElement(data: any, depth: string, state: State) {
     }
     const componentBody = component(data?.componentProperties || {});
     const parsedBody = parseSST(componentBody);
-    const element = document.createElement('div');
+    const element = document.createElement("div");
     element.setAttribute(SSID, depth);
-    // const subElements = [];
     for (let i = 0; i < parsedBody.length; i++) {
-      const subDepth = `${depth}${i}`
+      const subDepth = `${depth}${i}`;
       const subElement: any = constructElement(parsedBody[i], subDepth, state);
       element.appendChild(subElement);
     }
@@ -49,12 +48,14 @@ function constructElement(data: any, depth: string, state: State) {
   events.forEach((event: any) => {
     const eventProps: any = {};
     event.props.forEach((prop: string) => {
-      const tuple = prop.split('=');
-      const key: string = tuple[0] || '';
+      const tuple = prop.split("=");
+      const key: string = tuple[0] || "";
       const valueMatch = tuple[1]?.match(cleanerRegex) || null;
       eventProps[key] = (valueMatch && state.data[valueMatch[1]]) || tuple[1];
-    })
-    element.addEventListener(event.type, () => state.methods[event.function](eventProps));
+    });
+    element.addEventListener(event.type, (e: any) =>
+      state.methods[event.function](eventProps, e)
+    );
   });
   state.idMap[depth] = element;
   element.setAttribute(SSID, depth);
@@ -69,33 +70,32 @@ function constructElement(data: any, depth: string, state: State) {
       element.appendChild(constructElement(child, subDepth, state));
       continue;
     }
-      const subElement = document.createElement("span");
-      subElement.setAttribute(SSID, subDepth);
-      let innerText = "";
-      const mapValues: any = {};
-      let stringTemplate;
-      if (type == "string") {
-        innerText = child;
-        stringTemplate = "" + innerText;
-        const variables = child.match(valsRegex) || [];
-        for (let j = 0; j < variables.length; j++) {
-          const valuesString: string =
-            variables[j].match(cleanerRegex)[1] || "";
-          const values = valuesString.split(".");
-          const value = getValue(state.data, values);
-          mapValues[valuesString] = JSON.parse(JSON.stringify(value || ""));
-          innerText = innerText.replace(variables[j], value);
-        }
-      } else {
-        innerText = JSON.stringify(child);
+    const subElement = document.createElement("span");
+    subElement.setAttribute(SSID, subDepth);
+    let innerText = "";
+    const mapValues: any = {};
+    let stringTemplate;
+    if (type == "string") {
+      innerText = child;
+      stringTemplate = "" + innerText;
+      const variables = child.match(valsRegex) || [];
+      for (let j = 0; j < variables.length; j++) {
+        const valuesString: string = variables[j].match(cleanerRegex)[1] || "";
+        const values = valuesString.split(".");
+        const value = getValue(state.data, values);
+        mapValues[valuesString] = JSON.parse(JSON.stringify(value || ""));
+        innerText = innerText.replace(variables[j], value);
       }
-      subElement.innerText = innerText;
-      state.idMap[subDepth] = {
-        element: subElement,
-        values: mapValues,
-        template: stringTemplate,
-      };
-      element.appendChild(subElement);
+    } else {
+      innerText = JSON.stringify(child);
+    }
+    subElement.innerText = innerText;
+    state.idMap[subDepth] = {
+      element: subElement,
+      values: mapValues,
+      template: stringTemplate,
+    };
+    element.appendChild(subElement);
   }
   return element;
 }
