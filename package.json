@@ -11,10 +11,10 @@
   "author": "",
   "license": "ISC",
   "devDependencies": {
+    "@semantic-release/npm": "^11.0.2",
     "@types/node": "^20.10.7",
     "eslint": "^8.57.0",
     "eslint-config-prettier": "^9.1.0",
-    "semantic-release": "^23.0.2",
     "typescript": "^5.3.3",
     "typescript-eslint": "^7.1.0"
   }
