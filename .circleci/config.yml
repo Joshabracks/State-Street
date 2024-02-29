@@ -18,7 +18,7 @@ jobs:
     executor: node/default
     steps:
       - checkout
-      - run: npm i typescript -g
+      - run: sudo npm i typescript
       - run: npm run build
       - run: npm set //registry.npmjs.org/:_authToken=$NPM_TOKEN && npm publish
 workflows:
