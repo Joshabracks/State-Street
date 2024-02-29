@@ -1,5 +1,8 @@
 # ![State Street](https://github.com/Joshabracks/State-Street/blob/main/sstlogo.png?raw=true)
+[![CircleCI](https://circleci.com/gh/Joshabracks/State-Street.svg?style=shield)](https://circleci.com/gh/joshabracks/state-street)
+
 Want to contribute or need help? [Join the State Street Discord!](https://discord.gg/a7AycPG2)
+
 
 A simple JavaScript single page application framework
 
