@@ -1,4 +1,4 @@
-import { State, parseSST } from '../build/index.js';
+import { State, parseSST } from '@state-street/state-street';
 
 const template = parseSST(`
 <body title="{{title}}">
@@ -85,6 +85,4 @@ const methods = {
 
 window.onload = () => {
     new State(template, data, { TestComponent, Tab }, methods)
-    window.increment = increment;
-    window.whatIsIt = whatIsIt;
 }
