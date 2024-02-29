@@ -1,5 +1,5 @@
 # ![State Street](https://github.com/Joshabracks/State-Street/blob/main/sstlogo.png?raw=true)
-[![CircleCI](https://circleci.com/gh/Joshabracks/State-Street.svg?style=shield)](https://circleci.com/gh/joshabracks/state-street)
+[![CircleCI](https://circleci.com/gh/Joshabracks/State-Street.svg?style=shield)](https://circleci.com/gh/Joshabracks/State-Street)
 
 Want to contribute or need help? [Join the State Street Discord!](https://discord.gg/a7AycPG2)
 
@@ -92,6 +92,7 @@ window.onload = () => {
 * Compoents are simply functions that return formatted templates.  We can pass them into the State object as the third constructor argument.  All components access the same state data object, so we won't need to pass in a message.  So let's pass in some style properties instead.
 * We'll also update the template to use the component.
 ```js
+
 import { State, parseSST } from '@state-street/state-street';
 const data = {
     title: "Hello State Street!",
