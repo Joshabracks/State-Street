@@ -1,4 +1,4 @@
-import constructDOM from "./constructDOM.js";
+import constructDOM from "./constructDom.js";
 import updateDOM from "./updateDom.js";
 
 export default class State {
