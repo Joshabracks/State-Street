@@ -14,7 +14,7 @@ jobs:
       - run: node --version
       - run: sudo npm i 
       - run: sudo npm run lint
-  deploy:
+  publish:
     executor: node/default
     steps:
       - checkout
@@ -31,7 +31,7 @@ workflows:
       - node/test:
           requires:
             - install_and_lint
-      - deploy:
+      - publish:
           context: org_global
           filters:
             branches:
