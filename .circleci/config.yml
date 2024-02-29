@@ -16,14 +16,13 @@ jobs:
       - run: sudo npm run lint
   deploy:
     executor: node/default
-    permissions:
-      contents: write # to be able to publish a GitHub release
-      issues: write # to be able to comment on released issues
-      pull-requests: write # to be able to comment on released pull requests
-      id-token: write # to enable use of OIDC for npm provenance
     steps:
       - checkout
-      - run: npx semantic-release
+      - run:
+        name: Publish to NPM
+        command: |
+          npm set //registry.npmjs.org/:_authToken=$NPM_TOKEN
+          npm publish
 
 workflows:
   test_deploy:
