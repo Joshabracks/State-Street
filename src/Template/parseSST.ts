@@ -7,7 +7,7 @@ enum ELEMENT_TYPE {
 }
 
 const REGEX = {
-  OPEN_TAG: /^<[^>/]*>/,
+  OPEN_TAG: /^<[^/]{1}[^>]*>/,
   SELF_CLOSING_TAG: /^<[^>/]*\/>/,
   COMPONENT_TAG: /^<:[^>/]*\/>/,
   CLOSE_TAG: /^<\/\w+>/,
