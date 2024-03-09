@@ -13,7 +13,8 @@ function getValue(obj: any, values: string[]) {
   return getValue(value, values);
 }
 
-function constructElement(data: any, depth: string, state: State) {
+function constructElement(data: any, depth: string, state: State, parentElement: HTMLElement | null = null) {
+  if (!parentElement) parentElement = document.body || document.querySelector('body');
   const content = data?.content || [];
   if (content?.constructor?.name !== "Array") {
     return Error(
@@ -29,15 +30,22 @@ function constructElement(data: any, depth: string, state: State) {
     }
     const componentBody = component(data?.componentProperties || {});
     const parsedBody = parseSST(componentBody, state.components);
-    const element = document.createElement("div");
-    element.setAttribute(SSID, depth);
+    const subElements = [];
     for (let i = 0; i < parsedBody.length; i++) {
       const subDepth = `${depth}${i}`;
-      const subElement: any = constructElement(parsedBody[i], subDepth, state);
-      element.appendChild(subElement);
+      const subElement: any = constructElement(parsedBody[i], subDepth, state, parentElement);
+      if (subElement) {
+        subElements.push(subElement)
+        parentElement.appendChild(subElement);
+      }
     }
-    state.idMap[depth] = element;
-    return element;
+    if (!subElements.length) {
+      const element = document.createElement("div");
+      element.setAttribute(SSID, depth);
+      return element;
+    } else {
+      return null;
+    }
   }
   const element = document.createElement(tag);
   const attributes = data?.attributes || [];
@@ -67,7 +75,10 @@ function constructElement(data: any, depth: string, state: State) {
     const type = typeof child;
     const subDepth = `${depth}${i}`;
     if (type === "object" && type !== null) {
-      element.appendChild(constructElement(child, subDepth, state));
+      const subElement = constructElement(child, subDepth, state, element);
+      if (subElement) {
+        element.appendChild(subElement);
+      }
       continue;
     }
     const subElement = document.createElement("span");
