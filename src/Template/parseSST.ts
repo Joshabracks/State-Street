@@ -1,5 +1,4 @@
 enum ELEMENT_TYPE {
-  COMPONENT,
   OPEN,
   CLOSING,
   TEXT,
@@ -9,7 +8,6 @@ enum ELEMENT_TYPE {
 const REGEX = {
   OPEN_TAG: /^<[^/]{1}[^>]*>/,
   SELF_CLOSING_TAG: /^<[^>/]*\/>/,
-  COMPONENT_TAG: /^<:[^>/]*\/>/,
   CLOSE_TAG: /^<\/\w+>/,
   TEXT: /^[^<]+/,
   WHITE_SPACE_TRIM: /\n\s+/g,
@@ -18,7 +16,6 @@ const REGEX = {
 };
 
 const ELEMENT_REGEX_MAP = {
-  [ELEMENT_TYPE.COMPONENT]: REGEX.COMPONENT_TAG,
   [ELEMENT_TYPE.OPEN]: REGEX.OPEN_TAG,
   [ELEMENT_TYPE.CLOSING]: REGEX.CLOSE_TAG,
   [ELEMENT_TYPE.TEXT]: REGEX.TEXT,
@@ -56,7 +53,6 @@ function getEvents(tag: string): any[] {
 }
 
 function getElementType(data: string): ELEMENT_TYPE {
-  if (data.match(REGEX.COMPONENT_TAG)) return ELEMENT_TYPE.COMPONENT;
   if (data.match(REGEX.SELF_CLOSING_TAG)) return ELEMENT_TYPE.SELF_CLOSING;
   if (data.match(REGEX.OPEN_TAG)) return ELEMENT_TYPE.OPEN;
   if (data.match(REGEX.CLOSE_TAG)) return ELEMENT_TYPE.CLOSING;
@@ -68,7 +64,7 @@ function getTagName(tag: string) {
   return tag.match(tagNameRegExp)?.[1];
 }
 
-function getElements(data: string = "", content: any[] = []): any {
+function getElements(data: string = "", components: any = {}, content: any[] = []): any {
   let dataEdit = "" + data;
   while (dataEdit.length) {
     dataEdit = dataEdit.replace(REGEX.WHITE_SPACE_TRIM, "").trim();
@@ -78,34 +74,31 @@ function getElements(data: string = "", content: any[] = []): any {
     dataEdit = dataEdit.replace(elementRegExp, "");
     if (!elementString.trim()) continue;
     if (elementType === ELEMENT_TYPE.SELF_CLOSING) {
-      const element = {
-        type: getTagName(elementString),
-        attributes: getAttributes(elementString),
+      const tagName: string = getTagName(elementString) || '';
+      const isComponent = components[tagName.trim()] ? true : false;
+      const element: any = {
+        type: isComponent ? '_component' : tagName,
         events: getEvents(elementString),
         selfClosing: true,
       };
-      content.push(element);
-      continue;
-    }
-    if (elementType === ELEMENT_TYPE.COMPONENT) {
-      const element = {
-        type: "_component",
-        componentName: getTagName(elementString)?.replace(":", ""),
-        componentProperties: getAttributes(elementString).reduce((res, val) => {
+      if (isComponent) {
+        element.componentName = tagName;
+        element.componentProperties = getAttributes(elementString).reduce((res, val) => {
           res[val.name] = val.value;
           return res;
-        }, {}),
-        events: getEvents(elementString),
-      };
+        }, {});
+        dataEdit = dataEdit.replace(elementString, "");
+      } else {
+        element.attributes = getAttributes(elementString);
+      }
       content.push(element);
-      dataEdit = dataEdit.replace(elementString, "");
       continue;
     }
     if (elementType === ELEMENT_TYPE.OPEN) {
       const tagName = getTagName(elementString);
       const attributes = getAttributes(elementString);
       const events = getEvents(elementString);
-      const elementContentData = getElements(dataEdit);
+      const elementContentData = getElements(dataEdit, components);
       const element = {
         type: tagName,
         attributes: attributes,
@@ -124,8 +117,8 @@ function getElements(data: string = "", content: any[] = []): any {
   return { content, dataEdit };
 }
 
-function parseSST(data: string) {
-  const result = getElements(data);
+function parseSST(data: string, components: any = {}) {
+  const result = getElements(data, components);
   return result.content;
 }
 

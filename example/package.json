@@ -13,6 +13,6 @@
     "webpack-cli": "^5.1.4"
   },
   "dependencies": {
-    "@state-street/state-street": "^0.0.2"
+    "@state-street/state-street": "../build"
   }
 }
