@@ -46,7 +46,7 @@ function clickTab(_, event) {
 // Components 
 // These are just functions that render and return templates.  
 // They are denoted inside of a template as self-closing element tags with a colon in front of the tag name like so...
-// <:ComponentName/>
+// <ComponentName/>
 // Attributes added to components are passed into the component function as the componentProps object
 function TestComponent({ name }) {
     let res = /*html*/`
