@@ -87,18 +87,17 @@ window.onload = () => {
 ```
 
 #### Components
-* In State Street, Components  can be added to a template by preceeding a self closed tag name with a colon like so: `<:ComponentName/>`.  
-* You can also pass `componentProperties` into the component the same way you would add an attribute in html: `<:ComponentName prop1="Hello World"/>`.
+* In State Street, Components  can be added to a template with a self closed tag using the component name like so: `<ComponentName/>`.  
+* You can also pass `componentProperties` into the component the same way you would add an attribute in html: `<ComponentName prop1="Hello World"/>`.
 * Compoents are simply functions that return formatted templates.  We can pass them into the State object as the third constructor argument.  All components access the same state data object, so we won't need to pass in a message.  So let's pass in some style properties instead.
 * We'll also update the template to use the component.
 ```js
-
 import { State, parseSST } from '@state-street/state-street';
 const data = {
     title: "Hello State Street!",
     message: "Hello World!"
 }
-const template = parseSST('<:Header color="red" weight="bold"/>');
+const template = parseSST('<Header color="red" weight="bold"/>');
 const components = {
     Header: ({ color, weight }) => {
         return `
@@ -129,9 +128,9 @@ const data = {
 }
 
 const template = parseSST(`
-    <:Header color="red" weight="bold"/>
-    <:CounterMessage/>
-    <:Button onclick="incrementCounter"/>
+    <Header color="red" weight="bold"/>
+    <CounterMessage/>
+    <Button onclick="incrementCounter"/>
     `);
 
 const components = {
