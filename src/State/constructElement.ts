@@ -28,7 +28,7 @@ function constructElement(data: any, depth: string, state: State) {
       return null;
     }
     const componentBody = component(data?.componentProperties || {});
-    const parsedBody = parseSST(componentBody);
+    const parsedBody = parseSST(componentBody, state.components);
     const element = document.createElement("div");
     element.setAttribute(SSID, depth);
     for (let i = 0; i < parsedBody.length; i++) {
