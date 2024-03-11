@@ -1,3 +1,4 @@
 const SSID = "ssid";
+const SSCT = "ssct";
 
-export { SSID };
+export { SSID, SSCT };
