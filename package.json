@@ -1,6 +1,6 @@
 {
   "name": "@state-street/state-street",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "description": "light weight single page framework",
   "main": "build/index.js",
   "scripts": {
