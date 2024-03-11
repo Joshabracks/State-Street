@@ -8,6 +8,7 @@ export default class State {
   dataMap: any;
   previous: string;
   components: any;
+  componentMap: any;
   methods: any;
   constructor(template: any = [], data: any = {}, components: any = {}, methods: any = {}) {
     this.data = data;
@@ -15,7 +16,8 @@ export default class State {
     this.previous = JSON.stringify(this.data);
     this.idMap = {};
     this.dataMap = {};
-    this.components = components
+    this.components = components;
+    this.componentMap = {};
     this.methods = methods;
     constructDOM(this);
     this.update();

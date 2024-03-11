@@ -1,5 +1,5 @@
 import State from "./State.js";
-import { SSID } from "./const.js";
+import { SSID, SSCT } from "./const.js";
 import { parseSST } from "../Template/parseSST.js";
 
 const valsRegex = /{{.[^{]+}}/g;
@@ -28,6 +28,7 @@ function constructElement(data: any, depth: string, state: State, parentElement:
       console.error(`invalid component: ${data?.componentName}`);
       return null;
     }
+    state.componentMap[depth] = data;
     const componentBody = component(data?.componentProperties || {});
     const parsedBody = parseSST(componentBody, state.components);
     const subElements = [];
@@ -36,16 +37,15 @@ function constructElement(data: any, depth: string, state: State, parentElement:
       const subElement: any = constructElement(parsedBody[i], subDepth, state, parentElement);
       if (subElement) {
         subElements.push(subElement)
-        parentElement.appendChild(subElement);
       }
     }
-    if (!subElements.length) {
-      const element = document.createElement("div");
-      element.setAttribute(SSID, depth);
-      return element;
-    } else {
-      return null;
-    }
+    const element = document.createElement("div");
+    element.setAttribute(SSID, depth);
+    element.setAttribute(SSCT, data?.componentName);
+    subElements.forEach((subElement) => {
+      element.appendChild(subElement)
+    });
+    return element;
   }
   const element = document.createElement(tag);
   const attributes = data?.attributes || [];
