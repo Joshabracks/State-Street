@@ -161,6 +161,28 @@ window.onload = () => {
 ```
 * Now when you build and reload your page, there should be a button that, when clicked, changes a displayed message to show just how many times you've clicked the button.
 
+## Advanced
+### Method Variables
+- Variables can be passed directly into methods using `key=value` syntax within the method call.  Example `<button :click=functionName(key=value)>`.  Please note that the value does not have to be contained within quotes.
+  - Multiple variables may be passed as comma-separated pairs. `:click=functionName(key1=value1,key2=value2)`
+- Variables are passed into the method by their key names as a single properties object that may be destructured like so `function methodName({key1, key2})`
+- The `state` and `event` object are also passed into the properties object.  `function methodName({state, event, var1, var2})`
+### Component State Access
+- Along with variables, the state object is passed into the components properties object. `ComponentName({ state, var1, var2 })`
+### State Options
+- When building a new State you may also pass a fifth, `options` object.  Currently, there is only one option available, but additional options will be added to the same variable.  `new State(template, data, components, methods, options)`
+  - renderLoop: boolean - (default true) When set to false, disables the update render loop, requiring the `state.update()` method to be managed manually.   Generally, this would be called at the end of a method invocation if any variable within `state.data` is changed.  In apps using a large amount of State data, this can drastically improve page performance.
+    ```js
+    function methodName({ state }) {
+        state.data.numberValue ++;
+        state.update();
+    }
+    ...
+    window.onload = () => {
+        new State(template, data, components, methods, /*options*/ { renderLoop: false });
+    }
+    ```
+
 ## TODO
 I have every intention of keeping this project open source and anyone is welcome contribute.  Here's a list of State Street's most immediate "TODOs"
 * :bow_and_arrow: **Targeted Rendering**: Currently whenever any variable within the State data is updated, all elements effected by any state variables are re-rendered.  Update so that only changed elements will be rendered.
