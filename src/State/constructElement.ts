@@ -62,7 +62,7 @@ function constructElement(data: any, depth: string, state: State, parentElement:
       eventProps[key] = (valueMatch && state.data[valueMatch[1]]) || tuple[1];
     });
     element.addEventListener(event.type, (e: any) =>
-      state.methods[event.function](eventProps, e)
+      state.methods[event.function]({...eventProps, event: e, state})
     );
   });
   state.idMap[depth] = element;

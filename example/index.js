@@ -21,18 +21,18 @@ const TEMPLATE_STRING = /*html*/`
 `;
 
 
-function increment() {
-    data.total++;
+function increment({ state }) {
+    state.data.total++;
 }
 
-function whatIsIt({ thingList }) {
+function whatIsIt({ thingList, state }) {
     const rando = Math.random();
     const val = Math.floor(rando * thingList.length);
     const thing = thingList[val];
-    data.whatItIs = thing;
+    state.data.whatItIs = thing;
 }
 
-function clickTab(_, event) {
+function clickTab({ event }) {
     // eslint-disable-next-line no-undef
     const active = document.querySelector('.tab[active="true"]');
     if (active) active.setAttribute("active", "false");
