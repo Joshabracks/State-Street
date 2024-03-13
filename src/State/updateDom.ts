@@ -22,9 +22,9 @@ function updateDOM(state: State) {
     const selector = `[${SSID}="${id}"]`;
     const element: HTMLElement | null = document.querySelector(selector);
     if (element === null) {
-      console.error(
-        `unable to update element at ${selector}.\n element does not exist.`
-      );
+      // console.error(
+      //   `unable to update element at ${selector}.\n element does not exist.`
+      // );
       continue;
     }
     const values = data.values;

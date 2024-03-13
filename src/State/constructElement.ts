@@ -13,8 +13,7 @@ function getValue(obj: any, values: string[]) {
   return getValue(value, values);
 }
 
-function constructElement(data: any, depth: string, state: State, parentElement: HTMLElement | null = null) {
-  if (!parentElement) parentElement = document.body || document.querySelector('body');
+function constructElement(data: any, depth: string, state: State) {
   const content = data?.content || [];
   if (content?.constructor?.name !== "Array") {
     return Error(
@@ -34,7 +33,7 @@ function constructElement(data: any, depth: string, state: State, parentElement:
     const subElements = [];
     for (let i = 0; i < parsedBody.length; i++) {
       const subDepth = `${depth}${i}`;
-      const subElement: any = constructElement(parsedBody[i], subDepth, state, parentElement);
+      const subElement: any = constructElement(parsedBody[i], subDepth, state);
       if (subElement) {
         subElements.push(subElement)
       }
@@ -75,7 +74,7 @@ function constructElement(data: any, depth: string, state: State, parentElement:
     const type = typeof child;
     const subDepth = `${depth}${i}`;
     if (type === "object" && type !== null) {
-      const subElement = constructElement(child, subDepth, state, element);
+      const subElement = constructElement(child, subDepth, state);
       if (subElement) {
         element.appendChild(subElement);
       }
