@@ -7,11 +7,11 @@ enum ELEMENT_TYPE {
 
 const REGEX = {
   OPEN_TAG: /^<[^/]{1}[^>]*>/,
-  SELF_CLOSING_TAG: /^<[^>/]*\/>/,
+  SELF_CLOSING_TAG: /^<[^>]*\/>/,
   CLOSE_TAG: /^<\/\w+>/,
   TEXT: /^[^<]+/,
   WHITE_SPACE_TRIM: /\n\s+/g,
-  ATTRIBUTE: /(\w+)=["']([^"']+)["']/g,
+  ATTRIBUTE: /(\w+)=["'`]([\S\s]*?)["'`](?=\s\w+="|\/>|>$)/g,
   EVENT: /:(\w+)=(\w+)\(([^)]*)\)/g,
 };
 
