@@ -13,7 +13,26 @@ function getValue(obj: any, values: string[]) {
   return getValue(value, values);
 }
 
-function constructElement(data: any, depth: string, state: State) {
+function constructElement(data: any, parentSSID: string, state: State) {
+  console.log('do the thing: ', state.elementCount, ' - ', Object.keys(state.idMap).length)
+  let currentSSID = `${parentSSID}`;
+  const existingElement = state?.idMap?.[currentSSID];
+  
+  if (existingElement && existingElement.template && data.template && existingElement.template !== data.template) {
+    currentSSID = parentSSID + 'c';
+    // return constructElement(data, currentSSID, state);
+  } 
+  else if (existingElement && existingElement.template && data.template) {
+    // do nothing
+  }
+  else if (existingElement && existingElement.template && !data.template) {
+    currentSSID = parentSSID + 't';
+    // return constructElement(data, currentSSID, state);
+  }
+  else if (data.template && !existingElement?.template) {
+    currentSSID = parentSSID + 'g';
+    // return constructElement(data, currentSSID, state)
+  }
   const content = data?.content || [];
   if (content?.constructor?.name !== "Array") {
     return Error(
@@ -27,19 +46,19 @@ function constructElement(data: any, depth: string, state: State) {
       console.error(`invalid component: ${data?.componentName}`);
       return null;
     }
-    state.componentMap[depth] = data;
+    state.componentMap[currentSSID] = data;
     const componentBody = component(data?.componentProperties || {});
     const parsedBody = parseSST(componentBody, state.components);
     const subElements = [];
     for (let i = 0; i < parsedBody.length; i++) {
-      const subDepth = `${depth}${i}`;
-      const subElement: any = constructElement(parsedBody[i], subDepth, state);
+      const ssid = `${currentSSID}${i}`;
+      const subElement: any = constructElement(parsedBody[i], ssid, state);
       if (subElement) {
         subElements.push(subElement)
       }
     }
     const element = document.createElement("div");
-    element.setAttribute(SSID, depth);
+    element.setAttribute(SSID, currentSSID);
     element.setAttribute(SSCT, data?.componentName);
     subElements.forEach((subElement) => {
       element.appendChild(subElement)
@@ -64,24 +83,24 @@ function constructElement(data: any, depth: string, state: State) {
       state.methods[event.function]({...eventProps, event: e, state})
     );
   });
-  state.idMap[depth] = element;
-  element.setAttribute(SSID, depth);
+  state.idMap[currentSSID] = element;
+  element.setAttribute(SSID, currentSSID);
   if (data?.selfClosing) {
     return element;
   }
   for (let i = 0; i < content.length; i++) {
     const child = content[i];
     const type = typeof child;
-    const subDepth = `${depth}${i}`;
+    const ssid = `${currentSSID}${i}`;
     if (type === "object" && type !== null) {
-      const subElement = constructElement(child, subDepth, state);
+      const subElement = constructElement(child, ssid, state);
       if (subElement) {
         element.appendChild(subElement);
       }
       continue;
     }
     const subElement = document.createElement("span");
-    subElement.setAttribute(SSID, subDepth);
+    subElement.setAttribute(SSID, ssid);
     let innerText = "";
     const mapValues: any = {};
     let stringTemplate;
@@ -100,7 +119,7 @@ function constructElement(data: any, depth: string, state: State) {
       innerText = JSON.stringify(child);
     }
     subElement.innerText = innerText;
-    state.idMap[subDepth] = {
+    state.idMap[ssid] = {
       element: subElement,
       values: mapValues,
       template: stringTemplate,
