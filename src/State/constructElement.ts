@@ -14,25 +14,12 @@ function getValue(obj: any, values: string[]) {
 }
 
 function constructElement(data: any, parentSSID: string, state: State) {
-  console.log('do the thing: ', state.elementCount, ' - ', Object.keys(state.idMap).length)
   let currentSSID = `${parentSSID}`;
   const existingElement = state?.idMap?.[currentSSID];
-  
-  if (existingElement && existingElement.template && data.template && existingElement.template !== data.template) {
-    currentSSID = parentSSID + 'c';
-    // return constructElement(data, currentSSID, state);
-  } 
-  else if (existingElement && existingElement.template && data.template) {
-    // do nothing
+  if (existingElement && existingElement.template) {
+    currentSSID = parentSSID + "t";
   }
-  else if (existingElement && existingElement.template && !data.template) {
-    currentSSID = parentSSID + 't';
-    // return constructElement(data, currentSSID, state);
-  }
-  else if (data.template && !existingElement?.template) {
-    currentSSID = parentSSID + 'g';
-    // return constructElement(data, currentSSID, state)
-  }
+
   const content = data?.content || [];
   if (content?.constructor?.name !== "Array") {
     return Error(
@@ -54,14 +41,14 @@ function constructElement(data: any, parentSSID: string, state: State) {
       const ssid = `${currentSSID}${i}`;
       const subElement: any = constructElement(parsedBody[i], ssid, state);
       if (subElement) {
-        subElements.push(subElement)
+        subElements.push(subElement);
       }
     }
     const element = document.createElement("div");
     element.setAttribute(SSID, currentSSID);
     element.setAttribute(SSCT, data?.componentName);
     subElements.forEach((subElement) => {
-      element.appendChild(subElement)
+      element.appendChild(subElement);
     });
     return element;
   }
@@ -80,7 +67,7 @@ function constructElement(data: any, parentSSID: string, state: State) {
       eventProps[key] = (valueMatch && state.data[valueMatch[1]]) || tuple[1];
     });
     element.addEventListener(event.type, (e: any) =>
-      state.methods[event.function]({...eventProps, event: e, state})
+      state.methods[event.function]({ ...eventProps, event: e, state })
     );
   });
   state.idMap[currentSSID] = element;

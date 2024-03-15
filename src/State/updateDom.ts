@@ -5,7 +5,6 @@ import constructElement from "./constructElement.js";
 const TOP_COMPONENT_SELECTOR = "[ssct]:not([ssct] *)";
 
 function updateDOM(state: State) {
-  console.log(state)
   const componentElements = document.querySelectorAll(TOP_COMPONENT_SELECTOR);
   for ( let i  = 0; i < componentElements.length; i++) {
     const element = componentElements[i];
