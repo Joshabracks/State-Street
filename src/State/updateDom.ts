@@ -8,7 +8,7 @@ function updateDOM(state: State) {
   const componentElements = document.querySelectorAll(TOP_COMPONENT_SELECTOR);
   for ( let i  = 0; i < componentElements.length; i++) {
     const element = componentElements[i];
-    const ssid: string = element.getAttribute('ssid') || '';
+    const ssid: string = element.getAttribute(SSID) || '';
     const newElement = constructElement(state.componentMap[ssid], ssid, state)
     element.replaceWith(newElement);
   }
@@ -22,9 +22,6 @@ function updateDOM(state: State) {
     const selector = `[${SSID}="${id}"]`;
     const element: HTMLElement | null = document.querySelector(selector);
     if (element === null) {
-      // console.error(
-      //   `unable to update element at ${selector}.\n element does not exist.`
-      // );
       continue;
     }
     const values = data.values;

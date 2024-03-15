@@ -11,12 +11,12 @@ export default class State {
   componentMap: any;
   methods: any;
   renderLoop: boolean = true
+  elementCount: number = 0
   constructor(template: any = [], data: any = {}, components: any = {}, methods: any = {}, options: any = {}) {
     this.data = data;
     this.template = template;
     this.previous = JSON.stringify(this.data);
     this.idMap = {};
-    this.dataMap = {};
     this.components = components;
     this.componentMap = {};
     this.methods = methods;
