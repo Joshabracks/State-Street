@@ -24,7 +24,7 @@ const ELEMENT_REGEX_MAP = {
 };
 
 function getAttributes(tag: string): any[] {
-  const cleanTag = tag.replace(REGEX.EVENT, '').replace(/\s+/, ' ')
+  const cleanTag = tag.replace(REGEX.EVENT, '').replace(/\s+/g, ' ')
   let attributesMatch = (tag && REGEX.ATTRIBUTE.exec(cleanTag)) || null;
   const attributes = [];
   while (attributesMatch !== null) {
