@@ -11,7 +11,7 @@ const REGEX = {
   CLOSE_TAG: /^<\/\w+>/,
   TEXT: /^[^<]+/,
   WHITE_SPACE_TRIM: /\n\s+/g,
-  ATTRIBUTE: /[!:]*(\w+)=["'`]([\S\s]*?)["'`](?=\s\w+="|\/>|>$)/g,
+  ATTRIBUTE: /(\w+)=["'`]([\S\s]*?)["'`](?=\s\w+="|\/>|>$)/g,
   EVENT: /:(\w+)=(\w+)\(([^)]*)\)/g,
 };
 
@@ -24,7 +24,8 @@ const ELEMENT_REGEX_MAP = {
 };
 
 function getAttributes(tag: string): any[] {
-  const cleanTag = tag.replace(REGEX.EVENT, '')
+  const cleanTag = tag.replace(REGEX.EVENT, '').replace(/\s\s/, ' ')
+  console.log(cleanTag)
   let attributesMatch = (tag && REGEX.ATTRIBUTE.exec(cleanTag)) || null;
   const attributes = [];
   while (attributesMatch !== null) {
