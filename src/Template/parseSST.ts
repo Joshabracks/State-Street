@@ -11,7 +11,7 @@ const REGEX = {
   CLOSE_TAG: /^<\/\w+>/,
   TEXT: /^[^<]+/,
   WHITE_SPACE_TRIM: /\n\s+/g,
-  ATTRIBUTE: /(\w+)=["'`]([\S\s]*?)["'`](?=\s\w+="|\/>|>$)/g,
+  ATTRIBUTE: /(\w+)=["'`]([\S\s]*?)["'`](?=\s\w+="|\s{0,1}\/>|>$)/g,
   EVENT: /:(\w+)=(\w+)\(([^)]*)\)/g,
 };
 
