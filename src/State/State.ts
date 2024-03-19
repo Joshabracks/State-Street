@@ -1,5 +1,6 @@
 import constructDOM from "./constructDom.js";
 import updateDOM from "./updateDom.js";
+import { parseSST } from "../Template/parseSST.js";
 
 export default class State {
   data: any;
@@ -14,7 +15,7 @@ export default class State {
   elementCount: number = 0
   constructor(template: any = [], data: any = {}, components: any = {}, methods: any = {}, options: any = {}) {
     this.data = data;
-    this.template = template;
+    this.template = parseSST(template, components);
     this.previous = JSON.stringify(this.data);
     this.idMap = {};
     this.components = components;
