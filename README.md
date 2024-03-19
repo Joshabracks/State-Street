@@ -6,10 +6,8 @@ Want to contribute or need help? [Join the State Street Discord!](https://discor
 
 A simple JavaScript single page application framework
 
-## Current Features
-* Renders simple single page application through use of a "State" controller that takes in a data and template object.
-* Customize class, tag and internal text on the DOM
-* Uses a render loop instead of triggers to update the DOM
+### Websites and Applications powered by State Street
+- [joshuabracks.com](https://www.joshuabracks.com)
 
 ## Getting Started
 ### Setup / Dependencies
