@@ -58,9 +58,9 @@ module.exports = () => {
 * In your index.js file, import `State` and `parseSST`
 * The simplest path would be to just write a bit of html.
 ```js
-import { State, parseSST } from '@state-street/state-street';
+import { State } from '@state-street/state-street';
 
-const template = parseSST("<h1>Hello World!</h1>");
+const template = /*html*/`<h1>Hello World!</h1>`;
 window.onload = () => {
     new State(template);
 }
@@ -68,6 +68,13 @@ window.onload = () => {
 * Now build your project and open index.html.  `npm run build`.
 * You should have "Hello World" displayed in your browser.
 * Remember that, anytime you update your code, you'll need to re-build before you'll see any changes.
+
+#### Syntax Highlighting Reccomendation (From Josh)
+* You may have noticed a `/*html*/` comment added before the template above.
+* If you use VS code, you should install the [es6-string-html](https://marketplace.visualstudio.com/items?itemName=Tobermory.es6-string-html) extension.  State Street does not yet have syntax highlighting support, so I've been using this extension to handle highlighting of State Street formattted string literals and it's been very helpful at increasing readability in my apps.
+* When using this extension, you can prepend string literals with the following comment `/*html*/` to gain some decent syntax highlighting.
+* note: The highlighting via [es6-string-html](https://marketplace.visualstudio.com/items?itemName=Tobermory.es6-string-html) is meant for html, so some elements may look strange, but I promise it's better than no highlighting at all.
+
 #### Data Object
 * If all you want to do is create a static page, why would you be using **State Street**?
 * Let's make use of state data and the dynamic template
@@ -75,12 +82,12 @@ window.onload = () => {
 * Also, when representing data in the template, you can do so using double curly bracket syntax. `{{variableName}}`;
 * Additionally, if you pass a `title` variable in with the data object, it will update the page title for you automatically.
 ```js
-import { State, parseSST } from '@state-street/state-street';
+import { State } from '@state-street/state-street';
 const data = {
     title: "Hello State Street!",
     message: "Hello World!"
 }
-const template = parseSST("<h1>{{message}}</h1>");
+const template = /*html*/`<h1>{{message}}</h1>`;
 window.onload = () => {
     new State(template, data);
 }
@@ -92,15 +99,15 @@ window.onload = () => {
 * Compoents are simply functions that return formatted templates.  We can pass them into the State object as the third constructor argument.  All components access the same state data object, so we won't need to pass in a message.  So let's pass in some style properties instead.
 * We'll also update the template to use the component.
 ```js
-import { State, parseSST } from '@state-street/state-street';
+import { State } from '@state-street/state-street';
 const data = {
     title: "Hello State Street!",
     message: "Hello World!"
 }
-const template = parseSST('<Header color="red" weight="bold"/>');
+const template = /*html*/`<Header color="red" weight="bold"/>`;
 const components = {
     Header: ({ color, weight }) => {
-        return `
+        return /*html*/`
             <h1 style="color:${color};font-weight=${weight};">{{message}}</h1>
         `;
     }
@@ -112,14 +119,14 @@ window.onload = () => {
 ### Event Listener Methods
 * To be truly dynamic, we'll want some way to handle page events.  We can do this through use of event methods.
 * You can attach an event method like it were an attribute with a colon preceeding the event type.
-* The event type must be a supported event listener type such as `click` or `mouseover`.
+* The event type must be a supported event listener type such as `click` or `mouseleave`.
 ```html
 <button :click=methodName()>click me!</button>
 ```
 * The `methods` object can be passed into the State constructor as the fourth argument.
 * Let's add a simple counter to our example!
 ```js
-import { State, parseSST } from '@state-street/state-street';
+import { State } from '@state-street/state-street';
 
 const data = {
     title: "Hello State Street!",
@@ -127,23 +134,23 @@ const data = {
     count: 0
 }
 
-const template = parseSST(`
+const template = /*html*/`
     <Header color="red" weight="bold"/>
     <CounterMessage/>
     <Button onclick="incrementCounter"/>
-    `);
+    `;
 
 const components = {
     Header: ({ color, weight }) => {
-        return `
+        return /*html*/`
             <h1 style="color:${color};font-weight=${weight};">{{message}}</h1>
         `;
     },
     Button: ({onclick}) => {
-        return `<button :click=${onclick}()>click me!</button>`;
+        return /*html*/`<button :click=${onclick}()>click me!</button>`;
     },
     CounterMessage: () => {
-        return `<div>The Button has been clicked {{count}} times!`;
+        return /*html*/`<div>The Button has been clicked {{count}} times!`;
     }
 }
 
@@ -182,10 +189,3 @@ window.onload = () => {
         new State(template, data, components, methods, /*options*/ { renderLoop: false });
     }
     ```
-
-## TODO
-I have every intention of keeping this project open source and anyone is welcome contribute.  Here's a list of State Street's most immediate "TODOs"
-* :bow_and_arrow: **Targeted Rendering**: Currently whenever any variable within the State data is updated, all elements effected by any state variables are re-rendered.  Update so that only changed elements will be rendered.
-* :crayon: **CSS**: Add css handling
-* :running_woman: **Event Based Rendering**: By default, State Street runs on an update loop much in the way video games run.  This means that it's always checking for changes in State data and making changes to the DOM when appropriate.  This is easy, and in some cases, probably for the best, but it is not the most efficient use of resources, especially if there's a lot of data to check.  So, it would be nice to have an option to only run updates when specific events are triggered.  (which is how pretty much every other SPA framework does it)
-* :muscle: **Optimization**: There's always room to run faster.  Especially since the default (and currently the only) render option is an update loop.  The `State.sameState` method can likely be implemented in a faster manner than the current "serialize and comapre strings" technique that's currently being used; especially for more complicated applications with a greater amount of data.
