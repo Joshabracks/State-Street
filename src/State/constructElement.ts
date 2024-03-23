@@ -34,7 +34,7 @@ function constructElement(data: any, parentSSID: string, state: State) {
       return null;
     }
     state.componentMap[currentSSID] = data;
-    let componentBody = component(data?.componentProperties || {});
+    let componentBody = component({state, ...data?.componentProperties} || {});
     const vals = componentBody.match(valsRegex) || [];
     vals.forEach((val: any) => {
       const cleanVal = val.match(cleanerRegex)[1];
