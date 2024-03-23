@@ -68,7 +68,7 @@ function getTagName(tag: string) {
 function getElements(data: string = "", components: any = {}, content: any[] = []): any {
   let dataEdit = "" + data;
   while (dataEdit.length) {
-    dataEdit = dataEdit.replace(REGEX.WHITE_SPACE_TRIM, "").trim();
+    dataEdit = dataEdit.replace(REGEX.WHITE_SPACE_TRIM, " ").trim();
     const elementType = getElementType(dataEdit);
     const elementRegExp: RegExp = ELEMENT_REGEX_MAP[elementType];
     const elementString: string = dataEdit.match(elementRegExp)?.[0] || "";
