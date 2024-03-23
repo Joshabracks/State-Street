@@ -34,7 +34,12 @@ function constructElement(data: any, parentSSID: string, state: State) {
       return null;
     }
     state.componentMap[currentSSID] = data;
-    const componentBody = component(data?.componentProperties || {});
+    let componentBody = component(data?.componentProperties || {});
+    const vals = componentBody.match(valsRegex) || [];
+    vals.forEach((val: any) => {
+      const cleanVal = val.match(cleanerRegex)[1];
+      componentBody = componentBody.replace(val, state.data[cleanVal])
+    })
     const parsedBody = parseSST(componentBody, state.components);
     const subElements = [];
     for (let i = 0; i < parsedBody.length; i++) {
