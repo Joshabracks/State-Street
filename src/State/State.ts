@@ -59,14 +59,10 @@ export default class State {
    * Updates the DOM, taking changes made within the State.data object into account
    * @returns undefined
    */
-  update = (_: any, force: boolean = false) => {
+  update = () => {
     if (!this.renderLoop) {
       updateDOM(this);
       return;
-    }
-    if (force) {
-      updateDOM(this);
-      window.requestAnimationFrame(this.update);
     }
     if (this.nextUpdate > Date.now()) {
       window.requestAnimationFrame(this.update);
@@ -80,4 +76,7 @@ export default class State {
     updateDOM(this);
     window.requestAnimationFrame(this.update);
   };
+  forceUpdate = () => {
+    updateDOM(this)
+  }
 }
