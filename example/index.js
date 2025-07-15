@@ -1,4 +1,4 @@
-import { State, parseSST } from '@state-street/state-street';
+import { State } from '@state-street/state-street';
 
 const TEMPLATE_STRING = /*html*/`
 <body>
@@ -90,6 +90,5 @@ const components = {
 
 // eslint-disable-next-line no-undef
 window.onload = () => {
-    const template = parseSST(TEMPLATE_STRING, components)
-    new State(template, data, components, methods)
+    new State(TEMPLATE_STRING, data, components, methods)
 }
