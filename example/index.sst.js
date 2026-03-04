@@ -1,6 +1,6 @@
 import { State } from '@state-street/state-street';
 
-const TEMPLATE_STRING = /*html*/`
+const TEMPLATE_STRING = `
 <body>
     <div>
         <h1 class="bold highlight">
@@ -10,7 +10,7 @@ const TEMPLATE_STRING = /*html*/`
         <div>Message 2: {{message2}}</div>
         <img src="https://www.placecats.com/300/200"/>
     </div>
-    <div>  
+    <div>
         Element with multiple values. {{value1}} :: {{value2}}
     </div>
     <div>
@@ -44,13 +44,9 @@ function clickTab({ event }) {
     event.target.parentElement.setAttribute("active", "true");
 }
 
-// Components 
-// These are just functions that render and return templates.  
-// They are denoted inside of a template as self-closing element tags with a colon in front of the tag name like so...
-// <ComponentName/>
-// Attributes added to components are passed into the component function as the componentProps object
+// Components
 function TestComponent({ name }) {
-    let res = /*html*/`
+    let res = `
         <div>${name}</div>
         <div class="bar">
             <Tab name="home" active="true" onclick="clickTab()"/>
@@ -61,10 +57,10 @@ function TestComponent({ name }) {
 }
 
 function Tab({ name, onclick }) {
-    return /*html*/`<div class="tab" :click=${onclick}>${name}</div>`
+    return `<div class="tab" :click=${onclick}>${name}</div>`
 }
 
-// State data for regular access/manipulation used to render and update the State template
+// State data
 const data = {
     title: "State Street",
     message1: "... This is message 1!",
@@ -87,7 +83,6 @@ const methods = {
 const components = {
     TestComponent, Tab
 }
-
 
 // eslint-disable-next-line no-undef
 window.onload = () => {

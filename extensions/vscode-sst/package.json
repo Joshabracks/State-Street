@@ -1,0 +1,62 @@
+{
+  "name": "vscode-sst",
+  "displayName": "State Street SST",
+  "description": "Syntax highlighting for State Street (.sst.ts / .sst.js) template files",
+  "version": "0.1.0",
+  "publisher": "state-street",
+  "engines": {
+    "vscode": "^1.80.0"
+  },
+  "categories": [
+    "Programming Languages"
+  ],
+  "contributes": {
+    "languages": [
+      {
+        "id": "sst-typescript",
+        "aliases": [
+          "SST TypeScript",
+          "sst-ts"
+        ],
+        "extensions": [
+          ".sst.ts"
+        ],
+        "configuration": "./language-configuration.json"
+      },
+      {
+        "id": "sst-javascript",
+        "aliases": [
+          "SST JavaScript",
+          "sst-js"
+        ],
+        "extensions": [
+          ".sst.js"
+        ],
+        "configuration": "./language-configuration.json"
+      }
+    ],
+    "grammars": [
+      {
+        "language": "sst-typescript",
+        "scopeName": "source.sst.ts",
+        "path": "./syntaxes/sst-ts.tmLanguage.json"
+      },
+      {
+        "language": "sst-javascript",
+        "scopeName": "source.sst.js",
+        "path": "./syntaxes/sst-js.tmLanguage.json"
+      },
+      {
+        "injectTo": [
+          "source.sst.ts",
+          "source.sst.js"
+        ],
+        "scopeName": "inline.sst-template",
+        "path": "./syntaxes/sst-injection.tmLanguage.json",
+        "embeddedLanguages": {
+          "meta.embedded.block.html.sst": "html"
+        }
+      }
+    ]
+  }
+}
