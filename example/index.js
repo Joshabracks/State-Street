@@ -8,6 +8,7 @@ const TEMPLATE_STRING = /*html*/`
         </h1>
         <span class="itallic">Message 1: {{message1}}</span>
         <div>Message 2: {{message2}}</div>
+        <img src="https://www.placecats.com/300/200"/>
     </div>
     <div>  
         Element with multiple values. {{value1}} :: {{value2}}
