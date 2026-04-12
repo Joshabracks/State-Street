@@ -58,7 +58,7 @@ module.exports = () => {
 ```js
 import { State } from '@state-street/state-street';
 
-const template = /*html*/`<h1>Hello World!</h1>`;
+const template = `<h1>Hello World!</h1>`;
 window.onload = () => {
     new State(template);
 }
@@ -67,11 +67,11 @@ window.onload = () => {
 * You should have "Hello World" displayed in your browser.
 * Remember that, anytime you update your code, you'll need to re-build before you'll see any changes.
 
-#### Syntax Highlighting Reccomendation (From Josh)
-* You may have noticed a `/*html*/` comment added before the template above.
-* If you use VS code, you should install the [es6-string-html](https://marketplace.visualstudio.com/items?itemName=Tobermory.es6-string-html) extension.  State Street does not yet have syntax highlighting support, so I've been using this extension to handle highlighting of State Street formattted string literals and it's been very helpful at increasing readability in my apps.
-* When using this extension, you can prepend string literals with the following comment `/*html*/` to gain some decent syntax highlighting.
-* note: The highlighting via [es6-string-html](https://marketplace.visualstudio.com/items?itemName=Tobermory.es6-string-html) is meant for html, so some elements may look strange, but I promise it's better than no highlighting at all.
+#### Syntax Highlighting Plugin
+* There's an official VSCode plugin for State Street files:
+  * [State Street SST](https://marketplace.visualstudio.com/items?itemName=beetnick82.vscode-sst)
+* After installing the plugin, any TypeScript or JavaScript files with the sub extension `.sst` will treat string literals as State Street Templates.
+  * file name example: `index.sst.ts`
 
 #### Data Object
 * If all you want to do is create a static page, why would you be using **State Street**?
@@ -85,7 +85,7 @@ const data = {
     title: "Hello State Street!",
     message: "Hello World!"
 }
-const template = /*html*/`<h1>{{message}}</h1>`;
+const template = `<h1>{{message}}</h1>`;
 window.onload = () => {
     new State(template, data);
 }
@@ -102,10 +102,10 @@ const data = {
     title: "Hello State Street!",
     message: "Hello World!"
 }
-const template = /*html*/`<Header color="red" weight="bold"/>`;
+const template = `<Header color="red" weight="bold"/>`;
 const components = {
     Header: ({ color, weight }) => {
-        return /*html*/`
+        return `
             <h1 style="color:${color};font-weight=${weight};">{{message}}</h1>
         `;
     }
@@ -132,7 +132,7 @@ const data = {
     count: 0
 }
 
-const template = /*html*/`
+const template = `
     <Header color="red" weight="bold"/>
     <CounterMessage/>
     <Button onclick="incrementCounter"/>
@@ -140,15 +140,15 @@ const template = /*html*/`
 
 const components = {
     Header: ({ color, weight }) => {
-        return /*html*/`
+        return `
             <h1 style="color:${color};font-weight=${weight};">{{message}}</h1>
         `;
     },
     Button: ({onclick}) => {
-        return /*html*/`<button :click=${onclick}()>click me!</button>`;
+        return `<button :click=${onclick}()>click me!</button>`;
     },
     CounterMessage: () => {
-        return /*html*/`<div>The Button has been clicked {{count}} times!`;
+        return `<div>The Button has been clicked {{count}} times!`;
     }
 }
 
