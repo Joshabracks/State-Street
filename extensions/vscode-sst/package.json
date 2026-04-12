@@ -3,10 +3,11 @@
   "displayName": "State Street SST",
   "description": "Syntax highlighting for State Street (.sst.ts / .sst.js) template files",
   "version": "0.1.0",
-  "publisher": "state-street",
+  "publisher": "beetnick82",
   "engines": {
     "vscode": "^1.80.0"
   },
+  "icon": "state_street_icon_256.png",
   "categories": [
     "Programming Languages"
   ],
