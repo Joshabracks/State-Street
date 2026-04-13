@@ -5,7 +5,13 @@
   "injectionSelector": "L:string.template",
   "patterns": [
     {
+      "include": "#sst-component-comment"
+    },
+    {
       "include": "#sst-interpolation"
+    },
+    {
+      "include": "#js-template-expression"
     },
     {
       "include": "#sst-component-tag"
@@ -18,9 +24,214 @@
     },
     {
       "include": "#sst-close-tag"
+    },
+    {
+      "include": "#sst-markdown-patterns"
     }
   ],
   "repository": {
+    "sst-markdown-patterns": {
+      "comment": "Custom single-line markdown patterns. Uses only match (no begin/end) to avoid leaking past template literal boundaries.",
+      "patterns": [
+        {
+          "comment": "Markdown heading: # H1 through ###### H6",
+          "match": "^\\s*(#{1,6})\\s+(.+)$",
+          "captures": {
+            "1": {
+              "name": "punctuation.definition.heading.markdown"
+            },
+            "2": {
+              "name": "markup.heading.markdown"
+            }
+          }
+        },
+        {
+          "comment": "Markdown bold: **text**",
+          "match": "(\\*\\*)((?!\\s)[^*]+(?<!\\s))(\\*\\*)",
+          "captures": {
+            "1": {
+              "name": "punctuation.definition.bold.markdown"
+            },
+            "2": {
+              "name": "markup.bold.markdown"
+            },
+            "3": {
+              "name": "punctuation.definition.bold.markdown"
+            }
+          }
+        },
+        {
+          "comment": "Markdown bold (underscore): __text__",
+          "match": "(__)((?!\\s)[^_]+(?<!\\s))(__)",
+          "captures": {
+            "1": {
+              "name": "punctuation.definition.bold.markdown"
+            },
+            "2": {
+              "name": "markup.bold.markdown"
+            },
+            "3": {
+              "name": "punctuation.definition.bold.markdown"
+            }
+          }
+        },
+        {
+          "comment": "Markdown italic: *text* (not preceded/followed by another *)",
+          "match": "(?<!\\*)(\\*)((?!\\s)[^*]+(?<!\\s))(\\*)(?!\\*)",
+          "captures": {
+            "1": {
+              "name": "punctuation.definition.italic.markdown"
+            },
+            "2": {
+              "name": "markup.italic.markdown"
+            },
+            "3": {
+              "name": "punctuation.definition.italic.markdown"
+            }
+          }
+        },
+        {
+          "comment": "Markdown italic (underscore): _text_",
+          "match": "(?<!_)(_)((?!\\s)[^_]+(?<!\\s))(_)(?!_)",
+          "captures": {
+            "1": {
+              "name": "punctuation.definition.italic.markdown"
+            },
+            "2": {
+              "name": "markup.italic.markdown"
+            },
+            "3": {
+              "name": "punctuation.definition.italic.markdown"
+            }
+          }
+        },
+        {
+          "comment": "Markdown strikethrough: ~~text~~",
+          "match": "(~~)((?!\\s)[^~]+(?<!\\s))(~~)",
+          "captures": {
+            "1": {
+              "name": "punctuation.definition.strikethrough.markdown"
+            },
+            "2": {
+              "name": "markup.strikethrough.markdown"
+            },
+            "3": {
+              "name": "punctuation.definition.strikethrough.markdown"
+            }
+          }
+        },
+        {
+          "comment": "Markdown image: ![alt](url)",
+          "match": "(!)(?:(\\[)([^\\]]*)(\\]))(\\()([^)]+)(\\))",
+          "captures": {
+            "1": {
+              "name": "punctuation.definition.image.markdown"
+            },
+            "2": {
+              "name": "punctuation.definition.link.markdown"
+            },
+            "3": {
+              "name": "string.other.link.description.markdown"
+            },
+            "4": {
+              "name": "punctuation.definition.link.markdown"
+            },
+            "5": {
+              "name": "punctuation.definition.link.markdown"
+            },
+            "6": {
+              "name": "markup.underline.link.image.markdown"
+            },
+            "7": {
+              "name": "punctuation.definition.link.markdown"
+            }
+          }
+        },
+        {
+          "comment": "Markdown link: [text](url)",
+          "match": "(\\[)([^\\]]+)(\\])(\\()([^)]+)(\\))",
+          "captures": {
+            "1": {
+              "name": "punctuation.definition.link.markdown"
+            },
+            "2": {
+              "name": "string.other.link.title.markdown"
+            },
+            "3": {
+              "name": "punctuation.definition.link.markdown"
+            },
+            "4": {
+              "name": "punctuation.definition.link.markdown"
+            },
+            "5": {
+              "name": "markup.underline.link.markdown"
+            },
+            "6": {
+              "name": "punctuation.definition.link.markdown"
+            }
+          }
+        },
+        {
+          "comment": "Markdown blockquote: > text",
+          "match": "^\\s*(>)\\s?(.*)",
+          "captures": {
+            "1": {
+              "name": "punctuation.definition.quote.begin.markdown"
+            },
+            "2": {
+              "name": "markup.quote.markdown"
+            }
+          }
+        },
+        {
+          "comment": "Markdown unordered list item: - item, * item, + item",
+          "match": "^\\s*([-*+])\\s",
+          "captures": {
+            "1": {
+              "name": "punctuation.definition.list.begin.markdown"
+            }
+          }
+        },
+        {
+          "comment": "Markdown ordered list item: 1. item",
+          "match": "^\\s*(\\d+\\.)\\s",
+          "captures": {
+            "1": {
+              "name": "punctuation.definition.list.begin.markdown"
+            }
+          }
+        },
+        {
+          "comment": "Markdown horizontal rule: --- or *** or ___",
+          "match": "^\\s*([-*_]{3,})\\s*$",
+          "name": "meta.separator.markdown"
+        }
+      ]
+    },
+    "sst-component-comment": {
+      "comment": "SST component in HTML comment form: <!-- ComponentName attrs / -->",
+      "begin": "(<!--)\\s+([A-Z][a-zA-Z0-9]*)\\b",
+      "beginCaptures": {
+        "1": {
+          "name": "punctuation.definition.comment.begin.html"
+        },
+        "2": {
+          "name": "support.class.component.sst"
+        }
+      },
+      "end": "(/\\s*-->)",
+      "endCaptures": {
+        "1": {
+          "name": "punctuation.definition.comment.end.html"
+        }
+      },
+      "name": "meta.component-comment.sst",
+      "patterns": [
+        {
+          "include": "#sst-tag-attributes"
+        }
+      ]
+    },
     "sst-interpolation": {
       "comment": "SST double-curly interpolation: {{variableName}} or {{nested.path}}. Uses template-expression scopes to match ${} visual style.",
       "match": "(\\{\\{)([\\w.]+)(\\}\\})",

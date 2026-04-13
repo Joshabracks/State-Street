@@ -55,7 +55,8 @@
         "scopeName": "inline.sst-template",
         "path": "./syntaxes/sst-injection.tmLanguage.json",
         "embeddedLanguages": {
-          "meta.embedded.block.html.sst": "html"
+          "meta.embedded.block.html.sst": "html",
+          "meta.embedded.block.markdown.sst": "markdown"
         }
       }
     ]
