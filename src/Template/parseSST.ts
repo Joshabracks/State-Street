@@ -119,7 +119,14 @@ function getElements(data: string = "", components: any = {}, content: any[] = [
 }
 
 function parseSST(data: string, components: any = {}) {
-  const result = getElements(data, components);
+  // Convert component comments (<!-- Name attrs / -->) to self-closing tags (<Name attrs />)
+  let processed = data.replace(
+    /<!--\s+([\w]+)((?:\s+[\w]+="[^"]*")*)\s*\/\s*-->/g,
+    (_match: string, name: string, attrs: string) => components[name] ? `<${name}${attrs} />` : ''
+  );
+  // Strip remaining HTML comments
+  processed = processed.replace(/<!--[\s\S]*?-->/g, '');
+  const result = getElements(processed, components);
   return result.content;
 }
 
