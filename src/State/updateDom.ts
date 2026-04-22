@@ -12,19 +12,31 @@ function updateDOM(state: State) {
     const newElement = constructElement(state.componentMap[ssid], ssid, state)
     element.replaceWith(newElement);
   }
-  const { idMap }: any = state;
+  const { idMap, dirtyKeys }: any = state;
+  const hasDirtyFilter = dirtyKeys instanceof Set && dirtyKeys.size > 0;
   for (const id in idMap) {
     const data = (idMap[id]?.values && idMap[id]) || null;
     let template = data?.template;
     if (data == null || !template) {
       continue;
     }
+    const values = data.values;
+    if (hasDirtyFilter) {
+      let touched = false;
+      for (const key in values) {
+        const root = key.split(".")[0];
+        if (dirtyKeys.has(root)) {
+          touched = true;
+          break;
+        }
+      }
+      if (!touched) continue;
+    }
     const selector = `[${SSID}="${id}"]`;
     const element: HTMLElement | null = document.querySelector(selector);
     if (element === null) {
       continue;
     }
-    const values = data.values;
     for (const key in values) {
       const value = state.data[key];
       if (!value && value !== 0) continue;

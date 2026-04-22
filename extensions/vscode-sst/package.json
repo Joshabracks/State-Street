@@ -2,7 +2,7 @@
   "name": "vscode-sst",
   "displayName": "State Street SST",
   "description": "Syntax highlighting for State Street (.sst.ts / .sst.js) template files",
-  "version": "0.1.0",
+  "version": "0.5.0",
   "publisher": "beetnick82",
   "engines": {
     "vscode": "^1.80.0"
@@ -55,7 +55,8 @@
         "scopeName": "inline.sst-template",
         "path": "./syntaxes/sst-injection.tmLanguage.json",
         "embeddedLanguages": {
-          "meta.embedded.block.html.sst": "html"
+          "meta.embedded.block.html.sst": "html",
+          "meta.embedded.block.markdown.sst": "markdown"
         }
       }
     ]
