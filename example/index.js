@@ -17,6 +17,10 @@ const TEMPLATE_STRING = /*html*/`
         <button :click=whatIsIt(thingList={{thingList}})>this is a {{whatItIs}}</button>
     </div>
     <button :click=increment()>{{total}}</button>
+    <div>
+        <label>Textarea (RCDATA test):</label>
+        <textarea rows="3" cols="40">{{message1}}</textarea>
+    </div>
     <TestComponent name="Test Component"/>
 </body>
 `;
