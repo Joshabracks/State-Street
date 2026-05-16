@@ -14,12 +14,7 @@ function getValue(obj: any, values: string[]) {
 }
 
 function constructElement(data: any, parentSSID: string, state: State) {
-  let currentSSID = `${parentSSID}`;
-  const existingElement = state?.idMap?.[currentSSID];
-  if (existingElement && existingElement.template) {
-    currentSSID = parentSSID + "t";
-  }
-
+  const currentSSID = `${parentSSID}`;
   const content = data?.content || [];
   if (content?.constructor?.name !== "Array") {
     return Error(
@@ -91,15 +86,15 @@ function constructElement(data: any, parentSSID: string, state: State) {
       }
       continue;
     }
-    const subElement = document.createElement("span");
-    subElement.setAttribute(SSID, ssid);
     let innerText = "";
     const mapValues: any = {};
     let stringTemplate;
+    let hasVariables = false;
     if (type == "string") {
       innerText = child;
       stringTemplate = "" + innerText;
       const variables = child.match(valsRegex) || [];
+      hasVariables = variables.length > 0;
       for (let j = 0; j < variables.length; j++) {
         const valuesString: string = variables[j].match(cleanerRegex)[1] || "";
         const values = valuesString.split(".");
@@ -110,13 +105,15 @@ function constructElement(data: any, parentSSID: string, state: State) {
     } else {
       innerText = JSON.stringify(child);
     }
-    subElement.innerText = innerText;
-    state.idMap[ssid] = {
-      element: subElement,
-      values: mapValues,
-      template: stringTemplate,
-    };
-    element.appendChild(subElement);
+    const textNode = document.createTextNode(innerText);
+    if (hasVariables) {
+      state.textMap[`${currentSSID}_${i}`] = {
+        node: textNode,
+        values: mapValues,
+        template: stringTemplate,
+      };
+    }
+    element.appendChild(textNode);
   }
   return element;
 }
