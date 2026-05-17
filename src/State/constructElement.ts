@@ -28,13 +28,18 @@ function constructElement(data: any, parentSSID: string, state: State) {
       console.error(`invalid component: ${data?.componentName}`);
       return null;
     }
-    state.componentMap[currentSSID] = data;
     let componentBody = component({state, ...data?.componentProperties});
     const vals = componentBody.match(valsRegex) || [];
     vals.forEach((val: any) => {
       const cleanVal = val.match(cleanerRegex)[1];
       componentBody = componentBody.replace(val, state.data[cleanVal])
     })
+    const cached = state.componentMap[currentSSID];
+    if (cached && cached.lastBody === componentBody) {
+      return null;
+    }
+    state.componentMap[currentSSID] = data;
+    data.lastBody = componentBody;
     const parsedBody = parseSST(componentBody, state.components);
     const subElements = [];
     for (let i = 0; i < parsedBody.length; i++) {
