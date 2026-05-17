@@ -10,7 +10,7 @@ function updateDOM(state: State) {
     const element = componentElements[i];
     const ssid: string = element.getAttribute(SSID) || '';
     const newElement = constructElement(state.componentMap[ssid], ssid, state)
-    element.replaceWith(newElement);
+    if (newElement) element.replaceWith(newElement);
   }
   const { textMap, dirtyKeys }: any = state;
   const hasDirtyFilter = dirtyKeys instanceof Set && dirtyKeys.size > 0;
