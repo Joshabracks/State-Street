@@ -49,6 +49,42 @@ function restoreScroll(stash: Map<string, [number, number]>, state: State): void
   });
 }
 
+type FocusSnapshot = {
+  ssid: string;
+  selectionStart: number | null;
+  selectionEnd: number | null;
+};
+
+function captureFocus(componentSSID: string): FocusSnapshot | null {
+  const active = document.activeElement;
+  if (!(active instanceof Element)) return null;
+  const id = active.getAttribute(SSID);
+  if (!id || !id.startsWith(componentSSID)) return null;
+  let selectionStart: number | null = null;
+  let selectionEnd: number | null = null;
+  if (active instanceof HTMLInputElement || active instanceof HTMLTextAreaElement) {
+    try {
+      selectionStart = active.selectionStart;
+      selectionEnd = active.selectionEnd;
+    } catch (_) { /* selection unsupported on this input type */ }
+  }
+  return { ssid: id, selectionStart, selectionEnd };
+}
+
+function restoreFocus(snap: FocusSnapshot, state: State): void {
+  const el = state.idMap[snap.ssid];
+  if (!(el instanceof HTMLElement)) return;
+  el.focus({ preventScroll: true });
+  if (
+    (el instanceof HTMLInputElement || el instanceof HTMLTextAreaElement) &&
+    snap.selectionStart !== null
+  ) {
+    try {
+      el.setSelectionRange(snap.selectionStart, snap.selectionEnd ?? snap.selectionStart);
+    } catch (_) { /* selection unsupported on this input type */ }
+  }
+}
+
 function updateDOM(state: State) {
   ensureScrollListener();
   const componentElements = document.querySelectorAll(TOP_COMPONENT_SELECTOR);
@@ -56,10 +92,12 @@ function updateDOM(state: State) {
     const element = componentElements[i];
     const ssid: string = element.getAttribute(SSID) || '';
     const stash = captureScroll(ssid, state);
+    const focusSnap = captureFocus(ssid);
     const newElement = constructElement(state.componentMap[ssid], ssid, state)
     if (newElement) {
       element.replaceWith(newElement);
       if (stash) restoreScroll(stash, state);
+      if (focusSnap) restoreFocus(focusSnap, state);
     }
   }
   const { textMap, dirtyKeys }: any = state;

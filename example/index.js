@@ -21,6 +21,28 @@ const TEMPLATE_STRING = /*html*/`
         <label>Textarea (RCDATA test):</label>
         <textarea rows="3" cols="40">{{message1}}</textarea>
     </div>
+    <form class="message-form">
+        <div class="form-row">
+            <label for="msg1">Message 1:</label>
+            <input id="msg1" type="text" :input=updateMsg(name=msg1)/>
+            <div class="form-display">Saved: "{{msg1}}"</div>
+        </div>
+        <div class="form-row">
+            <label for="msg2">Message 2:</label>
+            <input id="msg2" type="text" :input=updateMsg(name=msg2)/>
+            <div class="form-display">Saved: "{{msg2}}"</div>
+        </div>
+        <div class="form-row">
+            <label for="msg3">Message 3:</label>
+            <input id="msg3" type="text" :input=updateMsg(name=msg3)/>
+            <div class="form-display">Saved: "{{msg3}}"</div>
+        </div>
+        <div class="form-row">
+            <label for="msg4">Message 4:</label>
+            <input id="msg4" type="text" :input=updateMsg(name=msg4)/>
+            <div class="form-display">Saved: "{{msg4}}"</div>
+        </div>
+    </form>
     <TestComponent name="Test Component"/>
 </body>
 `;
@@ -35,6 +57,10 @@ function whatIsIt({ thingList, state }) {
     const val = Math.floor(rando * thingList.length);
     const thing = thingList[val];
     state.data.whatItIs = thing;
+}
+
+function updateMsg({ name, event, state }) {
+    state.data[name] = event.target.value;
 }
 
 function clickTab({ event }) {
@@ -77,6 +103,10 @@ const data = {
     value2: "value 2",
     total: 0,
     whatItIs: 'button',
+    msg1: "",
+    msg2: "",
+    msg3: "",
+    msg4: "",
     thingList: [
         'potato chips', 'pink blouse', 'protein shake', 'cat', 'football', 'elephant tusk', 'whiskers', 'button', 'trophy', 'one single grape', 'Robert Downey Jr'
     ]
@@ -85,7 +115,8 @@ const data = {
 const methods = {
     increment,
     whatIsIt,
-    clickTab
+    clickTab,
+    updateMsg
 }
 
 const components = {
