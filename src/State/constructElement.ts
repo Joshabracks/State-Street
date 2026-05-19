@@ -60,7 +60,7 @@ function constructElement(data: any, parentSSID: string, state: State) {
   const element = document.createElement(tag);
   const attributes = data?.attributes || [];
   attributes.forEach((attribute: any) => {
-    element.setAttribute(attribute.name, attribute.value);
+    element.setAttribute(attribute.name, attribute.value ?? "");
   });
   const events = data?.events || [];
   events.forEach((event: any) => {
