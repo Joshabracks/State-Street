@@ -5,12 +5,38 @@ import { parseSST } from "../Template/parseSST.js";
 const valsRegex = /{{.[^{]+}}/g;
 const cleanerRegex = /{{(.*)}}/;
 
+let entityDecoder: HTMLTextAreaElement | null = null;
+function decodeEntities(str: string): string {
+  if (str.indexOf("&") === -1) return str;
+  if (!entityDecoder) entityDecoder = document.createElement("textarea");
+  entityDecoder.innerHTML = str;
+  return entityDecoder.value;
+}
+
 function getValue(obj: any, values: string[]) {
   if (values.length === 0) return obj;
   const key: string = values.shift() || "";
   const value = obj[key];
   if (!value) return value;
   return getValue(value, values);
+}
+
+function unescapeQuotes(str: string): string {
+  return str.replace(/\\(["'`\\])/g, "$1");
+}
+
+function coerceArg(raw: string, state: State): any {
+  const value = (raw ?? "").trim();
+  const varMatch = value.match(cleanerRegex);
+  if (varMatch) return getValue(state.data, varMatch[1].split("."));
+  const q = value[0];
+  if (value.length >= 2 && value[value.length - 1] === q && (q === '"' || q === "'" || q === "`")) {
+    return unescapeQuotes(value.slice(1, -1));
+  }
+  if (value === "true") return true;
+  if (value === "false") return false;
+  if (value !== "" && !isNaN(Number(value))) return Number(value);
+  return value;
 }
 
 function constructElement(data: any, parentSSID: string, state: State) {
@@ -60,16 +86,13 @@ function constructElement(data: any, parentSSID: string, state: State) {
   const element = document.createElement(tag);
   const attributes = data?.attributes || [];
   attributes.forEach((attribute: any) => {
-    element.setAttribute(attribute.name, attribute.value);
+    element.setAttribute(attribute.name, decodeEntities(unescapeQuotes(attribute.value ?? "")));
   });
   const events = data?.events || [];
   events.forEach((event: any) => {
     const eventProps: any = {};
-    event.props.forEach((prop: string) => {
-      const tuple = prop.split("=");
-      const key: string = tuple[0] || "";
-      const valueMatch = tuple[1]?.match(cleanerRegex) || null;
-      eventProps[key] = (valueMatch && state.data[valueMatch[1]]) || tuple[1];
+    event.props.forEach((prop: any) => {
+      eventProps[prop.key] = coerceArg(prop.value, state);
     });
     element.addEventListener(event.type, (e: any) =>
       state.methods[event.function]({ ...eventProps, event: e, state })
@@ -96,12 +119,13 @@ function constructElement(data: any, parentSSID: string, state: State) {
     let stringTemplate;
     let hasVariables = false;
     if (type == "string") {
-      innerText = child;
-      stringTemplate = "" + innerText;
-      const variables = child.match(valsRegex) || [];
+      const decoded = decodeEntities(child);
+      innerText = decoded;
+      stringTemplate = decoded;
+      const variables = decoded.match(valsRegex) || [];
       hasVariables = variables.length > 0;
       for (let j = 0; j < variables.length; j++) {
-        const valuesString: string = variables[j].match(cleanerRegex)[1] || "";
+        const valuesString: string = variables[j].match(cleanerRegex)?.[1] || "";
         const values = valuesString.split(".");
         const value = getValue(state.data, values);
         mapValues[valuesString] = JSON.parse(JSON.stringify(value || ""));

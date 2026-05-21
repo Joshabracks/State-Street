@@ -42,6 +42,7 @@ const TEMPLATE_STRING = /*html*/`
             <input id="msg4" type="text" :input=updateMsg(name=msg4)/>
             <div class="form-display">Saved: "{{msg4}}"</div>
         </div>
+        <div title="A &amp; B">Tom &amp; Jerry &copy; 2026 &lt;tag&gt;</div>
     </form>
     <TestComponent name="Test Component"/>
 </body>
