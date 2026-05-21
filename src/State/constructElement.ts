@@ -5,6 +5,14 @@ import { parseSST } from "../Template/parseSST.js";
 const valsRegex = /{{.[^{]+}}/g;
 const cleanerRegex = /{{(.*)}}/;
 
+let entityDecoder: HTMLTextAreaElement | null = null;
+function decodeEntities(str: string): string {
+  if (str.indexOf("&") === -1) return str;
+  if (!entityDecoder) entityDecoder = document.createElement("textarea");
+  entityDecoder.innerHTML = str;
+  return entityDecoder.value;
+}
+
 function getValue(obj: any, values: string[]) {
   if (values.length === 0) return obj;
   const key: string = values.shift() || "";
@@ -60,7 +68,7 @@ function constructElement(data: any, parentSSID: string, state: State) {
   const element = document.createElement(tag);
   const attributes = data?.attributes || [];
   attributes.forEach((attribute: any) => {
-    element.setAttribute(attribute.name, attribute.value ?? "");
+    element.setAttribute(attribute.name, decodeEntities(attribute.value ?? ""));
   });
   const events = data?.events || [];
   events.forEach((event: any) => {
@@ -96,12 +104,13 @@ function constructElement(data: any, parentSSID: string, state: State) {
     let stringTemplate;
     let hasVariables = false;
     if (type == "string") {
-      innerText = child;
-      stringTemplate = "" + innerText;
-      const variables = child.match(valsRegex) || [];
+      const decoded = decodeEntities(child);
+      innerText = decoded;
+      stringTemplate = decoded;
+      const variables = decoded.match(valsRegex) || [];
       hasVariables = variables.length > 0;
       for (let j = 0; j < variables.length; j++) {
-        const valuesString: string = variables[j].match(cleanerRegex)[1] || "";
+        const valuesString: string = variables[j].match(cleanerRegex)?.[1] || "";
         const values = valuesString.split(".");
         const value = getValue(state.data, values);
         mapValues[valuesString] = JSON.parse(JSON.stringify(value || ""));
