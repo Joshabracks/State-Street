@@ -6,13 +6,14 @@ enum ELEMENT_TYPE {
 }
 
 const REGEX = {
-  OPEN_TAG: /^<[^/]{1}[^>]*>/,
-  SELF_CLOSING_TAG: /^<[^>]*\/>/,
+  OPEN_TAG: /^<[^/](?:"(?:[^"\\]|\\.)*"|'(?:[^'\\]|\\.)*'|`(?:[^`\\]|\\.)*`|[^>"'`])*>/,
+  SELF_CLOSING_TAG: /^<(?:"(?:[^"\\]|\\.)*"|'(?:[^'\\]|\\.)*'|`(?:[^`\\]|\\.)*`|[^>"'`])*\/>/,
   CLOSE_TAG: /^<\/\w+>/,
   TEXT: /^[^<]+/,
   WHITE_SPACE_TRIM: /\n\s+/g,
-  ATTRIBUTE: /([\w-]+)(?:=(?:"([^"]*)"|'([^']*)'|`([^`]*)`))?(?=[\s/>])/g,
-  EVENT: /:(\w+)=(\w+)\(([^)]*)\)/g,
+  ATTRIBUTE: /([\w-]+)(?:=(?:"((?:[^"\\]|\\.)*)"|'((?:[^'\\]|\\.)*)'|`((?:[^`\\]|\\.)*)`))?(?=[\s/>])/g,
+  EVENT: /:(\w+)=(\w+)\(((?:"(?:[^"\\]|\\.)*"|'(?:[^'\\]|\\.)*'|`(?:[^`\\]|\\.)*`|[^)"'`])*)\)/g,
+  PROP: /([\w-]+)\s*=\s*("(?:[^"\\]|\\.)*"|'(?:[^'\\]|\\.)*'|`(?:[^`\\]|\\.)*`|[^,]*)/g,
 };
 
 const ELEMENT_REGEX_MAP = {
@@ -41,6 +42,17 @@ function getAttributes(tag: string): any[] {
   return attributes;
 }
 
+function parseProps(raw: string): { key: string; value: string }[] {
+  const props: { key: string; value: string }[] = [];
+  REGEX.PROP.lastIndex = 0;
+  let m = REGEX.PROP.exec(raw);
+  while (m !== null) {
+    props.push({ key: m[1], value: m[2] });
+    m = REGEX.PROP.exec(raw);
+  }
+  return props;
+}
+
 function getEvents(tag: string): any[] {
   let eventsMatch = (tag && REGEX.EVENT.exec(tag)) || null;
   const events = [];
@@ -48,7 +60,7 @@ function getEvents(tag: string): any[] {
     const event = {
       type: eventsMatch[1],
       function: eventsMatch[2],
-      props: eventsMatch[3]?.trim()?.split(/\s*,\s*/) || [],
+      props: parseProps(eventsMatch[3]?.trim() || ""),
     };
     events.push(event);
     eventsMatch = (tag && REGEX.EVENT.exec(tag)) || null;
