@@ -16,13 +16,18 @@ const REGEX = {
   PROP: /([\w-]+)\s*=\s*("(?:[^"\\]|\\.)*"|'(?:[^'\\]|\\.)*'|`(?:[^`\\]|\\.)*`|[^,]*)/g,
 };
 
-const ELEMENT_REGEX_MAP = {
-  [ELEMENT_TYPE.OPEN]: REGEX.OPEN_TAG,
-  [ELEMENT_TYPE.CLOSING]: REGEX.CLOSE_TAG,
-  [ELEMENT_TYPE.TEXT]: REGEX.TEXT,
-  [ELEMENT_TYPE.SELF_CLOSING]: REGEX.SELF_CLOSING_TAG,
-  default: REGEX.TEXT,
+// Sticky (`y`) clones of the element regexes, anchored at `lastIndex` so the
+// parser can scan with a moving cursor instead of slicing/replacing the string.
+const STICKY = {
+  SELF_CLOSING: new RegExp(REGEX.SELF_CLOSING_TAG.source.replace(/^\^/, ""), "y"),
+  OPEN: new RegExp(REGEX.OPEN_TAG.source.replace(/^\^/, ""), "y"),
+  CLOSE: new RegExp(REGEX.CLOSE_TAG.source.replace(/^\^/, ""), "y"),
+  TEXT: new RegExp(REGEX.TEXT.source.replace(/^\^/, ""), "y"),
 };
+
+function isWhitespace(code: number): boolean {
+  return code === 32 || (code >= 9 && code <= 13);
+}
 
 function getAttributes(tag: string): any[] {
   const cleanTag = tag
@@ -68,27 +73,44 @@ function getEvents(tag: string): any[] {
   return events;
 }
 
-function getElementType(data: string): ELEMENT_TYPE {
-  if (data.match(REGEX.SELF_CLOSING_TAG)) return ELEMENT_TYPE.SELF_CLOSING;
-  if (data.match(REGEX.OPEN_TAG)) return ELEMENT_TYPE.OPEN;
-  if (data.match(REGEX.CLOSE_TAG)) return ELEMENT_TYPE.CLOSING;
-  return ELEMENT_TYPE.TEXT;
-}
-
 const tagNameRegExp = /<\/*([\w:]+)/;
 function getTagName(tag: string) {
   return tag.match(tagNameRegExp)?.[1];
 }
 
-function getElements(data: string = "", components: any = {}, content: any[] = []): any {
-  let dataEdit = "" + data;
-  while (dataEdit.length) {
-    dataEdit = dataEdit.replace(REGEX.WHITE_SPACE_TRIM, " ").trim();
-    const elementType = getElementType(dataEdit);
-    const elementRegExp: RegExp = ELEMENT_REGEX_MAP[elementType];
-    const elementString: string = dataEdit.match(elementRegExp)?.[0] || "";
-    dataEdit = dataEdit.replace(elementRegExp, "");
-    if (!elementString.trim()) continue;
+// Single-pass parser: scans `data` with a moving cursor `pos` (no slicing or
+// per-token re-copying of the remaining string -> O(n) instead of O(n^2)).
+function getElements(data: string, components: any, pos: number, content: any[]): { content: any[]; pos: number } {
+  const len = data.length;
+  while (pos < len) {
+    // Skip whitespace between tokens (replaces the old per-iteration .trim()).
+    while (pos < len && isWhitespace(data.charCodeAt(pos))) pos++;
+    if (pos >= len) break;
+
+    let elementType: ELEMENT_TYPE;
+    let match: RegExpExecArray | null;
+    STICKY.SELF_CLOSING.lastIndex = pos;
+    if ((match = STICKY.SELF_CLOSING.exec(data))) {
+      elementType = ELEMENT_TYPE.SELF_CLOSING;
+    } else {
+      STICKY.OPEN.lastIndex = pos;
+      if ((match = STICKY.OPEN.exec(data))) {
+        elementType = ELEMENT_TYPE.OPEN;
+      } else {
+        STICKY.CLOSE.lastIndex = pos;
+        if ((match = STICKY.CLOSE.exec(data))) {
+          elementType = ELEMENT_TYPE.CLOSING;
+        } else {
+          STICKY.TEXT.lastIndex = pos;
+          match = STICKY.TEXT.exec(data);
+          elementType = ELEMENT_TYPE.TEXT;
+        }
+      }
+    }
+    if (!match) { pos++; continue; } // lone unmatched char (e.g. stray '<')
+    const elementString = match[0];
+    pos += elementString.length;
+
     if (elementType === ELEMENT_TYPE.SELF_CLOSING) {
       const tagName: string = getTagName(elementString) || '';
       const isComponent = components[tagName.trim()] ? true : false;
@@ -103,7 +125,6 @@ function getElements(data: string = "", components: any = {}, content: any[] = [
           res[val.name] = val.value;
           return res;
         }, {});
-        dataEdit = dataEdit.replace(elementString, "");
       } else {
         element.attributes = getAttributes(elementString);
       }
@@ -114,23 +135,22 @@ function getElements(data: string = "", components: any = {}, content: any[] = [
       const tagName = getTagName(elementString);
       const attributes = getAttributes(elementString);
       const events = getEvents(elementString);
-      const elementContentData = getElements(dataEdit, components);
-      const element = {
+      const child = getElements(data, components, pos, []);
+      content.push({
         type: tagName,
         attributes: attributes,
         events: events,
-        content: elementContentData.content,
-      };
-      content.push(element);
-      dataEdit = elementContentData.dataEdit;
+        content: child.content,
+      });
+      pos = child.pos;
       continue;
     }
     if (elementType === ELEMENT_TYPE.CLOSING) {
-      return { content, dataEdit };
+      return { content, pos };
     }
     content.push(elementString);
   }
-  return { content, dataEdit };
+  return { content, pos };
 }
 
 function parseSST(data: string, components: any = {}) {
@@ -141,7 +161,9 @@ function parseSST(data: string, components: any = {}) {
   );
   // Strip remaining HTML comments
   processed = processed.replace(/<!--[\s\S]*?-->/g, '');
-  const result = getElements(processed, components);
+  // Collapse newline-indentation runs once up front (was applied per-token before).
+  processed = processed.replace(REGEX.WHITE_SPACE_TRIM, " ");
+  const result = getElements(processed, components, 0, []);
   return result.content;
 }
 
