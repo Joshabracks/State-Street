@@ -3,7 +3,7 @@ import { SSID } from "./const.js";
 import constructElement, { getValue, decodeEntities, unescapeQuotes } from "./constructElement.js";
 import { resolveImageSrc, isBase64DataUri } from "./imageCache.js";
 
-const TOP_COMPONENT_SELECTOR = "[ssct]:not([ssct] *)";
+const ALL_COMPONENT_SELECTOR = "[ssct]";
 const scrolledSSIDs = new Set<string>();
 let scrollListenerInstalled = false;
 
@@ -94,19 +94,25 @@ function intersects(a: Set<string>, b: Set<string>): boolean {
 
 function updateDOM(state: State) {
   ensureScrollListener();
-  const componentElements = document.querySelectorAll(TOP_COMPONENT_SELECTOR);
+  // Visit every component (document order: outer -> inner) so nested components
+  // are independently dep-gated and updated in place.
+  const componentElements = document.querySelectorAll(ALL_COMPONENT_SELECTOR);
   for ( let i  = 0; i < componentElements.length; i++) {
     const element = componentElements[i];
+    // Skip nodes an ancestor's rebuild already replaced this tick.
+    if (!element.isConnected) continue;
     const ssid: string = element.getAttribute(SSID) || '';
     // Dep-gate: skip re-running a component whose tracked deps are all clean.
-    // (Value updates still flow via the textMap/attrMap passes below.)
+    // (Value updates still flow via the textMap/attrMap passes below; descendants
+    // remain connected and are visited later in this same loop.)
     const rec = state.componentMap[ssid];
     if (rec?.deps?.size && state.dirtyKeys.size && !intersects(rec.deps, state.dirtyKeys)) continue;
     const stash = captureScroll(ssid, state);
     const focusSnap = captureFocus(ssid);
-    const newElement = constructElement(state.componentMap[ssid]?.node, ssid, state)
-    if (newElement) {
+    const newElement = constructElement(rec?.node, ssid, state)
+    if (newElement && newElement !== element) {
       element.replaceWith(newElement);
+      if (rec) rec.element = newElement;
       if (stash) restoreScroll(stash, state);
       if (focusSnap) restoreFocus(focusSnap, state);
     }

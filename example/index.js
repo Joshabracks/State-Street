@@ -52,6 +52,7 @@ const TEMPLATE_STRING = /*html*/`
     <TestComponent name="Test Component"/>
     <ImgReuseTest/>
     <AttrTest/>
+    <GateOuter/>
 </body>
 `;
 
@@ -124,6 +125,24 @@ function AttrTest({ state }) {
         : /*html*/`<div>hidden</div>`;
 }
 
+// Nested-component test. GateOuter reads state.data.total (dep {total}) and embeds
+// a nested <GateInner/> (which reads state.data.childVal, dep {childVal}).
+// - Increment (dirty total): GateOuter rebuilds; GateInner is unchanged -> must be
+//   PRESERVED (same DOM node), not dropped.
+// - Mutate childVal (dirty childVal): GateInner rebuilds in place; GateOuter is
+//   dep-gated -> its fn must NOT re-run and its element must stay the same.
+function GateOuter({ state }) {
+    // eslint-disable-next-line no-undef
+    window.__gateOuterCalls = (window.__gateOuterCalls || 0) + 1;
+    const t = state.data.total;
+    return /*html*/`<div id="gateouter">outer t=${t} <GateInner/></div>`;
+}
+function GateInner({ state }) {
+    // eslint-disable-next-line no-undef
+    window.__gateInnerCalls = (window.__gateInnerCalls || 0) + 1;
+    return /*html*/`<div id="gateinner">inner: ${state.data.childVal}</div>`;
+}
+
 // State data for regular access/manipulation used to render and update the State template
 const data = {
     title: "State Street",
@@ -134,6 +153,7 @@ const data = {
     total: 0,
     whatItIs: 'button',
     showImg: true,
+    childVal: "A",
     portrait: "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==",
     msg1: "",
     msg2: "",
@@ -152,7 +172,7 @@ const methods = {
 }
 
 const components = {
-    TestComponent, Tab, ImgReuseTest, AttrTest
+    TestComponent, Tab, ImgReuseTest, AttrTest, GateOuter, GateInner
 }
 
 
