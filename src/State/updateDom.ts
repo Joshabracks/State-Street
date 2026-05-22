@@ -131,8 +131,7 @@ function updateDOM(state: State) {
     let rendered = entry.template;
     for (const key in values) {
       const value = getValue(state.data, key.split("."));
-      if (!value && value !== 0) continue;
-      rendered = rendered.replace(`{{${key}}}`, value);
+      rendered = rendered.replace(`{{${key}}}`, value ?? "");
     }
     entry.node.nodeValue = rendered;
   }

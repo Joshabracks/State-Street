@@ -2,6 +2,7 @@ import { State } from '@state-street/state-street';
 
 const TEMPLATE_STRING = /*html*/`
 <body>
+    <div id="ghosttest">missing:[{{ghost}}] nested-missing:[{{position.x}}]</div>
     <div>
         <h1 class="bold highlight">
             {{title}}
@@ -157,5 +158,6 @@ const components = {
 
 // eslint-disable-next-line no-undef
 window.onload = () => {
-    new State(TEMPLATE_STRING, data, components, methods)
+    // eslint-disable-next-line no-undef
+    window.state = new State(TEMPLATE_STRING, data, components, methods)
 }

@@ -183,7 +183,7 @@ function constructElement(data: any, parentSSID: string, state: State) {
         const values = valuesString.split(".");
         const value = getValue(state.data, values);
         mapValues[valuesString] = JSON.parse(JSON.stringify(value || ""));
-        innerText = innerText.replace(variables[j], value);
+        innerText = innerText.replace(variables[j], value ?? "");
       }
     } else {
       innerText = JSON.stringify(child);
