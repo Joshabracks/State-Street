@@ -6,6 +6,8 @@ import { resolveImageSrc, isBase64DataUri } from "./imageCache.js";
 const valsRegex = /{{.[^{]+}}/g;
 const cleanerRegex = /{{(.*)}}/;
 
+const REUSABLE_TAGS = new Set(["img", "input", "textarea", "select", "canvas", "video", "audio", "iframe"]);
+
 let entityDecoder: HTMLTextAreaElement | null = null;
 function decodeEntities(str: string): string {
   if (str.indexOf("&") === -1) return str;
@@ -84,38 +86,58 @@ function constructElement(data: any, parentSSID: string, state: State) {
     });
     return element;
   }
-  const element = document.createElement(tag);
   const attributes = data?.attributes || [];
   const isImg = tag === "img";
+  const reusable = REUSABLE_TAGS.has(tag);
+  const cached = reusable ? state.nodeMap[currentSSID] : undefined;
+  const reuse = cached && cached.tagName.toLowerCase() === tag ? cached : undefined;
+  const element = reuse || document.createElement(tag);
+
   const noCache = isImg && attributes.some((a: any) => a.name === "nocache");
-  let hasDecoding = false;
+  const desired = new Map<string, string>();
   attributes.forEach((attribute: any) => {
     if (isImg && attribute.name === "nocache") return;
-    if (attribute.name === "decoding") hasDecoding = true;
     const raw = attribute.value ?? "";
     if (isImg && attribute.name === "src" && !noCache && isBase64DataUri(raw)) {
-      element.setAttribute("src", resolveImageSrc(raw));
-      return;
+      desired.set("src", resolveImageSrc(raw));
+    } else {
+      desired.set(attribute.name, decodeEntities(unescapeQuotes(raw)));
     }
-    element.setAttribute(attribute.name, decodeEntities(unescapeQuotes(raw)));
   });
-  if (isImg) {
-    if (!hasDecoding) element.setAttribute("decoding", "async");
-    (element as HTMLImageElement).decode?.().catch(() => {});
+  if (isImg && !desired.has("decoding")) desired.set("decoding", "async");
+
+  if (reuse) {
+    for (const attr of Array.from((element as HTMLElement).attributes)) {
+      if (attr.name !== SSID && !desired.has(attr.name)) element.removeAttribute(attr.name);
+    }
+    desired.forEach((v, n) => { if (element.getAttribute(n) !== v) element.setAttribute(n, v); });
+  } else {
+    desired.forEach((v, n) => element.setAttribute(n, v));
+    if (isImg) (element as HTMLImageElement).decode?.().catch(() => {});
   }
+
+  const prev = (element as any).__sstEvents as Array<{ type: string; fn: any }> | undefined;
+  if (prev) for (const p of prev) element.removeEventListener(p.type, p.fn);
+  const bound: Array<{ type: string; fn: any }> = [];
   const events = data?.events || [];
   events.forEach((event: any) => {
     const eventProps: any = {};
     event.props.forEach((prop: any) => {
       eventProps[prop.key] = coerceArg(prop.value, state);
     });
-    element.addEventListener(event.type, (e: any) =>
-      state.methods[event.function]({ ...eventProps, event: e, state })
-    );
+    const fn = (e: any) => state.methods[event.function]({ ...eventProps, event: e, state });
+    element.addEventListener(event.type, fn);
+    bound.push({ type: event.type, fn });
   });
+  (element as any).__sstEvents = bound;
+
   state.idMap[currentSSID] = element;
   element.setAttribute(SSID, currentSSID);
+  if (reusable) state.nodeMap[currentSSID] = element;
   if (data?.selfClosing) {
+    return element;
+  }
+  if (reuse) {
     return element;
   }
   for (let i = 0; i < content.length; i++) {

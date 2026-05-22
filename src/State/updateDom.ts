@@ -125,6 +125,9 @@ function updateDOM(state: State) {
     }
     entry.node.nodeValue = rendered;
   }
+  for (const ssid in state.nodeMap) {
+    if (!state.nodeMap[ssid].isConnected) delete state.nodeMap[ssid];
+  }
 }
 
 export default updateDOM;

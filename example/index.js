@@ -49,6 +49,7 @@ const TEMPLATE_STRING = /*html*/`
         <div title="A &amp; B">Tom &amp; Jerry &copy; 2026 &lt;tag&gt;</div>
     </form>
     <TestComponent name="Test Component"/>
+    <ImgReuseTest/>
 </body>
 `;
 
@@ -99,6 +100,16 @@ function Tab({ name, onclick }) {
     return /*html*/`<div class="tab" :click=${onclick}>${name}</div>`
 }
 
+// Rebuilds every increment (body references {{total}}); the inner <img> should be
+// REUSED across rebuilds (same node, no reload) thanks to nodeMap element caching.
+function ImgReuseTest() {
+    return /*html*/`
+        <div>
+            <div>Reuse test — total is {{total}}:</div>
+            <img id="reuseimg" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg=="/>
+        </div>`
+}
+
 // State data for regular access/manipulation used to render and update the State template
 const data = {
     title: "State Street",
@@ -125,7 +136,7 @@ const methods = {
 }
 
 const components = {
-    TestComponent, Tab
+    TestComponent, Tab, ImgReuseTest
 }
 
 

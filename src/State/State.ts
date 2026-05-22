@@ -20,6 +20,7 @@ export default class State {
   template: any;
   idMap: any;
   textMap: any;
+  nodeMap: any;
   dataMap: any;
   dirty: boolean = true;
   dirtyKeys: Set<string> = new Set();
@@ -40,6 +41,7 @@ export default class State {
     this.template = parseSST(template, components);
     this.idMap = {};
     this.textMap = {};
+    this.nodeMap = {};
     this.components = components;
     this.componentMap = {};
     this.methods = methods;
