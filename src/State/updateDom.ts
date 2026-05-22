@@ -1,6 +1,7 @@
 import State from "./State.js";
 import { SSID } from "./const.js";
-import constructElement from "./constructElement.js";
+import constructElement, { getValue, decodeEntities, unescapeQuotes } from "./constructElement.js";
+import { resolveImageSrc, isBase64DataUri } from "./imageCache.js";
 
 const TOP_COMPONENT_SELECTOR = "[ssct]:not([ssct] *)";
 const scrolledSSIDs = new Set<string>();
@@ -85,15 +86,25 @@ function restoreFocus(snap: FocusSnapshot, state: State): void {
   }
 }
 
+function intersects(a: Set<string>, b: Set<string>): boolean {
+  const [small, big] = a.size <= b.size ? [a, b] : [b, a];
+  for (const k of small) if (big.has(k)) return true;
+  return false;
+}
+
 function updateDOM(state: State) {
   ensureScrollListener();
   const componentElements = document.querySelectorAll(TOP_COMPONENT_SELECTOR);
   for ( let i  = 0; i < componentElements.length; i++) {
     const element = componentElements[i];
     const ssid: string = element.getAttribute(SSID) || '';
+    // Dep-gate: skip re-running a component whose tracked deps are all clean.
+    // (Value updates still flow via the textMap/attrMap passes below.)
+    const rec = state.componentMap[ssid];
+    if (rec?.deps?.size && state.dirtyKeys.size && !intersects(rec.deps, state.dirtyKeys)) continue;
     const stash = captureScroll(ssid, state);
     const focusSnap = captureFocus(ssid);
-    const newElement = constructElement(state.componentMap[ssid], ssid, state)
+    const newElement = constructElement(state.componentMap[ssid]?.node, ssid, state)
     if (newElement) {
       element.replaceWith(newElement);
       if (stash) restoreScroll(stash, state);
@@ -119,11 +130,36 @@ function updateDOM(state: State) {
     }
     let rendered = entry.template;
     for (const key in values) {
-      const value = state.data[key];
+      const value = getValue(state.data, key.split("."));
       if (!value && value !== 0) continue;
       rendered = rendered.replace(`{{${key}}}`, value);
     }
     entry.node.nodeValue = rendered;
+  }
+  const { attrMap } = state;
+  for (const id in attrMap) {
+    const entry = attrMap[id];
+    if (!entry) continue;
+    if (!entry.element.isConnected) { delete attrMap[id]; continue; }
+    const values = entry.values;
+    if (hasDirtyFilter) {
+      let touched = false;
+      for (const key in values) {
+        if (dirtyKeys.has(key.split(".")[0])) { touched = true; break; }
+      }
+      if (!touched) continue;
+    }
+    let rendered = entry.template;
+    for (const key in values) {
+      const value = getValue(state.data, key.split("."));
+      rendered = rendered.replace(`{{${key}}}`, value ?? "");
+    }
+    const finalVal = entry.isImgSrc && isBase64DataUri(rendered)
+      ? resolveImageSrc(rendered)
+      : decodeEntities(unescapeQuotes(rendered));
+    if (entry.element.getAttribute(entry.attrName) !== finalVal) {
+      entry.element.setAttribute(entry.attrName, finalVal);
+    }
   }
   for (const ssid in state.nodeMap) {
     if (!state.nodeMap[ssid].isConnected) delete state.nodeMap[ssid];

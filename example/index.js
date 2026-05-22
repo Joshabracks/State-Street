@@ -50,6 +50,7 @@ const TEMPLATE_STRING = /*html*/`
     </form>
     <TestComponent name="Test Component"/>
     <ImgReuseTest/>
+    <AttrTest/>
 </body>
 `;
 
@@ -100,14 +101,26 @@ function Tab({ name, onclick }) {
     return /*html*/`<div class="tab" :click=${onclick}>${name}</div>`
 }
 
-// Rebuilds every increment (body references {{total}}); the inner <img> should be
-// REUSED across rebuilds (same node, no reload) thanks to nodeMap element caching.
+// Body is constant placeholders -> body-cache hits, no rebuild; {{total}} text
+// updates via textMap and the <img> is never touched.
 function ImgReuseTest() {
     return /*html*/`
         <div>
             <div>Reuse test — total is {{total}}:</div>
             <img id="reuseimg" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg=="/>
         </div>`
+}
+
+// Reads state.data.showImg in its fn -> tracked dep is {showImg}. An increment
+// (dirty key "total") should DEP-GATE this component (fn not re-run), yet its
+// title="seen {{total}} times" still updates via attrMap, and src="{{portrait}}"
+// (a base64 referenced by key) resolves to a cached blob without entering parseSST.
+function AttrTest({ state }) {
+    // eslint-disable-next-line no-undef
+    window.__attrTestCalls = (window.__attrTestCalls || 0) + 1;
+    return state.data.showImg
+        ? /*html*/`<img id="attrimg" src="{{portrait}}" title="seen {{total}} times"/>`
+        : /*html*/`<div>hidden</div>`;
 }
 
 // State data for regular access/manipulation used to render and update the State template
@@ -119,6 +132,8 @@ const data = {
     value2: "value 2",
     total: 0,
     whatItIs: 'button',
+    showImg: true,
+    portrait: "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==",
     msg1: "",
     msg2: "",
     msg3: "",
@@ -136,7 +151,7 @@ const methods = {
 }
 
 const components = {
-    TestComponent, Tab, ImgReuseTest
+    TestComponent, Tab, ImgReuseTest, AttrTest
 }
 
 

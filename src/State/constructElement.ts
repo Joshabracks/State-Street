@@ -2,21 +2,25 @@ import State from "./State.js";
 import { SSID, SSCT } from "./const.js";
 import { parseSST } from "../Template/parseSST.js";
 import { resolveImageSrc, isBase64DataUri } from "./imageCache.js";
+import { makeDepTracker } from "./trackDeps.js";
 
 const valsRegex = /{{.[^{]+}}/g;
 const cleanerRegex = /{{(.*)}}/;
 
 const REUSABLE_TAGS = new Set(["img", "input", "textarea", "select", "canvas", "video", "audio", "iframe"]);
 
+// Reuse parsed trees across components/instances with identical (placeholder) bodies.
+const parseCache = new Map<string, any>();
+
 let entityDecoder: HTMLTextAreaElement | null = null;
-function decodeEntities(str: string): string {
+export function decodeEntities(str: string): string {
   if (str.indexOf("&") === -1) return str;
   if (!entityDecoder) entityDecoder = document.createElement("textarea");
   entityDecoder.innerHTML = str;
   return entityDecoder.value;
 }
 
-function getValue(obj: any, values: string[]) {
+export function getValue(obj: any, values: string[]) {
   if (values.length === 0) return obj;
   const key: string = values.shift() || "";
   const value = obj[key];
@@ -24,7 +28,7 @@ function getValue(obj: any, values: string[]) {
   return getValue(value, values);
 }
 
-function unescapeQuotes(str: string): string {
+export function unescapeQuotes(str: string): string {
   return str.replace(/\\(["'`\\])/g, "$1");
 }
 
@@ -57,19 +61,19 @@ function constructElement(data: any, parentSSID: string, state: State) {
       console.error(`invalid component: ${data?.componentName}`);
       return null;
     }
-    let componentBody = component({state, ...data?.componentProperties});
-    const vals = componentBody.match(valsRegex) || [];
-    vals.forEach((val: any) => {
-      const cleanVal = val.match(cleanerRegex)[1];
-      componentBody = componentBody.replace(val, state.data[cleanVal])
-    })
-    const cached = state.componentMap[currentSSID];
-    if (cached && cached.lastBody === componentBody) {
+    const { trackedState, deps } = makeDepTracker(state);
+    const componentBody = component({state: trackedState, ...data?.componentProperties});
+    const rec = state.componentMap[currentSSID];
+    if (rec && rec.lastBody === componentBody) {
+      rec.deps = deps;
       return null;
     }
-    state.componentMap[currentSSID] = data;
-    data.lastBody = componentBody;
-    const parsedBody = parseSST(componentBody, state.components);
+    state.componentMap[currentSSID] = { node: data, lastBody: componentBody, deps };
+    let parsedBody = parseCache.get(componentBody);
+    if (!parsedBody) {
+      parsedBody = parseSST(componentBody, state.components);
+      parseCache.set(componentBody, parsedBody);
+    }
     const subElements = [];
     for (let i = 0; i < parsedBody.length; i++) {
       const ssid = `${currentSSID}${i}`;
@@ -98,7 +102,20 @@ function constructElement(data: any, parentSSID: string, state: State) {
   attributes.forEach((attribute: any) => {
     if (isImg && attribute.name === "nocache") return;
     const raw = attribute.value ?? "";
-    if (isImg && attribute.name === "src" && !noCache && isBase64DataUri(raw)) {
+    const isImgSrc = isImg && attribute.name === "src" && !noCache;
+    const vars = raw.match(valsRegex);
+    if (vars) {
+      const values: any = {};
+      let rendered = raw;
+      for (let j = 0; j < vars.length; j++) {
+        const key = vars[j].match(cleanerRegex)?.[1] || "";
+        const value = getValue(state.data, key.split("."));
+        values[key] = value;
+        rendered = rendered.replace(vars[j], value ?? "");
+      }
+      desired.set(attribute.name, isImgSrc && isBase64DataUri(rendered) ? resolveImageSrc(rendered) : decodeEntities(unescapeQuotes(rendered)));
+      state.attrMap[`${currentSSID}@${attribute.name}`] = { element, attrName: attribute.name, template: raw, values, isImgSrc };
+    } else if (isImgSrc && isBase64DataUri(raw)) {
       desired.set("src", resolveImageSrc(raw));
     } else {
       desired.set(attribute.name, decodeEntities(unescapeQuotes(raw)));
