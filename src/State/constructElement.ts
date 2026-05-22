@@ -66,9 +66,8 @@ function constructElement(data: any, parentSSID: string, state: State) {
     const rec = state.componentMap[currentSSID];
     if (rec && rec.lastBody === componentBody) {
       rec.deps = deps;
-      return null;
+      return rec.element ?? null;
     }
-    state.componentMap[currentSSID] = { node: data, lastBody: componentBody, deps };
     let parsedBody = parseCache.get(componentBody);
     if (!parsedBody) {
       parsedBody = parseSST(componentBody, state.components);
@@ -88,6 +87,7 @@ function constructElement(data: any, parentSSID: string, state: State) {
     subElements.forEach((subElement) => {
       element.appendChild(subElement);
     });
+    state.componentMap[currentSSID] = { node: data, lastBody: componentBody, deps, element };
     return element;
   }
   const attributes = data?.attributes || [];
