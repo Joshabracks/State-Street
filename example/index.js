@@ -9,6 +9,10 @@ const TEMPLATE_STRING = /*html*/`
         <span class="itallic">Message 1: {{message1}}</span>
         <div>Message 2: {{message2}}</div>
         <img src="https://www.placecats.com/300/200"/>
+        <div>Base64 (cached as blob):</div>
+        <img id="b64cached" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg=="/>
+        <div>Base64 (nocache):</div>
+        <img id="b64raw" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==" nocache/>
     </div>
     <div>  
         Element with multiple values. {{value1}} :: {{value2}}

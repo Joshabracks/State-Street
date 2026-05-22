@@ -1,6 +1,7 @@
 import State from "./State.js";
 import { SSID, SSCT } from "./const.js";
 import { parseSST } from "../Template/parseSST.js";
+import { resolveImageSrc, isBase64DataUri } from "./imageCache.js";
 
 const valsRegex = /{{.[^{]+}}/g;
 const cleanerRegex = /{{(.*)}}/;
@@ -85,9 +86,23 @@ function constructElement(data: any, parentSSID: string, state: State) {
   }
   const element = document.createElement(tag);
   const attributes = data?.attributes || [];
+  const isImg = tag === "img";
+  const noCache = isImg && attributes.some((a: any) => a.name === "nocache");
+  let hasDecoding = false;
   attributes.forEach((attribute: any) => {
-    element.setAttribute(attribute.name, decodeEntities(unescapeQuotes(attribute.value ?? "")));
+    if (isImg && attribute.name === "nocache") return;
+    if (attribute.name === "decoding") hasDecoding = true;
+    const raw = attribute.value ?? "";
+    if (isImg && attribute.name === "src" && !noCache && isBase64DataUri(raw)) {
+      element.setAttribute("src", resolveImageSrc(raw));
+      return;
+    }
+    element.setAttribute(attribute.name, decodeEntities(unescapeQuotes(raw)));
   });
+  if (isImg) {
+    if (!hasDecoding) element.setAttribute("decoding", "async");
+    (element as HTMLImageElement).decode?.().catch(() => {});
+  }
   const events = data?.events || [];
   events.forEach((event: any) => {
     const eventProps: any = {};

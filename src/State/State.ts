@@ -2,6 +2,7 @@ import constructDOM from "./constructDom.js";
 import updateDOM from "./updateDom.js";
 import { parseSST } from "../Template/parseSST.js";
 import { reactive } from "./reactive.js";
+import { setImageMemoryBudget, enqueueWarm, processWarmQueue } from "./imageCache.js";
 
 /**
  * Builds, renders and manages the DOM
@@ -11,6 +12,8 @@ import { reactive } from "./reactive.js";
  * @param options: object - Options for customizing State rendering behavior
  * renderLoop: boolean - Default: false - When set to true, the DOM automatically re-renders any time a variable within State.data is changed via State.update().  When set to false, State.update must be managed manually.
  * targetFPS: number - Default: 60 - When set, will attempt to run updates at the target fps, if possible.  If not, updates will run at the highest refresh rate determined by the browser via requestAnimationFrame.
+ * imgMemoryBudget: number - Default: 256MB - Maximum total bytes of cached image blobs. Base64 image src values are auto-converted to cached blob URLs (opt out per-image with the `nocache` attribute); least-recently-used blobs are revoked when over budget, except those still on the DOM.
+ * targetFPS and imgMemoryBudget aside, imgWarmPerFrame: number - Default: 4 - How many queued images State.warmImages() converts/pre-decodes per frame.
  */
 export default class State {
   private _data: any;
@@ -28,6 +31,7 @@ export default class State {
   targetFPS: number = 60
   nextUpdate: number = 0
   updateInterval: number = -1
+  imgWarmPerFrame: number = 4
   constructor(template: string, data: any = {}, components: any = {}, methods: any = {}, options: any = {}) {
     this._data = reactive(data, (key) => {
       this.dirty = true;
@@ -41,6 +45,8 @@ export default class State {
     this.methods = methods;
     if (!options?.renderLoop && options.renderLoop === false) this.renderLoop = false;
     if (typeof options?.targetFPS === 'number' && options.targetFPS > 0) this.targetFPS = options.targetFPS;
+    if (typeof options?.imgMemoryBudget === 'number' && options.imgMemoryBudget > 0) setImageMemoryBudget(options.imgMemoryBudget);
+    if (typeof options?.imgWarmPerFrame === 'number' && options.imgWarmPerFrame > 0) this.imgWarmPerFrame = options.imgWarmPerFrame;
     this.updateInterval = 1000 / this.targetFPS
     this.nextUpdate = this.updateInterval + Date.now()
     constructDOM(this);
@@ -76,6 +82,7 @@ export default class State {
    * @returns undefined
    */
   update = () => {
+    processWarmQueue(this.imgWarmPerFrame);
     if (!this.renderLoop) {
       updateDOM(this);
       this.clearDirty();
@@ -98,4 +105,10 @@ export default class State {
     updateDOM(this)
     this.clearDirty();
   }
+  /**
+   * Queues base64 image data URIs to be converted to cached blob URLs and
+   * pre-decoded during idle frames, so they render instantly when shown.
+   * @param list: string[] - base64 data URIs to warm
+   */
+  warmImages = (list: string[]) => enqueueWarm(list);
 }
