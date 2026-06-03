@@ -1,189 +1,914 @@
 # ![State Street](https://github.com/Joshabracks/State-Street/blob/main/sstlogo.png?raw=true)
-[![CircleCI](https://circleci.com/gh/Joshabracks/State-Street.svg?style=shield)](https://circleci.com/gh/Joshabracks/State-Street)
+
+[![CI](https://github.com/Joshabracks/State-Street/actions/workflows/ci.yml/badge.svg)](https://github.com/Joshabracks/State-Street/actions/workflows/ci.yml)
+[![npm version](https://img.shields.io/npm/v/@state-street/state-street.svg)](https://www.npmjs.com/package/@state-street/state-street)
+[![license: ISC](https://img.shields.io/badge/license-ISC-blue.svg)](#license)
+[![zero deps](https://img.shields.io/badge/dependencies-0-success)](https://www.npmjs.com/package/@state-street/state-street)
+
+A no-build reactive UI layer that fits in a single global script. Plain JS template strings, dep-gated re-renders, no JSX, no compile step.
 
 Want to contribute or need help? [Join the State Street Discord!](https://discord.gg/a7AycPG2)
 
+---
 
-A simple JavaScript single page application framework
+## Table of contents
 
-### Websites and Applications powered by State Street
+- [Why State Street](#why-state-street)
+- [Install](#install)
+- [Quick start — direct style](#quick-start--direct-style)
+- [Quick start — registry style](#quick-start--registry-style)
+- [Core concepts](#core-concepts)
+- [Template syntax](#template-syntax)
+- [The `State` class — API reference](#the-state-class--api-reference)
+- [Components](#components)
+- [Methods](#methods)
+- [Reactivity model](#reactivity-model)
+- [Render scheduling + the `<ssct>` wrapper](#render-scheduling--the-ssct-wrapper)
+- [Image cache](#image-cache)
+- [Patterns from production](#patterns-from-production)
+- [The registry pattern — full reference](#the-registry-pattern--full-reference)
+- [Gotchas](#gotchas)
+- [Tooling](#tooling)
+- [FAQ](#faq)
+- [License](#license)
+
+### Sites and applications powered by State Street
+
 - [joshuabracks.com](https://www.joshuabracks.com)
+- [omosuen-editor](https://github.com/joshabracks/omosuen-editor)
 
-## Getting Started
-### Setup / Dependencies
-* Install the npm package
-```
+---
+
+## Why State Street
+
+- **Plain template strings.** No JSX and no required compile step. Your views are template literals that return strings of HTML. Your editor highlights them as HTML. Your tests can read them.
+- **Mutate state directly.** `state.data.foo = bar` triggers a dep-gated re-render on the next animation frame. No setters, no actions, no reducers.
+- **One file, one class.** The entire library is `new State(template, data, components, methods)`. Read the source in an afternoon.
+- **First-class tooling.** Written in TypeScript and happy to be consumed as TS or plain JS, with any bundler or none at all. The official [State Street SST](https://marketplace.visualstudio.com/items?itemName=beetnick82.vscode-sst) VS Code extension gives you HTML highlighting + completion inside `.sst.js` / `.sst.ts` template literals.
+- **Tiny.** ~10 KB minified, zero runtime dependencies.
+
+### Is this for me?
+
+State Street fits apps where you own the HTML and want reactive, HTML-shaped templates — tools, internal dashboards, Tauri/Electron apps, browser-extension UIs, single-page games, and production SPAs. It works with plain JavaScript or TypeScript, with or without a bundler, and can also run straight from a single global script with no build at all. The [VS Code extension](#tooling) gives you template highlighting either way.
+
+It stays small on purpose: there's no virtual DOM, and conditionals and loops are plain JavaScript inside your component functions rather than template directives. If that trade sounds good, State Street is for you.
+
+---
+
+## Install
+
+**npm / module bundler:**
+
+```bash
 npm i @state-street/state-street
 ```
 
-* You will also need a module bundler.  In our example, we use webpack
+```js
+import { State } from "@state-street/state-street";
 ```
-npm i -D webpack webpack-cli
-```
-* If you use webpack, also add a config file to the same directory as your package.json file 
 
-`webpack.config.js`
-````js
-const path = require('path')
+**Global script tag (no build step):**
 
-module.exports = () => {
-  return {
-    entry: './index.js',
-    output: {
-      path: path.resolve(__dirname, 'build'),
-      filename: 'index.js',
-    },
-  };
-};
-````
-* You will also have to add the a build script to your package.json file
-```json
-  "scripts": {
-    "build": "webpack"
-  },
-```
-* We'll need an html file to run the script
+Grab `state-street.global.js` (a minified UMD build) from the [GitHub Releases](https://github.com/Joshabracks/State-Street/releases) page, or load it straight from a CDN — no download required:
 
-`index.html`
 ```html
+<!-- self-hosted, next to your HTML -->
+<script src="state-street.global.js"></script>
+
+<!-- or via CDN -->
+<script src="https://cdn.jsdelivr.net/npm/@state-street/state-street/build/state-street.global.js"></script>
+
+<script>
+  // the script defines the global `State` (window.State)
+  const app = new State(template, data, components, methods);
+</script>
+```
+
+If you use a bundler (webpack, esbuild, vite, rollup, …), the named export is `State`. The library has zero runtime dependencies, so the build is trivial.
+
+---
+
+## Quick start — direct style
+
+A counter app in one file:
+
+```html
+<!doctype html>
 <html>
-    <head>
-        <script src="./build/index.js"></script>
-    </head>
-</html>
-```
-### Hello World
-* In your index.js file, import `State` and `parseSST`
-* The simplest path would be to just write a bit of html.
-```js
-import { State } from '@state-street/state-street';
-
-const template = `<h1>Hello World!</h1>`;
-window.onload = () => {
-    new State(template);
-}
-```
-* Now build your project and open index.html.  `npm run build`.
-* You should have "Hello World" displayed in your browser.
-* Remember that, anytime you update your code, you'll need to re-build before you'll see any changes.
-
-#### Syntax Highlighting Plugin
-* There's an official VSCode plugin for State Street files:
-  * [State Street SST](https://marketplace.visualstudio.com/items?itemName=beetnick82.vscode-sst)
-* After installing the plugin, any TypeScript or JavaScript files with the sub extension `.sst` will treat string literals as State Street Templates.
-  * file name example: `index.sst.ts`
-
-#### Data Object
-* If all you want to do is create a static page, why would you be using **State Street**?
-* Let's make use of state data and the dynamic template
-* When creating the State object, you can pass in a `data` object as well.
-* Also, when representing data in the template, you can do so using double curly bracket syntax. `{{variableName}}`;
-* Additionally, if you pass a `title` variable in with the data object, it will update the page title for you automatically.
-```js
-import { State } from '@state-street/state-street';
-const data = {
-    title: "Hello State Street!",
-    message: "Hello World!"
-}
-const template = `<h1>{{message}}</h1>`;
-window.onload = () => {
-    new State(template, data);
-}
-```
-
-#### Components
-* In State Street, Components  can be added to a template with a self closed tag using the component name like so: `<ComponentName/>`.  
-* You can also pass `componentProperties` into the component the same way you would add an attribute in html: `<ComponentName prop1="Hello World"/>`.
-* Compoents are simply functions that return formatted templates.  We can pass them into the State object as the third constructor argument.  All components access the same state data object, so we won't need to pass in a message.  So let's pass in some style properties instead.
-* We'll also update the template to use the component.
-```js
-import { State } from '@state-street/state-street';
-const data = {
-    title: "Hello State Street!",
-    message: "Hello World!"
-}
-const template = `<Header color="red" weight="bold"/>`;
-const components = {
-    Header: ({ color, weight }) => {
-        return `
-            <h1 style="color:${color};font-weight=${weight};">{{message}}</h1>
-        `;
-    }
-}
-window.onload = () => {
-    new State(template, data, components);
-}
-```
-### Event Listener Methods
-* To be truly dynamic, we'll want some way to handle page events.  We can do this through use of event methods.
-* You can attach an event method like it were an attribute with a colon preceeding the event type.
-* The event type must be a supported event listener type such as `click` or `mouseleave`.
-```html
-<button :click=methodName()>click me!</button>
-```
-* The `methods` object can be passed into the State constructor as the fourth argument.
-* Let's add a simple counter to our example!
-```js
-import { State } from '@state-street/state-street';
-
-const data = {
-    title: "Hello State Street!",
-    message: "Hello World!",
-    count: 0
-}
-
-const template = `
-    <Header color="red" weight="bold"/>
-    <CounterMessage/>
-    <Button onclick="incrementCounter"/>
+<head>
+  <style>[ssct] { display: contents; }</style>
+</head>
+<body>
+  <script src="state-street.global.js"></script>
+  <script>
+    const template = `
+      <main>
+        <h1>{{title}}</h1>
+        <Counter/>
+      </main>
     `;
 
-const components = {
-    Header: ({ color, weight }) => {
-        return `
-            <h1 style="color:${color};font-weight=${weight};">{{message}}</h1>
-        `;
-    },
-    Button: ({onclick}) => {
-        return `<button :click=${onclick}()>click me!</button>`;
-    },
-    CounterMessage: () => {
-        return `<div>The Button has been clicked {{count}} times!`;
-    }
-}
+    const data = {
+      title: "Hello State Street",
+      count: 0,
+    };
 
-function incrementCounter(){
-    data.count++;
-}
+    const components = {
+      Counter: ({ state }) => `
+        <p>Count: ${state.data.count}</p>
+        <button :click=increment()>+1</button>
+        <button :click=reset()>Reset</button>
+      `,
+    };
 
-const methods = {
-    incrementCounter,
-}
+    const methods = {
+      increment: ({ state }) => { state.data.count += 1; },
+      reset:     ({ state }) => { state.data.count = 0; },
+    };
 
-window.onload = () => {
     new State(template, data, components, methods);
+  </script>
+</body>
+</html>
+```
+
+That's the whole pattern. The constructor mounts to `document.body` automatically. `state.data.count += 1` marks the top-level `count` key dirty; on the next animation frame, the `<Counter/>` component re-runs and its rendered HTML replaces the wrapper's children.
+
+> **Heads up:** `:click=increment()` requires the parentheses, even with no arguments. `:click=increment` without parens is silently treated as a regular HTML attribute and the click does nothing.
+
+---
+
+## Quick start — registry style
+
+The same app, written with a registration boilerplate. Useful when your app grows past one file or when you want to support runtime extension (mods, themes, plugins). The boilerplate itself is ~100 lines you copy in once; see [the registry pattern reference](#the-registry-pattern--full-reference) below.
+
+**index.html:**
+
+```html
+<style>[ssct] { display: contents; }</style>
+<script src="state-street.global.js"></script>
+<script src="my-app/core.js"></script>              <!-- the registry boilerplate -->
+<script src="my-app/base_data.js"></script>         <!-- setBaseData(...) -->
+<script src="my-app/components/counter.js"></script>
+<script src="my-app/methods/counter.js"></script>
+<script>MY_APP.boot();</script>
+```
+
+**base_data.js:**
+
+```js
+MY_APP.setBaseData(() => ({
+  title: "Hello State Street",
+  count: 0,
+}));
+```
+
+**components/counter.js:**
+
+```js
+(function () {
+  function Counter({ state }) {
+    return `
+      <p>Count: ${state.data.count}</p>
+      <button :click=increment()>+1</button>
+      <button :click=reset()>Reset</button>
+    `;
+  }
+  MY_APP.registerComponents({ Counter });
+})();
+```
+
+**methods/counter.js:**
+
+```js
+(function () {
+  MY_APP.registerMethods({
+    increment: ({ state }) => { state.data.count += 1; },
+    reset:     ({ state }) => { state.data.count = 0; },
+  });
+})();
+```
+
+`MY_APP.boot()` assembles the accumulated registries, calls `new State(...)`, and you're live. Both styles converge on the same `State` class — only the wiring differs.
+
+---
+
+## Core concepts
+
+State Street has four ideas. That's the whole API surface to internalize.
+
+### 1. Reactive state
+
+`state.data` is a `Proxy`. Reading `state.data.foo` is a normal property lookup; writing `state.data.foo = bar` triggers the proxy's `set` trap, which marks the top-level key `foo` as dirty for the next render frame.
+
+```js
+state.data.count = state.data.count + 1;        // marks "count" dirty
+state.data.user  = { name: "Marie", age: 21 };  // marks "user" dirty
+state.data.user.name = "Jasmine";               // marks "user" dirty (top-level)
+```
+
+### 2. Top-level-key dep gating
+
+Each component instance has its own dep-tracking proxy. While the component function runs, every `state.data.<key>` it reads is recorded into that instance's `deps: Set<string>`. On the next frame, the render scheduler only re-runs components whose tracked keys intersect with the set of dirty keys.
+
+> **Gating is top-level-key granular.** `state.data.user.name` marks `user` dirty, not `user.name`. Components reading any part of `user` will re-run. If you need finer reactivity, split your state into more top-level keys.
+
+### 3. Components return strings
+
+A component is a plain function that returns a string of HTML. There is no virtual DOM and no per-element diff. When a component's tracked state goes dirty, the function re-runs; if its output is byte-identical to the previous frame the DOM is left untouched, otherwise its wrapper element is rebuilt and swapped in. (Plain reusable elements are reused and patched in place rather than recreated.)
+
+```js
+function Greeting({ state, name }) {
+  return `<h1>Hello, ${state.data.user.name || name}!</h1>`;
 }
 ```
-* Now when you build and reload your page, there should be a button that, when clicked, changes a displayed message to show just how many times you've clicked the button.
 
-## Advanced
-### Method Variables
-- Variables can be passed directly into methods using `key=value` syntax within the method call.  Example `<button :click=functionName(key=value)>`.  Please note that the value does not have to be contained within quotes.
-  - Multiple variables may be passed as comma-separated pairs. `:click=functionName(key1=value1,key2=value2)`
-- Variables are passed into the method by their key names as a single properties object that may be destructured like so `function methodName({key1, key2})`
-- The `state` and `event` object are also passed into the properties object.  `function methodName({state, event, var1, var2})`
-### Component State Access
-- Along with variables, the state object is passed into the components properties object. `ComponentName({ state, var1, var2 })`
-### State Options
-- When building a new State you may also pass a fifth, `options` object.  Currently, there is only one option available, but additional options will be added to the same variable.  `new State(template, data, components, methods, options)`
-  - renderLoop: boolean - (default true) When set to false, disables the update render loop, requiring the `state.update()` method to be managed manually.   Generally, this would be called at the end of a method invocation if any variable within `state.data` is changed.  In apps using a large amount of State data, this can drastically improve page performance.
-    ```js
-    function methodName({ state }) {
-        state.data.numberValue ++;
-        state.update();
+### 4. `<Tag/>` vs `${Tag()}`
+
+Render components with the tag syntax `<Counter/>` so they get their own dep-tracking wrapper. **Don't** interpolate component output directly — `${Counter()}` inlines the string into the parent, which means the parent inherits the child's deps and re-runs whenever the child's state changes.
+
+```js
+// ✅ Good — Counter is its own dep-tracked subtree.
+function App() {
+  return `<main><Counter/></main>`;
+}
+
+// ❌ Bad — App now re-runs whenever Counter's state changes.
+function App({ state }) {
+  return `<main>${Counter({ state })}</main>`;
+}
+```
+
+Real example from a Tauri narrative game's world-view screen:
+
+```js
+function WorldView() {
+  return `
+    <div class="page wv-page">
+      <WvTopbar/>
+      <div class="wv-body">
+        <aside class="wv-sidebar">
+          <WvSidebarTabs/>
+          <WvSidebarBody/>
+        </aside>
+        <section class="wv-main"><WvMain/></section>
+      </div>
+    </div>
+  `;
+}
+```
+
+Each `<Wv…/>` is independently gated. Changing the selected sidebar tab marks `worldView` dirty, which re-runs `<WvSidebarTabs/>` and `<WvMain/>` but leaves `<WvTopbar/>` untouched (it only reads `game`).
+
+---
+
+## Template syntax
+
+### Interpolation: `{{path}}`
+
+Replaces with the value at `path` in the local scope (the props you passed to the component plus the values returned in its scope). Resolves dotted paths.
+
+```js
+function Card({ state, npc }) {
+  return `<h2>{{npc.name}} — age {{npc.age}}</h2>`;
+}
+```
+
+If you'd rather inline JavaScript, template literals work too: `${npc.name}`. Both produce the same string; `{{ }}` is rebuilt at update time, so it tracks across re-renders.
+
+### Component tags: `<Component prop="value"/>`
+
+Self-closing tags whose name matches a registered component invoke that component. Attributes are passed as props.
+
+```js
+const components = {
+  Avatar: ({ state, src, size }) =>
+    `<img class="avatar avatar--${size}" src="${src}"/>`,
+};
+
+// In a parent template:
+`<Avatar src="${user.portrait}" size="lg"/>`
+```
+
+### Event directives: `:event=method(arg=value, ...)`
+
+Wire any standard DOM event to a registered method. The handler receives `{ state, event, ...args }`.
+
+```js
+`<button :click=submit()>Save</button>`
+`<button :click=removeItem(id="${item.id}")>Delete</button>`
+`<input :input=updateField(field="email")/>`
+```
+
+**Required:** the parentheses. `:click=submit` without `()` is silently parsed as a regular HTML attribute and the click does nothing.
+
+Args are name=value pairs separated by commas. Values can be string literals, numbers, or `${interpolated}` expressions:
+
+```js
+`<button :click=jumpTo(scene="${state.data.targetScene}", from="${currentScene}")>Go</button>`
+```
+
+Supported events: anything DOM (`:click`, `:input`, `:change`, `:submit`, `:mouseenter`, `:keydown`, `:focus`, `:blur`, `:mouseleave`, …). State Street doesn't sniff the list — it just registers an event listener for whatever event name follows the `:`.
+
+### Attribute & argument coercion
+
+Component props and event-directive args are **coerced to a type** before they reach your function — they are not always strings. The same rules apply to both component attributes and `:event=method(arg=value)` arguments:
+
+| In the template | Arrives as |
+|---|---|
+| `"text"`, `'text'`, `` `text` `` (quoted) | the string `text` (quotes stripped) |
+| `{{path}}` | the value at `path` in state (any type) |
+| `true` / `false` (unquoted) | boolean `true` / `false` |
+| `478` (unquoted, numeric) | number `478` |
+| a bare attribute with no value | boolean `true` |
+| anything else (unquoted) | string |
+
+```js
+`<PropTest numberVal=478 booleanVal=true stringVal="this is a string" varVal={{total}}/>`
+// component receives:
+//   { state, numberVal: 478 (number), booleanVal: true (boolean),
+//     stringVal: "this is a string" (string), varVal: <state.total> }
+```
+
+```js
+`<button :click=setCount(n=5, reset=false)>Set</button>`
+// method receives: { state, event, n: 5 (number), reset: false (boolean) }
+```
+
+> **Heads up:** to keep something that *looks* like a number or boolean as a string, quote it: `code="0420"` arrives as the string `"0420"`, while `code=0420` arrives as the number `420`.
+
+### No `:if` / `:for` / `:bind`
+
+State Street has no built-in conditional or loop directives. Conditionals and loops are plain JavaScript inside the component body. Return different strings.
+
+```js
+function CartSummary({ state }) {
+  const items = state.data.cart.items;
+  if (items.length === 0) {
+    return `<p class="empty">Your cart is empty.</p>`;
+  }
+  const rows = items.map((it) =>
+    `<li>${it.name} — $${it.price.toFixed(2)}</li>`
+  ).join("");
+  return `<ul class="cart">${rows}</ul>`;
+}
+```
+
+This is the design: the template syntax is small because JavaScript already does the work.
+
+---
+
+## The `State` class — API reference
+
+```ts
+new State(template, data, components, methods, options?)
+```
+
+### Constructor parameters
+
+| Parameter | Type | Purpose |
+|---|---|---|
+| `template` | `string` | Root template. Any `<Component/>` tag references a key in `components`. |
+| `data` | `object` | Initial state. Becomes reactive on construction. If it has a `title` property, that value becomes `document.title` at mount time. |
+| `components` | `{ [name]: (props) => string }` | Component registry. |
+| `methods` | `{ [name]: (args) => void }` | Method registry. Bound to `:event=name()` directives. |
+| `options` | `object` | See below. |
+
+### Options
+
+| Option | Default | Purpose |
+|---|---|---|
+| `renderLoop` | `true` | When `true`, an internal `requestAnimationFrame` loop calls `update()` continuously. When `false`, you call `state.update()` (or `state.forceUpdate()`) yourself after mutations. Useful in apps with a lot of state where you want manual control. |
+| `targetFPS` | `60` | When the render loop is on, throttle to roughly this many updates per second. |
+| `imgMemoryBudget` | `256 MB` | Max bytes of cached image blobs from base64 → blob URL conversion. LRU eviction over this budget; blobs still in the DOM are never evicted. |
+| `imgWarmPerFrame` | `4` | When `warmImages()` queues data URIs, how many to decode per idle frame. |
+
+### Instance properties + methods
+
+| Member | Type | Purpose |
+|---|---|---|
+| `.data` | getter / setter | Reactive proxy. Reads + writes go through it. The setter replaces the whole tree and marks every top-level key dirty. |
+| `.update()` | `() => void` | Process one frame: drain warm queue, then re-render dirty components if it's time for the next update. Re-schedules itself when `renderLoop: true`. |
+| `.forceUpdate()` | `() => void` | Immediately re-render every dirty component and clear the dirty set. Bypasses the FPS throttle. |
+| `.sameState()` | `() => boolean` | `true` if nothing is dirty. |
+| `.warmImages(uris)` | `(string[]) => void` | Queue base64 data URIs for off-screen decode. See [Image cache](#image-cache). |
+
+### Mounting
+
+The `State` constructor mounts to `document.body` automatically — it clears `document.body` and appends the rendered root. There's no `app.mount(el)` step.
+
+---
+
+## Components
+
+A component is a function:
+
+```js
+function Name({ state, ...props }) {
+  // ... returns an HTML string
+}
+```
+
+Real example, trimmed for clarity (a game's loading screen):
+
+```js
+function LoadingScreen({ state }) {
+  const game = state.data.game;
+  const time = game?.in_game_time || { day: 1, phase: "early_morning" };
+  const phaseLabel = String(time.phase).replace(/_/g, "-");
+  const entry = pickNarrativeEntry(state);
+  const body = entry ? renderNarrative(entry) : renderShimmer();
+  return `
+    <div class="page ls-page">
+      <section class="ls-frame">
+        <h1 class="ls-title">Day ${time.day}, ${phaseLabel}</h1>
+        ${body}
+      </section>
+    </div>
+  `;
+}
+```
+
+### Rules of thumb
+
+- **Components are pure functions of state.** Side-effects belong in methods (event handlers) or in external code (listeners, network callbacks).
+- **Use `<Tag/>` for any non-trivial subtree.** Inline interpolation `${tag()}` defeats dep gating — the parent inherits all the child's deps.
+- **Read what you need, no more.** Each `state.data.<key>` you touch becomes a dependency. Touching `state.data.game` even just to check if it exists subscribes the component to every change under `game`.
+- **Props are typed values from the tag.** `<Avatar size="lg"/>` arrives as `{ state, size: "lg" }`. Unquoted `true`/`false` and numbers are coerced to booleans/numbers, `{{path}}` resolves from state, and a bare attribute with no value is `true`. See [Attribute & argument coercion](#attribute--argument-coercion).
+
+---
+
+## Methods
+
+A method is a function called by an event directive:
+
+```js
+function methodName({ state, event, ...args }) {
+  // mutate state.data; the event object is the DOM event.
+}
+```
+
+Real examples:
+
+```js
+// View dispatcher used by every nav button.
+function go({ view, state }) {
+  state.data.view = view;
+}
+
+// Continue button on a loading screen — mutates two pieces of state and
+// kicks off an external (Tauri) command.
+function lsContinueToWorldView({ state }) {
+  state.data.loadingProgress = { current: 0, total: 0, label: "" };
+  state.data.view = "WorldView";
+  invoke("world_view_bake_phase_art")
+    .catch((err) => console.error(err));
+}
+```
+
+Wiring in a template:
+
+```js
+`<button :click=go(view="Settings")>Settings</button>`
+`<button :click=lsContinueToWorldView()>Continue →</button>`
+```
+
+### Rules of thumb
+
+- **Mutate state directly.** `state.data.foo = bar`. The proxy marks `foo` dirty; no extra step.
+- **Args arrive coerced to their type.** Unquoted numbers and `true`/`false` become numbers/booleans, quoted values stay strings, and `{{path}}` resolves from state. See [Attribute & argument coercion](#attribute--argument-coercion).
+- **Async work is fine.** Methods can `await` and dispatch more mutations later. State Street picks them up on the next frame.
+
+---
+
+## Reactivity model
+
+The hot loop, end to end:
+
+1. **Mutation.** Your code (a method, a listener, anywhere) does `state.data.foo = bar`.
+2. **Proxy set trap fires.** The set handler stores the new value AND calls the constructor-provided `onMutate("foo")` callback.
+3. **`onMutate` flips dirty.** `state.dirty = true; state.dirtyKeys.add("foo")`.
+4. **Render loop ticks.** On the next `requestAnimationFrame`, if enough time has elapsed for the target FPS, `updateDom(state)` runs.
+5. **Dep gating.** For each `[ssct]` component wrapper in the DOM (outer → inner, including nested ones), the scheduler checks whether the component's recorded deps intersect with `dirtyKeys`. If not, skip.
+6. **Re-render the survivors.** Each surviving component function runs against a fresh dep-tracking proxy. If its output matches last frame, nothing changes; otherwise the rebuilt wrapper element replaces the old one (`element.replaceWith(newElement)`).
+7. **Text + attr interpolations.** Any `{{path}}` outside of a component wrapper is updated if its source key is dirty.
+8. **Dirty cleared.** Until the next mutation.
+
+### Nested mutations
+
+Nested objects are wrapped on read and cached via `WeakMap`. So:
+
+```js
+state.data.scene.beatCount = 3;
+```
+
+walks: get `scene` (returns a cached wrapper proxy) → set `beatCount = 3` → calls `onMutate("scene")` (the root key, not `scene.beatCount`). Every component reading `scene` re-runs.
+
+---
+
+## Render scheduling + the `<ssct>` wrapper
+
+Every component rendered into the DOM is wrapped:
+
+```html
+<div ssid="012" ssct="Counter">
+  <p>Count: 3</p>
+  <button>+1</button>
+</div>
+```
+
+- `ssid` is the component's hierarchical instance path — the parent's path plus this child's index (e.g. `"0"`, `"01"`, `"012"`), used internally for dep tracking and node reuse.
+- `ssct` (State Street Component Tag) names the component and is the selector the update loop uses to find re-render candidates.
+
+### CSS rule
+
+Add this rule once, anywhere in your stylesheet, so the wrapper doesn't disturb your flex/grid layouts:
+
+```css
+[ssct] { display: contents; }
+```
+
+`display: contents` makes the element disappear from the layout tree while keeping its children in the parent's flex/grid flow. The wrapper still exists in the DOM (so dep tracking works), but it has no layout effect.
+
+### Update loop pseudocode
+
+```
+on each requestAnimationFrame:
+  drain image warm queue
+  if !state.dirty or not yet time for next update: return
+  for each [ssct] element in DOM (outer → inner):
+    if !element.isConnected: continue          // already replaced by an ancestor this tick
+    rec = componentMap[element.ssid]
+    if rec.deps ∩ state.dirtyKeys is non-empty:
+      capture scroll + focus inside this subtree
+      newElement = constructElement(rec.node)   // re-runs rec.fn under a fresh proxy
+      if newElement differs from element:       // identical output short-circuits
+        element.replaceWith(newElement)
+        restore scroll + focus
+  update standalone {{interpolation}} text + attr nodes
+  clear dirty
+```
+
+The actual code lives in `src/State/updateDom.ts` — under 200 lines.
+
+---
+
+## Image cache
+
+State Street ships with an automatic base64 → blob URL converter for `<img>` elements. Base64 data URIs decode slowly and are heavy on memory; blob URLs are fast.
+
+### Automatic behavior
+
+Whenever you render an `<img src="data:image/png;base64,…">`, State Street swaps the `src` with a cached blob URL. Subsequent renders of the same data URI reuse the cached blob. The cache is bounded by `imgMemoryBudget` (default 256 MB); LRU eviction kicks in over that, skipping any blob still in the DOM.
+
+### Opt out per image
+
+If you need the raw data URI (e.g. you're going to download it), add `nocache`:
+
+```js
+`<img src="${b64}" nocache/>`
+```
+
+### Pre-warming
+
+If you know which images will appear soon, call `state.warmImages([dataUri1, dataUri2, …])`. State Street queues them and decodes a few per idle frame (controlled by `imgWarmPerFrame`, default 4).
+
+```js
+// In a route change or pagination handler:
+state.warmImages(nextPage.thumbnails);
+```
+
+---
+
+## Patterns from production
+
+Patterns this library's users converged on after substantial real-world use.
+
+### 1. Spread to update a top-level key
+
+This is the canonical mutation pattern — produces a fresh top-level reference, marks the key dirty, no surprises:
+
+```js
+const wv = state.data.worldView || {};
+state.data.worldView = {
+  ...wv,
+  selectedCastId: id,
+};
+```
+
+The set handler unwraps the top-level value (it stores the plain object you provided). The proxy doesn't deepen on this idiom.
+
+### 2. Direct mutation for high-frequency updates
+
+For events that fire many times per second — token streams, animation frames, polling — the spread idiom can compound proxy depth on nested keys and eventually overflow the JS call stack. Mutate the target field directly:
+
+```js
+// 50–300 events per second from an LLM token stream.
+function onToken(event) {
+  const p = event.payload || {};
+  const sc = state.data.scene;
+  if (!sc) return;
+  const streamingLines = { ...(sc.streamingLines || {}) };
+  streamingLines[p.seq] = (streamingLines[p.seq] || "") + p.delta;
+  sc.streamingLines = streamingLines;   // direct mutation; no full-scene spread
+}
+```
+
+**Why:** `state.data.scene = { ...sc, streamingLines }` reads every key of `sc` through the proxy. Each nested object value comes back as a fresh wrapper. The state setter stores the new plain object — but the wrappers it contains accumulate one extra layer per call. After enough events, any nested read overflows the stack.
+
+Direct field mutation (`sc.streamingLines = newMap`) reuses the existing top-level proxy and never spreads it, so no chain grows.
+
+### 3. Helpers are just functions
+
+State Street has no built-in "helpers" concept. A helper is a plain function in scope:
+
+```js
+function padTilesOnce(rawTiles, count) {
+  const out = (rawTiles || []).slice();
+  while (out.length < count) {
+    out.push({ kind: "color", color: randomTileColor() });
+  }
+  return out;
+}
+
+function HomeTiles({ state }) {
+  const padded = padTilesOnce(state.data.sceneTilesRaw, 12);
+  return `<div class="tiles">${padded.map(renderTile).join("")}</div>`;
+}
+```
+
+If you want a shared namespace across many components (typical in a registry-style app), expose helpers on your registry object (see [the registry pattern](#the-registry-pattern--full-reference)).
+
+### 4. The IIFE wrapper
+
+In multi-file registry-style apps, every file is typically wrapped in an immediately-invoked function expression:
+
+```js
+(function () {
+  function MyComponent({ state }) { /* ... */ }
+  MY_APP.registerComponents({ MyComponent });
+})();
+```
+
+The IIFE keeps each file's private helpers and constants out of the global scope. Registrations still happen at file-load time via the closures over `MY_APP`. Order matters within a load order, but State Street resolves components / methods live at render / event time, so you can override registrations from later files.
+
+---
+
+## The registry pattern — full reference
+
+The registry style isn't part of State Street's core; it's a ~100-line boilerplate you copy into your project. It gives you:
+
+- **Late binding** — register components and methods after the page boots.
+- **Override semantics** — later registrations replace earlier ones (mods, themes, plugins).
+- **Multi-file structure** — each file owns its own slice of the app.
+
+### The boilerplate
+
+```js
+// my-app/core.js — load FIRST (after the State Street global), before anything else.
+(function () {
+  "use strict";
+
+  function deepMerge(target, src) {
+    for (const k in src) {
+      const sv = src[k];
+      const tv = target[k];
+      if (sv && typeof sv === "object" && !Array.isArray(sv)
+          && tv && typeof tv === "object" && !Array.isArray(tv)) {
+        deepMerge(tv, sv);
+      } else {
+        target[k] = sv;
+      }
     }
-    ...
-    window.onload = () => {
-        new State(template, data, components, methods, /*options*/ { renderLoop: false });
-    }
-    ```
+    return target;
+  }
+
+  const MY_APP = {
+    // ----- live registries (passed to `new State`) -----
+    State: window.State,
+    components: {},
+    methods: {},
+    helpers: {},
+    listeners: {},
+    startup: [],
+    dataExtensions: [],
+    baseDataFactory: null,
+    template: "<AppRoot/>",
+    app: null,
+
+    // ----- registration hooks -----
+    registerComponent(name, fn) {
+      if (this.components[name]) console.info(`[MY_APP] overriding component "${name}"`);
+      this.components[name] = fn;
+    },
+    registerComponents(obj) {
+      for (const k in obj) this.registerComponent(k, obj[k]);
+    },
+    registerMethod(name, fn) {
+      if (this.methods[name]) console.info(`[MY_APP] overriding method "${name}"`);
+      this.methods[name] = fn;
+    },
+    registerMethods(obj) {
+      for (const k in obj) this.registerMethod(k, obj[k]);
+    },
+    registerHelper(name, val) { this.helpers[name] = val; },
+    registerHelpers(obj) { for (const k in obj) this.helpers[k] = obj[k]; },
+
+    // External events (e.g. Tauri, WebSocket, EventTarget). Override-friendly.
+    registerListener(eventName, fn) {
+      if (this.listeners[eventName]) console.info(`[MY_APP] overriding listener "${eventName}"`);
+      this.listeners[eventName] = fn;
+    },
+
+    // Fire-once init run after boot() builds the app.
+    registerStartup(fn) { if (typeof fn === "function") this.startup.push(fn); },
+
+    // Initial state factory (lazy so it can read previously-registered helpers).
+    setBaseData(factory) { this.baseDataFactory = factory; },
+
+    // Mods append top-level state slices. Deep-merged into the factory's output.
+    extendData(ext) { this.dataExtensions.push(ext); },
+
+    // ----- boot: assemble + start State -----
+    boot() {
+      if (!this.State) {
+        throw new Error("[MY_APP] window.State missing — load state-street.global.js first");
+      }
+      const data = this.baseDataFactory ? this.baseDataFactory() : {};
+      for (const ext of this.dataExtensions) {
+        const patch = typeof ext === "function" ? ext(data) : ext;
+        if (patch && typeof patch === "object") deepMerge(data, patch);
+      }
+      this.app = new this.State(this.template, data, this.components, this.methods);
+      // Wire your external event source here. Example for Tauri:
+      // for (const key in this.listeners) tauri.event.listen(key, this.listeners[key]);
+      for (const fn of this.startup) {
+        try { fn(); } catch (e) { console.error("[MY_APP] startup hook threw:", e); }
+      }
+      return this.app;
+    },
+  };
+
+  window.MY_APP = MY_APP;
+})();
+```
+
+### Hook reference
+
+| Hook | Purpose |
+|---|---|
+| `setBaseData(factory)` | Register the initial state factory. Lazy — runs at `boot()` so it can read previously-registered helpers. |
+| `registerComponent(name, fn)` / `registerComponents(obj)` | Add to the components registry. Subsequent registrations of the same name override (with a console.info). |
+| `registerMethod(name, fn)` / `registerMethods(obj)` | Same shape for methods. |
+| `registerHelper(name, val)` / `registerHelpers(obj)` | Shared utility namespace any component or method can read off `MY_APP.helpers`. |
+| `registerListener(eventName, fn)` | Bind a non-DOM event handler (Tauri events, WebSocket messages, EventTarget…). Override-friendly. |
+| `registerStartup(fn)` | Fire-once init hook run after `boot()` builds the app and listeners are wired. |
+| `extendData(patch \| (data) => patch)` | Mods append extra top-level state slices. Deep-merged into the factory's output. |
+| `boot()` | Assemble: run the data factory, apply data extensions, `new State(template, data, components, methods)`, wire listeners, run startup hooks. Returns the live `State` instance. |
+
+### Usage
+
+```js
+// base_data.js
+MY_APP.setBaseData(() => ({
+  title: "My App",
+  view: "Home",
+  user: null,
+}));
+
+// components/home.js
+(function () {
+  function Home({ state }) {
+    return `<h1>Hello, ${state.data.user?.name || "stranger"}!</h1>`;
+  }
+  MY_APP.registerComponents({ Home });
+})();
+
+// methods/auth.js
+(function () {
+  MY_APP.registerMethods({
+    logIn:  ({ state, name }) => { state.data.user = { name }; },
+    logOut: ({ state }) => { state.data.user = null; },
+  });
+})();
+
+// boot.js (last)
+MY_APP.boot();
+```
+
+### Mod / plugin override example
+
+Once `MY_APP.boot()` has run, any subsequent `registerComponent` / `registerMethod` call replaces the previous registration. Because State Street resolves `state.components[name]` and `state.methods[name]` at render and event time, the override takes effect immediately:
+
+```js
+// mods/dark-theme.js — loaded after boot
+MY_APP.registerComponents({
+  Home: ({ state }) =>
+    `<h1 class="dark">Hello, ${state.data.user?.name || "stranger"}!</h1>`,
+});
+```
+
+The next state mutation triggers an update, the update loop re-resolves `state.components.Home`, and the new version runs. No reload required.
+
+---
+
+## Gotchas
+
+A short list of things this library's users have hit. Read once, save yourself an evening.
+
+### Top-level-key gating is the gating
+
+`state.data.user.age = 22` marks `user` dirty. Every component reading any part of `user` re-runs. There is no `user.age` granularity. If you want finer reactivity, split: `state.data.userName`, `state.data.userAge`. Most apps don't need to.
+
+### `:click=method()` requires parentheses
+
+`:click=method` is silently parsed as a regular HTML attribute. Always include the parens, even when there are no arguments.
+
+```js
+// ❌ Does nothing.
+`<button :click=submit>Save</button>`
+
+// ✅
+`<button :click=submit()>Save</button>`
+```
+
+### Don't spread the proxy in high-frequency listeners
+
+The convenient `state.data.scene = { ...state.data.scene, x }` pattern can compound proxy layers on nested keys when called dozens or hundreds of times per second. Use [direct mutation](#2-direct-mutation-for-high-frequency-updates) for streams, animation frames, and per-token handlers. The spread pattern is fine for one-shot events (clicks, form submits, route changes).
+
+### Components must return a single root element
+
+A component that returns `"<p>hi</p><p>bye</p>"` confuses the wrapper logic. Wrap in one element:
+
+```js
+return `<div>${rows}</div>`;
+```
+
+(The `<ssct>` wrapper is your one root — but the children inside must form a single tree.)
+
+### `display: contents` isn't free everywhere
+
+`[ssct] { display: contents; }` is essential, but a few older browsers don't support it perfectly (accessibility tree issues in particular). Modern Chromium / Firefox / Safari are fine. If you target ancient browsers, you may need to live with the wrapper's default `display: block`.
+
+### State setter replaces the whole tree
+
+`state.data = newObject` is supported but marks **every** top-level key in `newObject` dirty and re-renders the whole app. Use it for resets / hot reloads, not for normal updates.
+
+### Methods always need `()` even with `state`-only args
+
+State Street injects `state` and `event` into every method call automatically — but only when the directive uses the call syntax. `:click=method` is not a call.
+
+---
+
+## Tooling
+
+### VSCode syntax highlighting
+
+There's an official VSCode plugin for State Street templates:
+
+- [**State Street SST**](https://marketplace.visualstudio.com/items?itemName=beetnick82.vscode-sst)
+
+After installing, any TypeScript or JavaScript files with the sub-extension `.sst` (e.g. `counter.sst.js`, `home.sst.ts`) have their template-literal strings treated as State Street templates, which gives you HTML highlighting + completion inside the templates.
+
+### Recommended file structure (registry style)
+
+```
+src/
+  core.js              ← registry boilerplate
+  base_data.js         ← setBaseData(...)
+  views/               ← *.sst.js, one component (or component group) per file
+  methods/             ← registerMethods(...)
+  listeners/           ← registerListener(...) for external events
+  helpers/             ← registerHelpers(...)
+  boot.js              ← MY_APP.boot()
+```
+
+In one Tauri narrative game running State Street, this layout currently runs ~21 view files, ~6 methods/listeners/helpers files, and ~37 JS files total — bootstrapping happens in under 50 ms.
+
+---
+
+## FAQ
+
+**Why no JSX?** Plain template strings work in any editor, in any test runner, with no build step. JSX needs a transpiler. This is a tradeoff State Street picks.
+
+**Why no virtual DOM?** Top-level-key dep gating + outerHTML replacement on the component wrapper is fast enough for the apps State Street targets. There's no per-element diff — just "did this component's tracked state change? If so, re-render its subtree."
+
+**Can I use TypeScript?** Yes — the source is TypeScript. The reactive proxy types as `any` (a proxy fundamentally can't be type-checked at compile time without significant ceremony). Wrap your own typed accessors if you want stricter types in your app.
+
+**How big is it?** ~10 KB minified. Zero runtime dependencies.
+
+**Does it work in Node?** Not directly — it touches `document.body` and `requestAnimationFrame`. For testing components in Node, use jsdom or run in a browser. The reactive proxy logic itself is environment-agnostic.
+
+**Can I render to a specific container instead of `document.body`?** Not in the current version. The constructor mounts to `document.body` unconditionally. If you need this, open an issue.
+
+**What if I want server-side rendering?** State Street is a runtime reactivity layer — not currently aimed at SSR. Component functions return strings, so you could call them server-side to get HTML, but you'd lose reactivity at runtime.
+
+---
+
+## License
+
+ISC.
+
+---
+
+*Found a bug? Have a use case the docs don't cover? Open an issue on the [GitHub repo](https://github.com/Joshabracks/State-Street) or [join the Discord](https://discord.gg/a7AycPG2).*

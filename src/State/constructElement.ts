@@ -62,7 +62,10 @@ function constructElement(data: any, parentSSID: string, state: State) {
       return null;
     }
     const { trackedState, deps } = makeDepTracker(state);
-    const componentBody = component({state: trackedState, ...data?.componentProperties});
+    const cp = data?.componentProperties || {};
+    const props: any = {};
+    for (const k in cp) props[k] = cp[k] === undefined ? true : coerceArg(cp[k], trackedState);
+    const componentBody = component({state: trackedState, ...props});
     const rec = state.componentMap[currentSSID];
     if (rec && rec.lastBody === componentBody) {
       rec.deps = deps;

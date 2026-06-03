@@ -53,6 +53,7 @@ const TEMPLATE_STRING = /*html*/`
     <ImgReuseTest/>
     <AttrTest/>
     <GateOuter/>
+    <PropTest numberVal=478 booleanVal=true stringVal="this is a string" varVal={{total}}/>
 </body>
 `;
 
@@ -143,6 +144,12 @@ function GateInner({ state }) {
     return /*html*/`<div id="gateinner">inner: ${state.data.childVal}</div>`;
 }
 
+// Prop coercion test: unquoted number/boolean coerce; quoted stays string;
+// {{var}} resolves (and is reactive). Renders each value + its typeof.
+function PropTest({ numberVal, booleanVal, stringVal, varVal }) {
+    return /*html*/`<div id="proptest">n=${numberVal}/${typeof numberVal} b=${booleanVal}/${typeof booleanVal} s=${stringVal}/${typeof stringVal} v=${varVal}</div>`;
+}
+
 // State data for regular access/manipulation used to render and update the State template
 const data = {
     title: "State Street",
@@ -172,7 +179,7 @@ const methods = {
 }
 
 const components = {
-    TestComponent, Tab, ImgReuseTest, AttrTest, GateOuter, GateInner
+    TestComponent, Tab, ImgReuseTest, AttrTest, GateOuter, GateInner, PropTest
 }
 
 

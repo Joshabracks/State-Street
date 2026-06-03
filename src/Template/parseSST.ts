@@ -11,7 +11,7 @@ const REGEX = {
   CLOSE_TAG: /^<\/\w+>/,
   TEXT: /^[^<]+/,
   WHITE_SPACE_TRIM: /\n\s+/g,
-  ATTRIBUTE: /([\w-]+)(?:=(?:"((?:[^"\\]|\\.)*)"|'((?:[^'\\]|\\.)*)'|`((?:[^`\\]|\\.)*)`))?(?=[\s/>])/g,
+  ATTRIBUTE: /([\w-]+)(?:=("(?:[^"\\]|\\.)*"|'(?:[^'\\]|\\.)*'|`(?:[^`\\]|\\.)*`|[^\s/>"'`]+))?(?=[\s/>])/g,
   EVENT: /:(\w+)=(\w+)\(((?:"(?:[^"\\]|\\.)*"|'(?:[^'\\]|\\.)*'|`(?:[^`\\]|\\.)*`|[^)"'`])*)\)/g,
   PROP: /([\w-]+)\s*=\s*("(?:[^"\\]|\\.)*"|'(?:[^'\\]|\\.)*'|`(?:[^`\\]|\\.)*`|[^,]*)/g,
 };
@@ -34,14 +34,16 @@ function getAttributes(tag: string): any[] {
     .replace(/^<[\w:-]+\s*/, '')
     .replace(REGEX.EVENT, '')
     .replace(/\s+/g, ' ');
+  REGEX.ATTRIBUTE.lastIndex = 0;
   let attributesMatch = (cleanTag && REGEX.ATTRIBUTE.exec(cleanTag)) || null;
   const attributes = [];
   while (attributesMatch !== null) {
-    const attribute = {
-      name: attributesMatch[1],
-      value: attributesMatch[2] ?? attributesMatch[3] ?? attributesMatch[4],
-    };
-    attributes.push(attribute);
+    const raw = attributesMatch[2];
+    const q = raw && raw[0];
+    const value = raw === undefined ? undefined
+      : (q === '"' || q === "'" || q === '`') ? raw.slice(1, -1) // inner content; constructElement unescapes/decodes
+      : raw;                                                      // unquoted token
+    attributes.push({ name: attributesMatch[1], value, raw });
     attributesMatch = (cleanTag && REGEX.ATTRIBUTE.exec(cleanTag)) || null;
   }
   return attributes;
@@ -122,7 +124,7 @@ function getElements(data: string, components: any, pos: number, content: any[])
       if (isComponent) {
         element.componentName = tagName;
         element.componentProperties = getAttributes(elementString).reduce((res, val) => {
-          res[val.name] = val.value;
+          res[val.name] = val.raw;   // raw token (with quotes) so coercion can respect them
           return res;
         }, {});
       } else {

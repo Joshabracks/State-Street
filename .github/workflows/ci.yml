@@ -1,0 +1,80 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  lint-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      - run: npm run lint
+      - run: npm run build
+      - run: npm run build:umd
+      - run: npm test
+
+  release:
+    needs: lint-test
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write # create the GitHub release + tag
+      id-token: write # OIDC trusted publishing to npm (no NPM_TOKEN needed)
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      # Trusted publishing (OIDC) requires npm >= 11.5.1, newer than the npm
+      # bundled with Node 20.
+      - name: Upgrade npm for OIDC trusted publishing
+        run: npm install -g npm@latest
+
+      # Release only when package.json version changed vs the previous commit,
+      # so ordinary merges to main don't attempt a duplicate publish.
+      - name: Detect version bump
+        id: ver
+        run: |
+          CUR="$(node -p "require('./package.json').version")"
+          echo "version=$CUR" >> "$GITHUB_OUTPUT"
+          if git cat-file -e HEAD~1:package.json 2>/dev/null; then
+            git show HEAD~1:package.json > /tmp/prev-package.json
+            PREV="$(node -p "require('/tmp/prev-package.json').version")"
+          else
+            PREV=""
+          fi
+          if [ "$CUR" != "$PREV" ]; then
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+            echo "Version changed: ${PREV:-<none>} -> $CUR"
+          else
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+            echo "Version unchanged ($CUR); skipping release."
+          fi
+
+      - run: npm ci
+      - run: npm run build
+      - run: npm run build:umd
+
+      - name: Publish to npm
+        if: steps.ver.outputs.changed == 'true'
+        run: npm publish
+
+      - name: Create GitHub release with UMD bundle
+        if: steps.ver.outputs.changed == 'true'
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v${{ steps.ver.outputs.version }}
+          name: v${{ steps.ver.outputs.version }}
+          files: build/state-street.global.js
+          fail_on_unmatched_files: true

@@ -10,7 +10,7 @@ import { setImageMemoryBudget, enqueueWarm, processWarmQueue } from "./imageCach
  * @param data: object - Object containing dynamic variables for use in State.  If renderLoop option is not set to false, any changes made within the data object trigger re-rendering of the DOM where appropriate
  * @param methods: object - Object containing methods meant to be used via event listeners that are declared within the template's elements
  * @param options: object - Options for customizing State rendering behavior
- * renderLoop: boolean - Default: false - When set to true, the DOM automatically re-renders any time a variable within State.data is changed via State.update().  When set to false, State.update must be managed manually.
+ * renderLoop: boolean - Default: true - When true, an internal requestAnimationFrame loop calls State.update() automatically so the DOM re-renders whenever a variable within State.data changes.  When false, State.update() (or State.forceUpdate()) must be called manually.
  * targetFPS: number - Default: 60 - When set, will attempt to run updates at the target fps, if possible.  If not, updates will run at the highest refresh rate determined by the browser via requestAnimationFrame.
  * imgMemoryBudget: number - Default: 256MB - Maximum total bytes of cached image blobs. Base64 image src values are auto-converted to cached blob URLs (opt out per-image with the `nocache` attribute); least-recently-used blobs are revoked when over budget, except those still on the DOM.
  * targetFPS and imgMemoryBudget aside, imgWarmPerFrame: number - Default: 4 - How many queued images State.warmImages() converts/pre-decodes per frame.
