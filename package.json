@@ -1,20 +1,28 @@
 {
   "name": "@state-street/state-street",
-  "version": "1.3.1",
+  "version": "1.4.0",
   "description": "light weight single page framework",
   "main": "build/index.js",
+  "files": [
+    "build"
+  ],
   "scripts": {
     "build": "tsc",
     "build:watch": "tsc -w",
+    "build:umd": "rollup -c rollup.config.mjs",
     "lint": "eslint src --ext .ts",
     "test": "echo \"no test specified. \nCarry on?\""
   },
   "author": "",
   "license": "ISC",
   "devDependencies": {
+    "@rollup/plugin-commonjs": "^28.0.1",
+    "@rollup/plugin-node-resolve": "^15.3.0",
+    "@rollup/plugin-terser": "^0.4.4",
     "@types/node": "^20.10.7",
     "eslint": "^8.57.0",
     "eslint-config-prettier": "^9.1.0",
+    "rollup": "^4.24.0",
     "typescript": "^5.3.3",
     "typescript-eslint": "^7.1.0"
   }
