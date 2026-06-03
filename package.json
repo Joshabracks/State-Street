@@ -6,6 +6,12 @@
   "files": [
     "build"
   ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Joshabracks/State-Street.git"
+  },
+  "homepage": "https://github.com/Joshabracks/State-Street#readme",
+  "bugs": "https://github.com/Joshabracks/State-Street/issues",
   "scripts": {
     "build": "tsc",
     "build:watch": "tsc -w",
