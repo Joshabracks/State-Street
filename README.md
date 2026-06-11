@@ -69,13 +69,17 @@ import { State } from "@state-street/state-street";
 
 **Global script tag (no build step):**
 
-Grab `state-street.global.js` (a minified UMD build) from the [GitHub Releases](https://github.com/Joshabracks/State-Street/releases) page, or load it straight from a CDN — no download required:
+Every release ships a minified UMD build, `state-street.global.js`, that defines the global `State` (`window.State`). You can get it from any of these:
+
+- **GitHub Releases** — attached as a downloadable asset on each [release](https://github.com/Joshabracks/State-Street/releases) (e.g. the latest at [releases/latest](https://github.com/Joshabracks/State-Street/releases/latest)). Download it and host it yourself.
+- **jsDelivr CDN** — `https://cdn.jsdelivr.net/npm/@state-street/state-street/build/state-street.global.js`
+- **unpkg CDN** — `https://unpkg.com/@state-street/state-street/build/state-street.global.js`
 
 ```html
 <!-- self-hosted, next to your HTML -->
 <script src="state-street.global.js"></script>
 
-<!-- or via CDN -->
+<!-- or via CDN (jsDelivr) -->
 <script src="https://cdn.jsdelivr.net/npm/@state-street/state-street/build/state-street.global.js"></script>
 
 <script>
@@ -83,6 +87,9 @@ Grab `state-street.global.js` (a minified UMD build) from the [GitHub Releases](
   const app = new State(template, data, components, methods);
 </script>
 ```
+
+> **Pin a version in production.** The CDN URLs above always resolve to the latest published version. To lock to a specific release, add `@<version>` after the package name, e.g.
+> `https://cdn.jsdelivr.net/npm/@state-street/state-street@1.4.1/build/state-street.global.js`.
 
 If you use a bundler (webpack, esbuild, vite, rollup, …), the named export is `State`. The library has zero runtime dependencies, so the build is trivial.
 
