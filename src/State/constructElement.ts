@@ -165,6 +165,21 @@ function constructElement(data: any, parentSSID: string, state: State) {
   state.idMap[currentSSID] = element;
   element.setAttribute(SSID, currentSSID);
   if (reusable) state.nodeMap[currentSSID] = element;
+  // Raw element (RAWTEXT tag or `:raw`): its content was stashed verbatim by the
+  // parser. Plain raw -> literal textContent. `:raw=formatter` -> feed the text
+  // to the named method and use its return value as HTML (the formatter owns
+  // escaping/XSS). Attributes + events above still apply to raw elements.
+  if (data?.raw) {
+    const rawText = `${content[0] ?? ""}`;
+    if (data.rawFormatter) {
+      const fn = state.methods[data.rawFormatter];
+      if (fn) element.innerHTML = `${fn({ text: rawText, state })}`;
+      else { console.error(`invalid :raw formatter: ${data.rawFormatter}`); element.textContent = rawText; }
+    } else {
+      element.textContent = rawText;
+    }
+    return element;
+  }
   if (data?.selfClosing) {
     return element;
   }

@@ -1,36 +1,33 @@
-import type { Ctx } from "../types";
-
-const FEATURES: Array<{ no: string; title: string; body: string }> = [
-  { no: "01", title: "Reactive state", body: "Mutate a plain object. Only the components that actually read the changed key re-render." },
-  { no: "02", title: "No virtual DOM", body: "Components are functions that return HTML strings. What you write is what renders." },
-  { no: "03", title: "Dep-gating", body: "Tracking is per top-level key. A change touches just the subtree that depends on it." },
-  { no: "04", title: "Image cache", body: "Base64 sources become cached blob URLs automatically, with LRU eviction and pre-warming." },
-  { no: "05", title: "State preserved", body: "Scroll, focus and selection survive re-renders. Inputs, canvas and media are reused, not rebuilt." },
-  { no: "06", title: "No build required", body: "Plain template literals. TypeScript and a bundler are optional, never mandatory." },
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.Landing = void 0;
+const FEATURES = [
+    { no: "01", title: "Reactive state", body: "Mutate a plain object. Only the components that actually read the changed key re-render." },
+    { no: "02", title: "No virtual DOM", body: "Components are functions that return HTML strings. What you write is what renders." },
+    { no: "03", title: "Dep-gating", body: "Tracking is per top-level key. A change touches just the subtree that depends on it." },
+    { no: "04", title: "Image cache", body: "Base64 sources become cached blob URLs automatically, with LRU eviction and pre-warming." },
+    { no: "05", title: "State preserved", body: "Scroll, focus and selection survive re-renders. Inputs, canvas and media are reused, not rebuilt." },
+    { no: "06", title: "No build required", body: "Plain template literals. TypeScript and a bundler are optional, never mandatory." },
 ];
-
-const SPECS: Array<[string, string]> = [
-  ["Version", "2.0.0"],
-  ["Bundle size", "~10 kb min"],
-  ["Dependencies", "0"],
-  ["Module", "ESM + UMD"],
-  ["Renderer", "rAF loop, dep-gated"],
-  ["License", "ISC"],
+const SPECS = [
+    ["Version", "2.0.0"],
+    ["Bundle size", "~10 kb min"],
+    ["Dependencies", "0"],
+    ["Module", "ESM + UMD"],
+    ["Renderer", "rAF loop, dep-gated"],
+    ["License", "ISC"],
 ];
-
-const featureCard = (f: { no: string; title: string; body: string }): string => `
+const featureCard = (f) => `
   <div class="feature ticked">
     <span class="feature__no">[#${f.no}]</span>
     <div class="feature__title">${f.title}</div>
     <p class="feature__body">${f.body}</p>
   </div>`;
-
-const specRow = ([k, v]: [string, string]): string => `
+const specRow = ([k, v]) => `
   <div class="spec__row"><div class="spec__k">${k}</div><div class="spec__v">${v}</div></div>`;
-
 /** The landing page / index sheet. */
-export function Landing(_ctx: Ctx): string {
-  return `
+function Landing(_ctx) {
+    return `
     <section class="section hero">
       <div class="wrap stack">
         <div class="eyebrow">Cat. No. SS&middot;2.0.0 // single page framework</div>
@@ -74,7 +71,7 @@ export function Landing(_ctx: Ctx): string {
         <div class="grid grid--2">
           <CodeBlock label="Quick start" src="quickstart"/>
           <div class="stack">
-            <p>Hand <code>State</code> a template, some data, your components and methods. It mounts to <code><body></code> and keeps the DOM in sync on a requestAnimationFrame loop.</p>
+            <p>Hand <code>State</code> a template, some data, your components and methods. It mounts to <code>&lt;body&gt;</code> and keeps the DOM in sync on a requestAnimationFrame loop.</p>
             <div class="spec">
               ${SPECS.map(specRow).join("")}
             </div>
@@ -85,3 +82,5 @@ export function Landing(_ctx: Ctx): string {
     </section>
   `;
 }
+exports.Landing = Landing;
+//# sourceMappingURL=Landing.sst.js.map

@@ -1,5 +1,5 @@
 import type { Ctx } from "./types";
-import { snippets } from "./snippets";
+import { highlightSST } from "./highlight";
 // Routed through webpack's asset pipeline so it resolves in dev and prod.
 import logoUrl from "../static/sstlogo.png";
 
@@ -36,12 +36,11 @@ export const data: Record<string, any> = {
   logoUrl,
   // Live-demo state (landing page), proving the site runs on State Street.
   count: 0,
-  // Code samples, rendered verbatim via {{key}} interpolation (see snippets.ts).
-  ...snippets,
 };
 
-/** Methods wired to `:event=name()` directives in templates. */
-export const methods: Record<string, (ctx: Ctx) => void> = {
+/** Methods wired to `:event=name()` directives and `:raw=fn` formatters.
+ *  Event handlers return void; `:raw` formatters return an HTML string. */
+export const methods: Record<string, (ctx: Ctx) => void | string> = {
   // Hash-driven view switch — the canonical State Street "navigation" (no router).
   setView: ({ target, state }: Ctx) => {
     if (!VIEWS[target]) return;
@@ -52,4 +51,7 @@ export const methods: Record<string, (ctx: Ctx) => void> = {
   inc: ({ state }: Ctx) => { state.data.count++; },
   dec: ({ state }: Ctx) => { state.data.count--; },
   resetCount: ({ state }: Ctx) => { state.data.count = 0; },
+  // `:raw=highlightSST` formatter — syntax-highlights a code sample, returning
+  // HTML that the framework sets as the element's innerHTML (see highlight.ts).
+  highlightSST: ({ text }: Ctx) => highlightSST(text),
 };
