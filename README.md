@@ -23,7 +23,7 @@ Want to contribute or need help? [Join the State Street Discord!](https://discor
 - [Components](#components)
 - [Methods](#methods)
 - [Reactivity model](#reactivity-model)
-- [Render scheduling + the `<ssct>` wrapper](#render-scheduling--the-ssct-wrapper)
+- [Render scheduling + component marker ranges](#render-scheduling--component-marker-ranges)
 - [Image cache](#image-cache)
 - [Patterns from production](#patterns-from-production)
 - [The registry pattern — full reference](#the-registry-pattern--full-reference)
@@ -102,9 +102,6 @@ A counter app in one file:
 ```html
 <!doctype html>
 <html>
-<head>
-  <style>[ssct] { display: contents; }</style>
-</head>
 <body>
   <script src="state-street.global.js"></script>
   <script>
@@ -139,7 +136,7 @@ A counter app in one file:
 </html>
 ```
 
-That's the whole pattern. The constructor mounts to `document.body` automatically. `state.data.count += 1` marks the top-level `count` key dirty; on the next animation frame, the `<Counter/>` component re-runs and its rendered HTML replaces the wrapper's children.
+That's the whole pattern. The constructor mounts to `document.body` automatically. `state.data.count += 1` marks the top-level `count` key dirty; on the next animation frame, the `<Counter/>` component re-runs and its rendered nodes are swapped in place. The component adds no wrapper element to the DOM, so no special CSS is needed — `<Counter/>`'s `<p>` and `<button>`s are direct children of `<main>`.
 
 > **Heads up:** `:click=increment()` requires the parentheses, even with no arguments. `:click=increment` without parens is silently treated as a regular HTML attribute and the click does nothing.
 
@@ -152,7 +149,6 @@ The same app, written with a registration boilerplate. Useful when your app grow
 **index.html:**
 
 ```html
-<style>[ssct] { display: contents; }</style>
 <script src="state-street.global.js"></script>
 <script src="my-app/core.js"></script>              <!-- the registry boilerplate -->
 <script src="my-app/base_data.js"></script>         <!-- setBaseData(...) -->
@@ -222,7 +218,7 @@ Each component instance has its own dep-tracking proxy. While the component func
 
 ### 3. Components return strings
 
-A component is a plain function that returns a string of HTML. There is no virtual DOM and no per-element diff. When a component's tracked state goes dirty, the function re-runs; if its output is byte-identical to the previous frame the DOM is left untouched, otherwise its wrapper element is rebuilt and swapped in. (Plain reusable elements are reused and patched in place rather than recreated.)
+A component is a plain function that returns a string of HTML. There is no virtual DOM and no per-element diff. When a component's tracked state goes dirty, the function re-runs; if its output is byte-identical to the previous frame the DOM is left untouched, otherwise its rendered nodes are rebuilt and swapped in place (within a pair of invisible comment markers that bound the component — no wrapper element). (Plain reusable elements are reused and patched in place rather than recreated.)
 
 ```js
 function Greeting({ state, name }) {
@@ -232,7 +228,7 @@ function Greeting({ state, name }) {
 
 ### 4. `<Tag/>` vs `${Tag()}`
 
-Render components with the tag syntax `<Counter/>` so they get their own dep-tracking wrapper. **Don't** interpolate component output directly — `${Counter()}` inlines the string into the parent, which means the parent inherits the child's deps and re-runs whenever the child's state changes.
+Render components with the tag syntax `<Counter/>` so they get their own dep-tracked range. **Don't** interpolate component output directly — `${Counter()}` inlines the string into the parent, which means the parent inherits the child's deps and re-runs whenever the child's state changes.
 
 ```js
 // ✅ Good — Counter is its own dep-tracked subtree.
@@ -496,9 +492,9 @@ The hot loop, end to end:
 2. **Proxy set trap fires.** The set handler stores the new value AND calls the constructor-provided `onMutate("foo")` callback.
 3. **`onMutate` flips dirty.** `state.dirty = true; state.dirtyKeys.add("foo")`.
 4. **Render loop ticks.** On the next `requestAnimationFrame`, if enough time has elapsed for the target FPS, `updateDom(state)` runs.
-5. **Dep gating.** For each `[ssct]` component wrapper in the DOM (outer → inner, including nested ones), the scheduler checks whether the component's recorded deps intersect with `dirtyKeys`. If not, skip.
-6. **Re-render the survivors.** Each surviving component function runs against a fresh dep-tracking proxy. If its output matches last frame, nothing changes; otherwise the rebuilt wrapper element replaces the old one (`element.replaceWith(newElement)`).
-7. **Text + attr interpolations.** Any `{{path}}` outside of a component wrapper is updated if its source key is dirty.
+5. **Dep gating.** For each tracked component (outer → inner, including nested ones), the scheduler checks whether the component's recorded deps intersect with `dirtyKeys`. If not, skip.
+6. **Re-render the survivors.** Each surviving component function runs against a fresh dep-tracking proxy. If its output matches last frame, nothing changes; otherwise its rendered nodes are rebuilt and swapped in place between the component's comment markers.
+7. **Text + attr interpolations.** Any `{{path}}` outside of a component is updated if its source key is dirty.
 8. **Dirty cleared.** Until the next mutation.
 
 ### Nested mutations
@@ -513,29 +509,23 @@ walks: get `scene` (returns a cached wrapper proxy) → set `beatCount = 3` → 
 
 ---
 
-## Render scheduling + the `<ssct>` wrapper
+## Render scheduling + component marker ranges
 
-Every component rendered into the DOM is wrapped:
+A component adds **no wrapper element** to the DOM. Its rendered nodes become direct children of the parent, bracketed by a pair of invisible HTML comment markers:
 
 ```html
-<div ssid="012" ssct="Counter">
-  <p>Count: 3</p>
-  <button>+1</button>
-</div>
+<!--ss:012:Counter-->
+<p>Count: 3</p>
+<button>+1</button>
+<!--/ss:012-->
 ```
 
-- `ssid` is the component's hierarchical instance path — the parent's path plus this child's index (e.g. `"0"`, `"01"`, `"012"`), used internally for dep tracking and node reuse.
-- `ssct` (State Street Component Tag) names the component and is the selector the update loop uses to find re-render candidates.
+- The markers encode the component's hierarchical instance path (`ssid`) — the parent's path plus this child's index (e.g. `"0"`, `"01"`, `"012"`), used internally for dep tracking, node reuse, and as a stable re-render anchor.
+- Comment nodes are **not elements**, so they never affect CSS layout (grid/flex tracks, `min-height: 0` propagation, percentage heights) or structural selectors (`:nth-child`, `>`, `:first-child`). A component's real root element(s) sit exactly where you wrote `<Component/>`.
 
-### CSS rule
+### No CSS rule needed
 
-Add this rule once, anywhere in your stylesheet, so the wrapper doesn't disturb your flex/grid layouts:
-
-```css
-[ssct] { display: contents; }
-```
-
-`display: contents` makes the element disappear from the layout tree while keeping its children in the parent's flex/grid flow. The wrapper still exists in the DOM (so dep tracking works), but it has no layout effect.
+Earlier versions wrapped each component in a `<div>` and required you to add `[ssct] { display: contents; }` to undo its layout effect. That wrapper is gone — your CSS Grid / flexbox / percentage-height layouts and structural selectors apply directly to component output with no extra rule.
 
 ### Update loop pseudocode
 
@@ -543,16 +533,17 @@ Add this rule once, anywhere in your stylesheet, so the wrapper doesn't disturb 
 on each requestAnimationFrame:
   drain image warm queue
   if !state.dirty or not yet time for next update: return
-  for each [ssct] element in DOM (outer → inner):
-    if !element.isConnected: continue          // already replaced by an ancestor this tick
-    rec = componentMap[element.ssid]
+  for each component in componentMap (outer → inner, by ssid):
+    if start marker not connected: continue    // already removed by an ancestor this tick
+    if already rebuilt this tick: continue      // an ancestor recreated it
     if rec.deps ∩ state.dirtyKeys is non-empty:
-      capture scroll + focus inside this subtree
-      newElement = constructElement(rec.node)   // re-runs rec.fn under a fresh proxy
-      if newElement differs from element:       // identical output short-circuits
-        element.replaceWith(newElement)
+      capture scroll + focus inside this range
+      run rec.fn under a fresh proxy
+      if body differs from last frame:          // identical output short-circuits
+        replace the nodes between the markers in place
         restore scroll + focus
   update standalone {{interpolation}} text + attr nodes
+  prune component records whose range was removed
   clear dirty
 ```
 
@@ -843,19 +834,9 @@ A short list of things this library's users have hit. Read once, save yourself a
 
 The convenient `state.data.scene = { ...state.data.scene, x }` pattern can compound proxy layers on nested keys when called dozens or hundreds of times per second. Use [direct mutation](#2-direct-mutation-for-high-frequency-updates) for streams, animation frames, and per-token handlers. The spread pattern is fine for one-shot events (clicks, form submits, route changes).
 
-### Components must return a single root element
+### Components may return multiple root elements
 
-A component that returns `"<p>hi</p><p>bye</p>"` confuses the wrapper logic. Wrap in one element:
-
-```js
-return `<div>${rows}</div>`;
-```
-
-(The `<ssct>` wrapper is your one root — but the children inside must form a single tree.)
-
-### `display: contents` isn't free everywhere
-
-`[ssct] { display: contents; }` is essential, but a few older browsers don't support it perfectly (accessibility tree issues in particular). Modern Chromium / Firefox / Safari are fine. If you target ancient browsers, you may need to live with the wrapper's default `display: block`.
+A component can return any number of top-level nodes — `"<p>hi</p><p>bye</p>"` is fine. All of them become direct children of the parent, bracketed by the component's comment markers, and are re-rendered together as a range. Each top-level element must still be well-formed (its own children form a single tree).
 
 ### State setter replaces the whole tree
 
@@ -898,7 +879,7 @@ In one Tauri narrative game running State Street, this layout currently runs ~21
 
 **Why no JSX?** Plain template strings work in any editor, in any test runner, with no build step. JSX needs a transpiler. This is a tradeoff State Street picks.
 
-**Why no virtual DOM?** Top-level-key dep gating + outerHTML replacement on the component wrapper is fast enough for the apps State Street targets. There's no per-element diff — just "did this component's tracked state change? If so, re-render its subtree."
+**Why no virtual DOM?** Top-level-key dep gating + in-place replacement of a component's rendered range is fast enough for the apps State Street targets. There's no per-element diff — just "did this component's tracked state change? If so, re-render its subtree."
 
 **Can I use TypeScript?** Yes — the source is TypeScript. The reactive proxy types as `any` (a proxy fundamentally can't be type-checked at compile time without significant ceremony). Wrap your own typed accessors if you want stricter types in your app.
 

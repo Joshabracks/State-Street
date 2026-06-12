@@ -1,9 +1,8 @@
 import State from "./State.js";
 import { SSID } from "./const.js";
-import constructElement, { getValue, decodeEntities, unescapeQuotes } from "./constructElement.js";
+import constructElement, { getValue, decodeEntities, unescapeQuotes, runComponent, parseComponentBody } from "./constructElement.js";
 import { resolveImageSrc, isBase64DataUri } from "./imageCache.js";
 
-const ALL_COMPONENT_SELECTOR = "[ssct]";
 const scrolledSSIDs = new Set<string>();
 let scrollListenerInstalled = false;
 
@@ -92,27 +91,63 @@ function intersects(a: Set<string>, b: Set<string>): boolean {
   return false;
 }
 
+// Re-render a single component in place, within its existing comment-marker range.
+// Returns true if the DOM was mutated (so callers know to restore scroll/focus).
+function rebuildComponentRange(rec: any, ssid: string, state: State): boolean {
+  const result = runComponent(rec.node, state);
+  if (!result) return false;
+  const { componentBody, deps } = result;
+  rec.deps = deps;
+  // Body unchanged -> existing rendered nodes are already correct/in place. No DOM work.
+  if (rec.lastBody === componentBody) {
+    rec.tick = state.tick;
+    return false;
+  }
+  const parsedBody = parseComponentBody(componentBody, state);
+  const parent = rec.startMarker.parentNode;
+  if (!parent) return false;
+  // Build the fresh subtree first. constructElement transplants any reused nodeMap
+  // nodes (img/input/textarea/select/canvas/video/audio/iframe) out of the live
+  // range into this fragment via appendChild -- a move, not a destroy+recreate --
+  // so their value/checked/selection/pixels/playback survive.
+  const frag = document.createDocumentFragment();
+  for (let i = 0; i < parsedBody.length; i++) {
+    const subElement: any = constructElement(parsedBody[i], `${ssid}${i}`, state);
+    if (subElement) frag.appendChild(subElement);
+  }
+  // Remove the stale leftovers still between the markers, then insert the new nodes.
+  while (rec.startMarker.nextSibling && rec.startMarker.nextSibling !== rec.endMarker) {
+    parent.removeChild(rec.startMarker.nextSibling);
+  }
+  parent.insertBefore(frag, rec.endMarker);
+  rec.lastBody = componentBody;
+  rec.tick = state.tick;
+  return true;
+}
+
 function updateDOM(state: State) {
   ensureScrollListener();
-  // Visit every component (document order: outer -> inner) so nested components
-  // are independently dep-gated and updated in place.
-  const componentElements = document.querySelectorAll(ALL_COMPONENT_SELECTOR);
-  for ( let i  = 0; i < componentElements.length; i++) {
-    const element = componentElements[i];
-    // Skip nodes an ancestor's rebuild already replaced this tick.
-    if (!element.isConnected) continue;
-    const ssid: string = element.getAttribute(SSID) || '';
-    // Dep-gate: skip re-running a component whose tracked deps are all clean.
-    // (Value updates still flow via the textMap/attrMap passes below; descendants
-    // remain connected and are visited later in this same loop.)
+  state.tick++;
+  // Visit every component outer -> inner (a parent's ssid is a strict prefix of its
+  // children's, so sorting by length then lexicographically puts parents first) so
+  // nested components are independently dep-gated and updated in place.
+  const ssids = Object.keys(state.componentMap)
+    .sort((a, b) => a.length - b.length || (a < b ? -1 : a > b ? 1 : 0));
+  for (let i = 0; i < ssids.length; i++) {
+    const ssid = ssids[i];
     const rec = state.componentMap[ssid];
-    if (rec?.deps?.size && state.dirtyKeys.size && !intersects(rec.deps, state.dirtyKeys)) continue;
+    if (!rec) continue;
+    // Skip components an ancestor's rebuild already removed (markers detached) or
+    // already recreated (stamped with the current tick) this frame.
+    if (!rec.startMarker.isConnected) continue;
+    if (rec.tick === state.tick) continue;
+    // Dep-gate: skip re-running a component whose tracked deps are all clean.
+    // (Value updates still flow via the textMap/attrMap passes below.)
+    if (rec.deps?.size && state.dirtyKeys.size && !intersects(rec.deps, state.dirtyKeys)) continue;
     const stash = captureScroll(ssid, state);
     const focusSnap = captureFocus(ssid);
-    const newElement = constructElement(rec?.node, ssid, state)
-    if (newElement && newElement !== element) {
-      element.replaceWith(newElement);
-      if (rec) rec.element = newElement;
+    const changed = rebuildComponentRange(rec, ssid, state);
+    if (changed) {
       if (stash) restoreScroll(stash, state);
       if (focusSnap) restoreFocus(focusSnap, state);
     }
@@ -168,6 +203,13 @@ function updateDOM(state: State) {
   }
   for (const ssid in state.nodeMap) {
     if (!state.nodeMap[ssid].isConnected) delete state.nodeMap[ssid];
+  }
+  // Drop component records whose range was removed this frame (and not rebuilt),
+  // e.g. a conditional component that stopped rendering. Without the wrapper the
+  // map is iterated directly, so stale entries must be pruned to avoid leaking.
+  for (const ssid in state.componentMap) {
+    const r = state.componentMap[ssid];
+    if (!r.startMarker.isConnected && r.tick !== state.tick) delete state.componentMap[ssid];
   }
 }
 

@@ -30,6 +30,7 @@ export default class State {
   methods: any;
   renderLoop: boolean = true
   elementCount: number = 0
+  tick: number = 0
   targetFPS: number = 60
   nextUpdate: number = 0
   updateInterval: number = -1

@@ -1,5 +1,5 @@
 import State from "./State.js";
-import { SSID, SSCT } from "./const.js";
+import { SSID } from "./const.js";
 import { parseSST } from "../Template/parseSST.js";
 import { resolveImageSrc, isBase64DataUri } from "./imageCache.js";
 import { makeDepTracker } from "./trackDeps.js";
@@ -46,6 +46,33 @@ function coerceArg(raw: string, state: State): any {
   return value;
 }
 
+// Resolve a component reference, build its dep-tracking proxy + coerced props,
+// run the component function, and return its rendered body + tracked deps.
+// Shared by constructElement (mount / full rebuild) and updateDom's in-place rebuild.
+export function runComponent(data: any, state: State): { componentBody: string; deps: Set<string> } | null {
+  const component = state.components[data?.componentName];
+  if (!component) {
+    console.error(`invalid component: ${data?.componentName}`);
+    return null;
+  }
+  const { trackedState, deps } = makeDepTracker(state);
+  const cp = data?.componentProperties || {};
+  const props: any = {};
+  for (const k in cp) props[k] = cp[k] === undefined ? true : coerceArg(cp[k], trackedState);
+  const componentBody = component({ state: trackedState, ...props });
+  return { componentBody, deps };
+}
+
+// Parse a component body once and cache the resulting element tree.
+export function parseComponentBody(componentBody: string, state: State): any {
+  let parsedBody = parseCache.get(componentBody);
+  if (!parsedBody) {
+    parsedBody = parseSST(componentBody, state.components);
+    parseCache.set(componentBody, parsedBody);
+  }
+  return parsedBody;
+}
+
 function constructElement(data: any, parentSSID: string, state: State) {
   const currentSSID = `${parentSSID}`;
   const content = data?.content || [];
@@ -56,42 +83,26 @@ function constructElement(data: any, parentSSID: string, state: State) {
   }
   const tag = data?.type || "div";
   if (tag === "_component") {
-    const component = state.components[data?.componentName];
-    if (!component) {
-      console.error(`invalid component: ${data?.componentName}`);
-      return null;
-    }
-    const { trackedState, deps } = makeDepTracker(state);
-    const cp = data?.componentProperties || {};
-    const props: any = {};
-    for (const k in cp) props[k] = cp[k] === undefined ? true : coerceArg(cp[k], trackedState);
-    const componentBody = component({state: trackedState, ...props});
-    const rec = state.componentMap[currentSSID];
-    if (rec && rec.lastBody === componentBody) {
-      rec.deps = deps;
-      return rec.element ?? null;
-    }
-    let parsedBody = parseCache.get(componentBody);
-    if (!parsedBody) {
-      parsedBody = parseSST(componentBody, state.components);
-      parseCache.set(componentBody, parsedBody);
-    }
-    const subElements = [];
+    const result = runComponent(data, state);
+    if (!result) return null;
+    const { componentBody, deps } = result;
+    const parsedBody = parseComponentBody(componentBody, state);
+    // A component renders with no wrapper element. Instead its rendered nodes are
+    // delimited by a pair of comment markers, so the component's real root(s) become
+    // direct children of the parent (no layout/structural-selector interference).
+    // The markers are a stable re-render anchor even when the body renders nothing.
+    const startMarker = document.createComment(`ss:${currentSSID}:${data?.componentName}`);
+    const endMarker = document.createComment(`/ss:${currentSSID}`);
+    const frag = document.createDocumentFragment();
+    frag.appendChild(startMarker);
     for (let i = 0; i < parsedBody.length; i++) {
       const ssid = `${currentSSID}${i}`;
       const subElement: any = constructElement(parsedBody[i], ssid, state);
-      if (subElement) {
-        subElements.push(subElement);
-      }
+      if (subElement) frag.appendChild(subElement);
     }
-    const element = document.createElement("div");
-    element.setAttribute(SSID, currentSSID);
-    element.setAttribute(SSCT, data?.componentName);
-    subElements.forEach((subElement) => {
-      element.appendChild(subElement);
-    });
-    state.componentMap[currentSSID] = { node: data, lastBody: componentBody, deps, element };
-    return element;
+    frag.appendChild(endMarker);
+    state.componentMap[currentSSID] = { node: data, lastBody: componentBody, deps, startMarker, endMarker, tick: state.tick };
+    return frag;
   }
   const attributes = data?.attributes || [];
   const isImg = tag === "img";
