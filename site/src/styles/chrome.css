@@ -1,0 +1,331 @@
+/* ============================================================================
+   chrome.css — retro-futuristic "type-specimen" layout + motif classes.
+   Panels, registration ticks, barcodes, catalog numbers, ruled dividers,
+   spec sheets, plus the site shell (header / main / footer) layout.
+   ============================================================================ */
+
+/* --- Shell --------------------------------------------------------------- */
+.shell { display: flex; flex-direction: column; min-height: 100vh; }
+main { flex: 1 0 auto; }
+
+.wrap {
+  width: 100%;
+  max-width: var(--maxw);
+  margin-inline: auto;
+  padding-inline: var(--sp-5);
+}
+
+.section { padding-block: var(--sp-8); }
+.section + .section { border-top: 1px solid var(--line); }
+
+/* --- Site header --------------------------------------------------------- */
+.site-header {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  background: var(--ink);
+  color: var(--invert-fg);
+  /* Thin light underline so the dark header's black text/elements read as
+     separate from the page below instead of bleeding into it. */
+  border-bottom: 1px solid var(--invert-fg);
+}
+.site-header__bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-4);
+  height: 56px;
+}
+.brand { display: flex; align-items: center; gap: var(--sp-3); }
+/* Logo is ~2.77:1 (2010×725) — fix height, let width track the aspect ratio. */
+.brand__logo { height: 24px; width: auto; display: block; }
+.brand__mark {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: var(--fs-500);
+  text-transform: uppercase;
+  letter-spacing: 0.22em;
+  color: var(--invert-fg);
+}
+.brand__cat {
+  font-family: var(--font-mono);
+  font-size: var(--fs-300);
+  color: var(--accent-hi);
+  letter-spacing: 0.1em;
+}
+.nav { display: flex; align-items: center; gap: var(--sp-1); }
+.nav__link {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: var(--fs-400);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--invert-fg);
+  border: 1px solid transparent;
+  border-radius: var(--radius);
+  padding: var(--sp-1) var(--sp-3);
+  background: none;
+}
+.nav__link:hover { color: var(--accent-hi); border-color: var(--invert-faint); }
+.nav__link[aria-current="true"] {
+  color: var(--accent-ink);
+  background: var(--accent);
+  border-color: var(--accent);
+}
+
+/* --- Panels (printed label boxes) --------------------------------------- */
+.panel {
+  position: relative;
+  background: var(--paper-hi);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: var(--sp-5);
+}
+.panel--inset { background: var(--paper); }
+.panel__label {
+  position: absolute;
+  top: -0.72em;
+  left: var(--sp-4);
+  background: var(--paper-hi);
+  padding: 0 var(--sp-2);
+  font-family: var(--font-mono);
+  font-size: var(--fs-300);
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  color: var(--ink-faint);
+}
+
+/* Registration ticks on the four corners (technical drawing vibe) */
+.ticked { position: relative; }
+.ticked::before,
+.ticked::after {
+  content: "";
+  position: absolute;
+  width: var(--tick);
+  height: var(--tick);
+  border-color: var(--accent);
+  border-style: solid;
+}
+.ticked::before { top: -1px; left: -1px; border-width: 2px 0 0 2px; }
+.ticked::after  { bottom: -1px; right: -1px; border-width: 0 2px 2px 0; }
+
+/* --- Catalog number + tags ---------------------------------------------- */
+.cat-no {
+  font-family: var(--font-mono);
+  font-size: var(--fs-300);
+  letter-spacing: 0.12em;
+  color: var(--accent);
+}
+.tag {
+  display: inline-block;
+  font-family: var(--font-mono);
+  font-size: var(--fs-300);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  padding: 0.1em 0.55em;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  color: var(--ink-soft);
+}
+.tag--accent { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+.tag--signal { background: var(--signal); color: #fff; border-color: var(--signal); }
+
+/* --- Eyebrow + ruled dividers ------------------------------------------- */
+.eyebrow {
+  font-family: var(--font-mono);
+  font-size: var(--fs-300);
+  text-transform: uppercase;
+  letter-spacing: 0.24em;
+  color: var(--ink-faint);
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+}
+.eyebrow::after { content: ""; flex: 1; height: 1px; background: var(--line-soft); }
+
+.rule { height: 1px; background: var(--line); border: 0; }
+.rule--dotted { height: 0; border-top: 2px dotted var(--line-soft); background: none; }
+
+/* --- Barcode (pure CSS) -------------------------------------------------- */
+.barcode {
+  height: 38px;
+  width: 180px;
+  background-image: repeating-linear-gradient(
+    90deg,
+    var(--ink) 0, var(--ink) 2px,
+    transparent 2px, transparent 4px,
+    var(--ink) 4px, var(--ink) 5px,
+    transparent 5px, transparent 9px,
+    var(--ink) 9px, var(--ink) 12px,
+    transparent 12px, transparent 14px
+  );
+}
+.barcode--invert { background-color: transparent; }
+.barcode--invert.barcode { background-image: repeating-linear-gradient(
+    90deg,
+    var(--invert-fg) 0, var(--invert-fg) 2px,
+    transparent 2px, transparent 4px,
+    var(--invert-fg) 4px, var(--invert-fg) 5px,
+    transparent 5px, transparent 9px,
+    var(--invert-fg) 9px, var(--invert-fg) 12px,
+    transparent 12px, transparent 14px
+  );
+}
+
+/* --- Spec sheet (key/value technical table) ----------------------------- */
+.spec {
+  font-family: var(--font-mono);
+  font-size: var(--fs-400);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+.spec__row {
+  display: grid;
+  grid-template-columns: 12rem 1fr;
+}
+.spec__row + .spec__row { border-top: 1px solid var(--line-soft); }
+.spec__k {
+  background: var(--ink);
+  color: var(--invert-fg);
+  padding: var(--sp-2) var(--sp-3);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-size: var(--fs-300);
+}
+.spec__v { padding: var(--sp-2) var(--sp-3); display: flex; align-items: center; gap: var(--sp-2); }
+
+/* --- Grids --------------------------------------------------------------- */
+.grid { display: grid; gap: var(--sp-4); }
+.grid--2 { grid-template-columns: repeat(2, 1fr); }
+.grid--3 { grid-template-columns: repeat(3, 1fr); }
+.grid--auto { grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); }
+
+/* --- Feature card -------------------------------------------------------- */
+.feature {
+  position: relative;
+  background: var(--paper-hi);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: var(--sp-5);
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+}
+.feature__no { font-family: var(--font-mono); font-size: var(--fs-300); color: var(--accent); letter-spacing: 0.1em; }
+.feature__title { font-family: var(--font-display); font-weight: 700; font-size: var(--fs-600); text-transform: uppercase; }
+.feature__body { color: var(--ink-soft); font-size: var(--fs-400); }
+
+/* --- Hero ---------------------------------------------------------------- */
+.hero { padding-block: var(--sp-8) var(--sp-7); }
+.hero__wordmark {
+  font-family: var(--font-poster);
+  font-weight: 400;
+  font-size: var(--fs-wordmark);
+  line-height: 0.82;
+  text-transform: uppercase;
+  letter-spacing: -0.01em;
+  margin: var(--sp-4) 0;
+}
+.hero__wordmark span { color: var(--accent); -webkit-text-stroke: 0; }
+.hero__lead { font-size: var(--fs-700); max-width: 28ch; color: var(--ink-soft); }
+.hero__cta { display: flex; flex-wrap: wrap; gap: var(--sp-3); margin-top: var(--sp-5); align-items: center; }
+
+.btn--accent { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+.btn--accent:hover { background: var(--accent-hi); box-shadow: 3px 3px 0 var(--ink); }
+.btn--ghost { background: transparent; }
+
+/* Anchors styled as .btn must not inherit base.css `a:hover`, which would
+   otherwise tint the label to the accent button's hover background (making it
+   disappear) and recolor only the bottom border. The .btn `border` shorthand
+   already overrides the link underline, so keep all four borders intact. */
+.btn:hover, .btn:focus { color: var(--ink); border-color: var(--line); }
+.btn--ghost, .btn--ghost:hover { color: var(--ink); }
+.btn--accent, .btn--accent:hover, .btn--accent:focus { color: var(--accent-ink); border-color: var(--accent); }
+
+.install {
+  font-family: var(--font-mono);
+  font-size: var(--fs-400);
+  background: var(--invert-bg);
+  color: var(--invert-fg);
+  border-radius: var(--radius);
+  padding: var(--sp-2) var(--sp-4);
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+}
+.install::before { content: "$"; color: var(--accent-hi); }
+
+/* --- Code block (component) --------------------------------------------- */
+.code {
+  position: relative;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+.code__bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: var(--ink);
+  color: var(--invert-faint);
+  font-family: var(--font-mono);
+  font-size: var(--fs-300);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: var(--sp-2) var(--sp-3);
+}
+.code__bar b { color: var(--invert-fg); font-weight: 500; }
+.code pre { border-radius: 0; margin: 0; }
+
+/* --- Live demo ----------------------------------------------------------- */
+.demo {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-4);
+  flex-wrap: wrap;
+}
+.demo__count {
+  font-family: var(--font-poster);
+  font-size: clamp(3rem, 8vw, 5rem);
+  line-height: 1;
+  min-width: 2.2ch;
+  text-align: center;
+  color: var(--accent);
+}
+
+/* --- Footer -------------------------------------------------------------- */
+.site-footer {
+  background: var(--ink);
+  color: var(--invert-fg);
+  border-top: 2px solid var(--ink);
+  margin-top: var(--sp-8);
+}
+.site-footer a { color: var(--invert-fg); border-bottom-color: var(--invert-faint); }
+.site-footer a:hover { color: var(--accent-hi); }
+.site-footer__grid {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--sp-5);
+  flex-wrap: wrap;
+  padding-block: var(--sp-6);
+}
+.site-footer__meta { font-family: var(--font-mono); font-size: var(--fs-300); color: var(--invert-faint); letter-spacing: 0.06em; }
+
+/* --- Utility ------------------------------------------------------------- */
+.stack > * + * { margin-top: var(--sp-4); }
+.stack-lg > * + * { margin-top: var(--sp-6); }
+.muted { color: var(--ink-faint); }
+.mono { font-family: var(--font-mono); }
+.center { text-align: center; }
+.flex { display: flex; gap: var(--sp-3); align-items: center; flex-wrap: wrap; }
+.swatch { height: 56px; border-radius: var(--radius); border: 1px solid var(--line); }
+
+/* --- Responsive ---------------------------------------------------------- */
+@media (max-width: 760px) {
+  .grid--2, .grid--3 { grid-template-columns: 1fr; }
+  .spec__row { grid-template-columns: 8rem 1fr; }
+  .nav__link { padding: var(--sp-1) var(--sp-2); }
+  .brand__cat { display: none; }
+}

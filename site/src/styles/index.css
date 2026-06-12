@@ -1,0 +1,5 @@
+/* Single CSS entry — imported once from src/index.ts.
+   Order matters: tokens first, then base element styles, then chrome motifs. */
+@import "./tokens.css";
+@import "./base.css";
+@import "./chrome.css";
