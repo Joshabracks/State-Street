@@ -1,5 +1,6 @@
 import type { Ctx } from "../types";
 import { NAV } from "../state";
+import { LOGO_SVG } from "./logo";
 
 /**
  * Sticky site header: brand mark + catalog stamp + hash-nav.
@@ -18,7 +19,7 @@ export function SiteHeader({ state }: Ctx): string {
     <header class="site-header">
       <div class="wrap site-header__bar">
         <div class="brand">
-          <img class="brand__logo" src="{{logoUrl}}" alt="State Street logo" width="67" height="24"/>
+          ${LOGO_SVG}
           <span class="brand__mark">State Street</span>
           <span class="brand__cat">[SS&middot;2.0.0]</span>
         </div>

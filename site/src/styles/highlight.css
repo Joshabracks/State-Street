@@ -4,15 +4,15 @@
    grammar's scope categories.
    ============================================================================ */
 
-.code pre code .hl-comment { color: var(--invert-faint); font-style: italic; }
-.code pre code .hl-keyword { color: #e8b14c; }                 /* import/const/new/return… */
-.code pre code .hl-string  { color: #b7c47a; }                 /* '…' "…" `…` */
-.code pre code .hl-number  { color: #e8915a; }
-.code pre code .hl-tag     { color: #7fa6c4; }                 /* <div> … </div> + brackets */
-.code pre code .hl-comp    { color: #8aa2ee; font-weight: 600; } /* <Component/> */
-.code pre code .hl-attr    { color: #c8cbbf; }                 /* attribute names */
-.code pre code .hl-event   { color: var(--accent-hi); }        /* :click */
-.code pre code .hl-fn      { color: #e8b14c; }                 /* method / function names */
-.code pre code .hl-interp  { color: var(--accent-hi); }        /* {{ }} braces */
-.code pre code .hl-var     { color: #f0ede2; }                 /* path inside {{ }} */
-.code pre code .hl-punct   { color: var(--invert-faint); }     /* ${ } and tag operators */
+.code pre .hl-comment { color: var(--invert-faint); font-style: italic; }
+.code pre .hl-keyword { color: #e8b14c; }                 /* import/const/new/return… */
+.code pre .hl-string  { color: #b7c47a; }                 /* '…' "…" `…` */
+.code pre .hl-number  { color: #e8915a; }
+.code pre .hl-tag     { color: #7fa6c4; }                 /* <div> … </div> + brackets */
+.code pre .hl-comp    { color: #8aa2ee; font-weight: 600; } /* <Component/> */
+.code pre .hl-attr    { color: #c8cbbf; }                 /* attribute names */
+.code pre .hl-event   { color: var(--accent-hi); }        /* :click */
+.code pre .hl-fn      { color: #e8b14c; }                 /* method / function names */
+.code pre .hl-interp  { color: var(--accent-hi); }        /* {{ }} braces */
+.code pre .hl-var     { color: #f0ede2; }                 /* path inside {{ }} */
+.code pre .hl-punct   { color: var(--invert-faint); }     /* ${ } and tag operators */

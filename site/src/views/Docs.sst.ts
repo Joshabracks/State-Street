@@ -1,23 +1,54 @@
 import type { Ctx } from "../types";
+import { DOC_GROUPS, DOC_GROUP_MAP, DEFAULT_DOC_GROUP } from "../docs/groups";
 
-/** Placeholder — built out in Phase 2 (Docs). */
+/** Docs shell: sidebar (groups) · content · TOC. Reads nothing, so it never
+ *  re-renders; the three children each read docGroup and re-render on switch. */
 export function Docs(_ctx: Ctx): string {
   return `
-    <section class="section">
-      <div class="wrap stack">
-        <div class="eyebrow">Section 02 // documentation</div>
-        <h1>Docs</h1>
-        <div class="panel ticked stack">
-          <span class="panel__label">status // pending</span>
-          <p>The full documentation is being typeset for <strong>Phase 2</strong>. It will be authored as <code>.sst.ts</code> pages sourced from the README: core concepts, template syntax, the <code>State</code> API, components, reactivity, the image cache, patterns and gotchas.</p>
-          <p class="muted">In the meantime, the canonical reference is the <a href="https://github.com/Joshabracks/State-Street#readme">project README</a>.</p>
-          <div class="flex">
-            <span class="tag tag--accent">Phase 2</span>
-            <span class="tag">sidebar nav</span>
-            <span class="tag">api reference</span>
-          </div>
-        </div>
-      </div>
-    </section>
+    <div class="docs-layout">
+      <DocsSidebar/>
+      <div class="docs-main"><DocsContent/></div>
+      <DocsToc/>
+    </div>
+  `;
+}
+
+/** Left rail: one link per docs group, active one highlighted. */
+export function DocsSidebar({ state }: Ctx): string {
+  const cur = state.data.docGroup || DEFAULT_DOC_GROUP;
+  const links = DOC_GROUPS.map(
+    (g) =>
+      `<a class="docs-nav__link" href="#docs/${g.key}" aria-current="${g.key === cur}" :click=setDocGroup(group=${g.key})>${g.label}</a>`
+  ).join("");
+  return `
+    <aside class="docs-sidebar">
+      <div class="eyebrow">Docs // SS&middot;2.0.0</div>
+      <nav class="docs-nav">${links}</nav>
+    </aside>
+  `;
+}
+
+/** Content pane: dispatch the active group's page component. Reads only docGroup. */
+export function DocsContent({ state }: Ctx): string {
+  const g = DOC_GROUP_MAP[state.data.docGroup] || DOC_GROUP_MAP[DEFAULT_DOC_GROUP];
+  return `<${g.component}/>`;
+}
+
+/** Right rail: "on this page" TOC for the active group, with scroll-spy highlight. */
+export function DocsToc({ state }: Ctx): string {
+  const g = DOC_GROUP_MAP[state.data.docGroup] || DOC_GROUP_MAP[DEFAULT_DOC_GROUP];
+  const active = state.data.docActiveSection;
+  const items = g.sections
+    .map(
+      (s) =>
+        `<button class="docs-toc__link" aria-current="${s.id === active}" :click=docScrollTo(id=${s.id})>${s.label}</button>`
+    )
+    .join("");
+  return `
+    <aside class="docs-toc">
+      <div class="docs-toc__label">On this page</div>
+      <nav>${items}</nav>
+      <a class="docs-toc__readme" href="https://github.com/Joshabracks/State-Street#readme" target="_blank" rel="noopener">Full README &#8599;</a>
+    </aside>
   `;
 }

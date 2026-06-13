@@ -37,8 +37,13 @@ main { flex: 1 0 auto; }
   height: 56px;
 }
 .brand { display: flex; align-items: center; gap: var(--sp-3); }
-/* Logo is ~2.77:1 (2010×725) — fix height, let width track the aspect ratio. */
-.brand__logo { height: 24px; width: auto; display: block; }
+/* Inline SVG logo (viewBox 483×174 ≈ 2.78:1) — fix height, width tracks the ratio. */
+.brand__logo { height: 26px; width: auto; display: block; }
+/* Source art is two-tone: the default-fill paths are the badge/fill, the #FFFFFF
+   paths are the letterforms. Recolor: fill -> the version-stamp orange, text -> white.
+   CSS `fill` overrides the SVG presentation attribute. */
+.brand__logo path { fill: var(--accent-hi); }
+.brand__logo path[fill="#FFFFFF"] { fill: #fff; }
 .brand__mark {
   font-family: var(--font-display);
   font-weight: 700;
