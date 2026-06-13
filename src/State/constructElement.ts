@@ -9,6 +9,25 @@ const cleanerRegex = /{{(.*)}}/;
 
 const REUSABLE_TAGS = new Set(["img", "input", "textarea", "select", "canvas", "video", "audio", "iframe"]);
 
+const SVG_NS = "http://www.w3.org/2000/svg";
+const MATHML_NS = "http://www.w3.org/1998/Math/MathML";
+const XLINK_NS = "http://www.w3.org/1999/xlink";
+const XML_NS = "http://www.w3.org/XML/1998/namespace";
+
+// Set an attribute, honoring the xlink:/xml: namespaces (e.g. SVG `xlink:href`).
+// A namespaced attribute set via plain setAttribute lands in the null namespace
+// and is ignored by SVG; getAttribute/removeAttribute match by qualified name, so
+// only the *set* needs to be namespace-aware.
+export function setAttr(element: any, name: string, value: string) {
+  const ci = name.indexOf(":");
+  if (ci > 0) {
+    const prefix = name.slice(0, ci);
+    if (prefix === "xlink") { element.setAttributeNS(XLINK_NS, name, value); return; }
+    if (prefix === "xml") { element.setAttributeNS(XML_NS, name, value); return; }
+  }
+  element.setAttribute(name, value);
+}
+
 // Reuse parsed trees across components/instances with identical (placeholder) bodies.
 const parseCache = new Map<string, any>();
 
@@ -73,7 +92,7 @@ export function parseComponentBody(componentBody: string, state: State): any {
   return parsedBody;
 }
 
-function constructElement(data: any, parentSSID: string, state: State) {
+function constructElement(data: any, parentSSID: string, state: State, ns?: string) {
   const currentSSID = `${parentSSID}`;
   const content = data?.content || [];
   if (content?.constructor?.name !== "Array") {
@@ -97,7 +116,7 @@ function constructElement(data: any, parentSSID: string, state: State) {
     frag.appendChild(startMarker);
     for (let i = 0; i < parsedBody.length; i++) {
       const ssid = `${currentSSID}${i}`;
-      const subElement: any = constructElement(parsedBody[i], ssid, state);
+      const subElement: any = constructElement(parsedBody[i], ssid, state, ns);
       if (subElement) frag.appendChild(subElement);
     }
     frag.appendChild(endMarker);
@@ -109,7 +128,15 @@ function constructElement(data: any, parentSSID: string, state: State) {
   const reusable = REUSABLE_TAGS.has(tag);
   const cached = reusable ? state.nodeMap[currentSSID] : undefined;
   const reuse = cached && cached.tagName.toLowerCase() === tag ? cached : undefined;
-  const element = reuse || document.createElement(tag);
+  // Namespace: <svg>/<math> open a namespaced subtree; descendants inherit it via
+  // `ns`. <foreignObject> hosts HTML again. Without a namespace we use the HTML
+  // path (document.createElement) exactly as before.
+  const tagLower = tag.toLowerCase();
+  const createNs = tagLower === "svg" ? SVG_NS : tagLower === "math" ? MATHML_NS : ns;
+  const childNs = tagLower === "foreignobject" ? undefined : createNs;
+  const element = reuse || (createNs
+    ? document.createElementNS(createNs, tag)
+    : document.createElement(tag));
 
   const noCache = isImg && attributes.some((a: any) => a.name === "nocache");
   const desired = new Map<string, string>();
@@ -141,9 +168,9 @@ function constructElement(data: any, parentSSID: string, state: State) {
     for (const attr of Array.from((element as HTMLElement).attributes)) {
       if (attr.name !== SSID && !desired.has(attr.name)) element.removeAttribute(attr.name);
     }
-    desired.forEach((v, n) => { if (element.getAttribute(n) !== v) element.setAttribute(n, v); });
+    desired.forEach((v, n) => { if (element.getAttribute(n) !== v) setAttr(element, n, v); });
   } else {
-    desired.forEach((v, n) => element.setAttribute(n, v));
+    desired.forEach((v, n) => setAttr(element, n, v));
     if (isImg) (element as HTMLImageElement).decode?.().catch(() => {});
   }
 
@@ -191,7 +218,7 @@ function constructElement(data: any, parentSSID: string, state: State) {
     const type = typeof child;
     const ssid = `${currentSSID}${i}`;
     if (type === "object" && type !== null) {
-      const subElement = constructElement(child, ssid, state);
+      const subElement = constructElement(child, ssid, state, childNs);
       if (subElement) {
         element.appendChild(subElement);
       }

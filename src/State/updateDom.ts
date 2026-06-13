@@ -1,6 +1,6 @@
 import State from "./State.js";
 import { SSID } from "./const.js";
-import constructElement, { getValue, decodeEntities, unescapeQuotes, runComponent, parseComponentBody } from "./constructElement.js";
+import constructElement, { getValue, decodeEntities, unescapeQuotes, runComponent, parseComponentBody, setAttr } from "./constructElement.js";
 import { resolveImageSrc, isBase64DataUri } from "./imageCache.js";
 
 const scrolledSSIDs = new Set<string>();
@@ -198,7 +198,7 @@ function updateDOM(state: State) {
       ? resolveImageSrc(rendered)
       : decodeEntities(unescapeQuotes(rendered));
     if (entry.element.getAttribute(entry.attrName) !== finalVal) {
-      entry.element.setAttribute(entry.attrName, finalVal);
+      setAttr(entry.element, entry.attrName, finalVal);
     }
   }
   for (const ssid in state.nodeMap) {

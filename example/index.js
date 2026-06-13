@@ -49,6 +49,18 @@ const TEMPLATE_STRING = /*html*/`
         </div>
         <div title="A &amp; B">Tom &amp; Jerry &copy; 2026 &lt;tag&gt;</div>
     </form>
+    <div>
+        <div>Inline SVG (static):</div>
+        <svg id="svgstatic" viewBox="0 0 24 24" width="48" height="48">
+            <rect x="2" y="2" width="20" height="20" rx="3" fill="royalblue"/>
+            <path d="M6 12 L11 17 L18 7" stroke="white" stroke-width="2" fill="none"/>
+        </svg>
+        <div>Inline SVG (reactive radius {{radius}}):</div>
+        <svg id="svgreactive" viewBox="0 0 100 100" width="100" height="100">
+            <circle id="svgcircle" cx="50" cy="50" r="{{radius}}" fill="tomato"/>
+        </svg>
+        <button :click=grow()>grow circle</button>
+    </div>
     <TestComponent name="Test Component"/>
     <ImgReuseTest/>
     <AttrTest/>
@@ -60,6 +72,10 @@ const TEMPLATE_STRING = /*html*/`
 
 function increment({ state }) {
     state.data.total++;
+}
+
+function grow({ state }) {
+    state.data.radius = state.data.radius >= 45 ? 5 : state.data.radius + 5;
 }
 
 function whatIsIt({ thingList, state }) {
@@ -159,6 +175,7 @@ const data = {
     value2: "value 2",
     total: 0,
     whatItIs: 'button',
+    radius: 20,
     showImg: true,
     childVal: "A",
     portrait: "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==",
@@ -173,6 +190,7 @@ const data = {
 
 const methods = {
     increment,
+    grow,
     whatIsIt,
     clickTab,
     updateMsg
