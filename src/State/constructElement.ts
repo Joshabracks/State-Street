@@ -28,6 +28,20 @@ export function setAttr(element: any, name: string, value: string) {
   element.setAttribute(name, value);
 }
 
+// Namespace that children of this live element should be created in. Mirrors the
+// childNs rule below (svg/math pass their namespace to children, foreignObject hosts
+// HTML again), but derived from a live parent element — used by updateDom to rebuild
+// a component in place with the correct namespace. Returns undefined for HTML so the
+// plain document.createElement path is preserved unchanged.
+export function childNamespaceOf(parent: any): string | undefined {
+  const ns = parent && parent.namespaceURI;
+  const local = parent && parent.localName ? `${parent.localName}`.toLowerCase() : "";
+  if (local === "foreignobject") return undefined;
+  if (ns === SVG_NS) return SVG_NS;
+  if (ns === MATHML_NS) return MATHML_NS;
+  return undefined;
+}
+
 // Reuse parsed trees across components/instances with identical (placeholder) bodies.
 const parseCache = new Map<string, any>();
 

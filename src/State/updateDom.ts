@@ -1,6 +1,6 @@
 import State from "./State.js";
 import { SSID } from "./const.js";
-import constructElement, { getValue, decodeEntities, unescapeQuotes, runComponent, parseComponentBody, setAttr } from "./constructElement.js";
+import constructElement, { getValue, decodeEntities, unescapeQuotes, runComponent, parseComponentBody, setAttr, childNamespaceOf } from "./constructElement.js";
 import { resolveImageSrc, isBase64DataUri } from "./imageCache.js";
 
 const scrolledSSIDs = new Set<string>();
@@ -106,13 +106,17 @@ function rebuildComponentRange(rec: any, ssid: string, state: State): boolean {
   const parsedBody = parseComponentBody(componentBody, state);
   const parent = rec.startMarker.parentNode;
   if (!parent) return false;
+  // Infer the namespace from where this component is mounted, so an independently
+  // re-rendered sub-component inside an <svg> (e.g. one that returns naked <rect>…)
+  // is rebuilt in the SVG namespace rather than reverting to HTML.
+  const ns = childNamespaceOf(parent);
   // Build the fresh subtree first. constructElement transplants any reused nodeMap
   // nodes (img/input/textarea/select/canvas/video/audio/iframe) out of the live
   // range into this fragment via appendChild -- a move, not a destroy+recreate --
   // so their value/checked/selection/pixels/playback survive.
   const frag = document.createDocumentFragment();
   for (let i = 0; i < parsedBody.length; i++) {
-    const subElement: any = constructElement(parsedBody[i], `${ssid}${i}`, state);
+    const subElement: any = constructElement(parsedBody[i], `${ssid}${i}`, state, ns);
     if (subElement) frag.appendChild(subElement);
   }
   // Remove the stale leftovers still between the markers, then insert the new nodes.

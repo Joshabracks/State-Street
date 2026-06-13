@@ -60,6 +60,9 @@ const TEMPLATE_STRING = /*html*/`
             <circle id="svgcircle" cx="50" cy="50" r="{{radius}}" fill="tomato"/>
         </svg>
         <button :click=grow()>grow circle</button>
+        <div>Inline SVG sub-component (independent re-render):</div>
+        <Chart/>
+        <button :click=growBars()>grow bars</button>
     </div>
     <TestComponent name="Test Component"/>
     <ImgReuseTest/>
@@ -76,6 +79,13 @@ function increment({ state }) {
 
 function grow({ state }) {
     state.data.radius = state.data.radius >= 45 ? 5 : state.data.radius + 5;
+}
+
+// Reassign a NEW array so only `bars` is dirty -> Bars re-renders independently
+// while Chart (which owns the <svg> and doesn't read `bars`) does not. This is the
+// case that requires updateDom to rebuild Bars in the SVG namespace.
+function growBars({ state }) {
+    state.data.bars = state.data.bars.map((h) => (h >= 90 ? 20 : h + 15));
 }
 
 function whatIsIt({ thingList, state }) {
@@ -166,6 +176,20 @@ function PropTest({ numberVal, booleanVal, stringVal, varVal }) {
     return /*html*/`<div id="proptest">n=${numberVal}/${typeof numberVal} b=${booleanVal}/${typeof booleanVal} s=${stringVal}/${typeof stringVal} v=${varVal}</div>`;
 }
 
+// SVG namespace test for INDEPENDENT sub-component re-render.
+// Chart owns the <svg> but reads no state -> never dirty. Bars renders naked SVG
+// <rect>s from state.data.bars. Changing `bars` dep-gates to Bars ALONE, which
+// updateDom rebuilds in place -> the rects must be created in the SVG namespace
+// (not HTML) or they vanish on update.
+function Chart() {
+    return /*html*/`<svg id="chart" viewBox="0 0 100 100" width="200" height="100"><Bars/></svg>`;
+}
+function Bars({ state }) {
+    return state.data.bars
+        .map((h, i) => `<rect class="bar" x="${i * 24 + 4}" y="${100 - h}" width="18" height="${h}" fill="seagreen"/>`)
+        .join("");
+}
+
 // State data for regular access/manipulation used to render and update the State template
 const data = {
     title: "State Street",
@@ -176,6 +200,7 @@ const data = {
     total: 0,
     whatItIs: 'button',
     radius: 20,
+    bars: [30, 60, 45, 80],
     showImg: true,
     childVal: "A",
     portrait: "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==",
@@ -191,13 +216,14 @@ const data = {
 const methods = {
     increment,
     grow,
+    growBars,
     whatIsIt,
     clickTab,
     updateMsg
 }
 
 const components = {
-    TestComponent, Tab, ImgReuseTest, AttrTest, GateOuter, GateInner, PropTest
+    TestComponent, Tab, ImgReuseTest, AttrTest, GateOuter, GateInner, PropTest, Chart, Bars
 }
 
 
