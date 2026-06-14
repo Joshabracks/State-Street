@@ -242,6 +242,41 @@ MY_APP.registerComponents({
 });
 // The next state mutation re-resolves components.Home — the override is live.`,
 
+  // --- Preserve / mounting -----------------------------------------------
+  "preserve": `// :preserve makes State reuse this element in place across re-renders and
+// never rebuild its children — for hosting DOM State doesn't own (a chart, a
+// map, a code editor) or a manually-mounted child State.
+\`<div :preserve id="chart"></div>\`
+
+// Some third-party lib draws into #chart; it survives the parent's re-renders.
+new Chart(document.getElementById("chart"), config);`,
+
+  "mount-target": `// Mount into a specific element instead of <body>:
+new State(template, data, components, methods, { mountTarget: "#app" });
+
+// A string target is a selector, re-resolved over time; an Element works too.
+new State(template, data, components, methods, { mountTarget: panelEl });`,
+
+  "mount-lifecycle": `// Non-body targets wait for their element and track it (mountOnAvailable,
+// default true): auto-mount when it appears, dismount if it's removed, re-mount
+// when it returns. State.data survives a dismount — only the DOM is rebuilt.
+new State(tpl, data, comps, methods, { mountTarget: "#panel" });
+
+// renderLoop:false -> no loop -> drive the check yourself:
+const s = new State(tpl, data, comps, methods,
+  { mountTarget: "#panel", renderLoop: false });
+s.mountCheck();        // mount/dismount as needed
+s.update();            // render once
+s.setMountTarget("#other");   // dismount, move, re-mount`,
+
+  "nested-states": `// A parent State, then a child mounted INTO one of the parent's elements.
+new State(\`<main><div id="widget"></div></main>\`, parentData, comps, methods);
+
+// The child renders into #widget. Because every element is branded with its
+// owner State's id (stid), the child auto-registers with the parent, which then
+// preserves #widget across its re-renders — the child's DOM is never clobbered.
+new State(widgetTpl, widgetData, {}, widgetMethods, { mountTarget: "#widget" });`,
+
   // --- Gotchas -----------------------------------------------------------
   "gotcha-parens": `// Does nothing — parsed as a plain HTML attribute.
 \`<button :click=submit>Save</button>\`

@@ -3,17 +3,25 @@ import updateDOM from "./updateDom.js";
 import { parseSST } from "../Template/parseSST.js";
 import { reactive } from "./reactive.js";
 import { setImageMemoryBudget, enqueueWarm, processWarmQueue } from "./imageCache.js";
+import { SSID, STID } from "./const.js";
+import { register, get as getState, unregister } from "./registry.js";
 
 /**
- * Builds, renders and manages the DOM
- * @param template: string - State Street formatted string template.  Parsed along with components to build the DOM
- * @param data: object - Object containing dynamic variables for use in State.  If renderLoop option is not set to false, any changes made within the data object trigger re-rendering of the DOM where appropriate
- * @param methods: object - Object containing methods meant to be used via event listeners that are declared within the template's elements
- * @param options: object - Options for customizing State rendering behavior
- * renderLoop: boolean - Default: true - When true, an internal requestAnimationFrame loop calls State.update() automatically so the DOM re-renders whenever a variable within State.data changes.  When false, State.update() (or State.forceUpdate()) must be called manually.
- * targetFPS: number - Default: 60 - When set, will attempt to run updates at the target fps, if possible.  If not, updates will run at the highest refresh rate determined by the browser via requestAnimationFrame.
- * imgMemoryBudget: number - Default: 256MB - Maximum total bytes of cached image blobs. Base64 image src values are auto-converted to cached blob URLs (opt out per-image with the `nocache` attribute); least-recently-used blobs are revoked when over budget, except those still on the DOM.
- * targetFPS and imgMemoryBudget aside, imgWarmPerFrame: number - Default: 4 - How many queued images State.warmImages() converts/pre-decodes per frame.
+ * Builds, renders and manages the DOM.
+ * @param template SST-formatted template string.
+ * @param data Reactive state. Mutations trigger dep-gated re-renders (when renderLoop is on).
+ * @param components Component registry (`<Tag/>` -> function returning a template string).
+ * @param methods Method registry (bound to `:event=name()` directives; `:raw=fn` formatters).
+ * @param options Rendering + mounting options:
+ *  - renderLoop: boolean (default true) — run an internal requestAnimationFrame loop.
+ *  - targetFPS: number (default 60).
+ *  - imgMemoryBudget: number (default 256MB) — image blob cache budget.
+ *  - imgWarmPerFrame: number (default 4).
+ *  - mountTarget: Element | string (default document.body) — where to mount. A string is
+ *    treated as a CSS selector and re-resolved over time.
+ *  - mountOnAvailable: boolean (default true) — for non-body targets: while the render loop
+ *    runs, auto-mount when the target appears, dismount if it disappears, and re-mount when it
+ *    returns. When false, mounting/dismounting is manual (see mountCheck()).
  */
 export default class State {
   private _data: any;
@@ -28,13 +36,23 @@ export default class State {
   components: any;
   componentMap: any;
   methods: any;
-  renderLoop: boolean = true
-  elementCount: number = 0
-  tick: number = 0
-  targetFPS: number = 60
-  nextUpdate: number = 0
-  updateInterval: number = -1
-  imgWarmPerFrame: number = 4
+  renderLoop: boolean = true;
+  elementCount: number = 0;
+  tick: number = 0;
+  targetFPS: number = 60;
+  nextUpdate: number = 0;
+  updateInterval: number = -1;
+  imgWarmPerFrame: number = 4;
+  // Mounting + lifecycle.
+  id: string = "";
+  root: Element | null = null;
+  mounted: boolean = false;
+  mountTarget: Element | string = (typeof document !== "undefined" ? document.body : "body");
+  mountOnAvailable: boolean = true;
+  preserveSet: Set<string> = new Set();
+  private looping: boolean = false;
+  private _parentMount: { parent: State; ssid: string } | null = null;
+
   constructor(template: string, data: any = {}, components: any = {}, methods: any = {}, options: any = {}) {
     this._data = reactive(data, (key) => {
       this.dirty = true;
@@ -48,15 +66,19 @@ export default class State {
     this.components = components;
     this.componentMap = {};
     this.methods = methods;
-    if (!options?.renderLoop && options.renderLoop === false) this.renderLoop = false;
-    if (typeof options?.targetFPS === 'number' && options.targetFPS > 0) this.targetFPS = options.targetFPS;
-    if (typeof options?.imgMemoryBudget === 'number' && options.imgMemoryBudget > 0) setImageMemoryBudget(options.imgMemoryBudget);
-    if (typeof options?.imgWarmPerFrame === 'number' && options.imgWarmPerFrame > 0) this.imgWarmPerFrame = options.imgWarmPerFrame;
-    this.updateInterval = 1000 / this.targetFPS
-    this.nextUpdate = this.updateInterval + Date.now()
-    constructDOM(this);
-    this.update();
+    this.id = register(this);
+    if (options?.renderLoop === false) this.renderLoop = false;
+    if (typeof options?.targetFPS === "number" && options.targetFPS > 0) this.targetFPS = options.targetFPS;
+    if (typeof options?.imgMemoryBudget === "number" && options.imgMemoryBudget > 0) setImageMemoryBudget(options.imgMemoryBudget);
+    if (typeof options?.imgWarmPerFrame === "number" && options.imgWarmPerFrame > 0) this.imgWarmPerFrame = options.imgWarmPerFrame;
+    if (options?.mountTarget != null) this.mountTarget = options.mountTarget;
+    if (options?.mountOnAvailable === false) this.mountOnAvailable = false;
+    this.updateInterval = 1000 / this.targetFPS;
+    this.nextUpdate = this.updateInterval + Date.now();
+    this.mountCheck();                                  // initial mount attempt
+    if (this.renderLoop) { this.looping = true; window.requestAnimationFrame(this.loop); }
   }
+
   get data(): any {
     return this._data;
   }
@@ -68,52 +90,144 @@ export default class State {
     this.dirty = true;
     for (const k in next) this.dirtyKeys.add(k);
   }
-  /**
-   * Checks to see if the State.data object has any changes
-   * @returns boolean
-   */
-  sameState = () => {
-    return !this.dirty;
+
+  /** True if State.data has no pending changes. */
+  sameState = () => !this.dirty;
+  private clearDirty = () => { this.dirty = false; this.dirtyKeys.clear(); };
+  setNextUpdate = () => { this.nextUpdate = Date.now() + this.updateInterval; };
+  private resetMaps = () => {
+    this.idMap = {}; this.textMap = {}; this.attrMap = {}; this.nodeMap = {}; this.componentMap = {};
   };
-  private clearDirty = () => {
-    this.dirty = false;
-    this.dirtyKeys.clear();
-  }
-  setNextUpdate = () => {
-    this.nextUpdate = Date.now() + this.updateInterval
-  }
+
+  /** Resolve the configured mountTarget to a live element (or null). */
+  private resolveTarget = (): Element | null => {
+    const t = this.mountTarget;
+    if (typeof document === "undefined") return null;
+    if (t === document.body) return document.body;
+    if (typeof t === "string") return document.querySelector(t);
+    if (t instanceof Element) return t.isConnected ? t : null;
+    return null;
+  };
+
+  /** Mount (build the template) into `el`, owning its contents. */
+  private mount = (el: Element) => {
+    this.root = el;
+    this.resetMaps();
+    el.innerHTML = "";
+    constructDOM(this);
+    this.mounted = true;
+    this.clearDirty();
+    if (el === document.body && this._data && this._data.title) document.title = this._data.title;
+    // If we mounted into an element owned by another State, ask that parent to
+    // preserve this element across its re-renders (so it won't clobber our DOM).
+    const stid = el.getAttribute(STID);
+    const ssid = el.getAttribute(SSID);
+    if (stid !== null && ssid !== null) {
+      const parent = getState(stid);
+      if (parent && parent !== this) {
+        parent.togglePreserve(ssid, true);
+        this._parentMount = { parent, ssid };
+      }
+    }
+  };
+
+  /** Remove our rendered nodes and return to the unmounted state. */
+  private dismount = () => {
+    if (!this.mounted) return;
+    if (this._parentMount) {
+      this._parentMount.parent.togglePreserve(this._parentMount.ssid, false);
+      this._parentMount = null;
+    }
+    if (this.root) this.root.innerHTML = "";
+    this.resetMaps();
+    this.mounted = false;
+    this.root = null;
+  };
+
   /**
-   * Updates the DOM, taking changes made within the State.data object into account
-   * @returns undefined
+   * Reconcile mount state with the DOM. Dismounts if the current target is gone (root
+   * detached, or a string selector no longer matches the mounted element); mounts if a
+   * target is now available. Called automatically by the render loop (when
+   * mountOnAvailable is on) and manually when renderLoop is off.
    */
+  mountCheck = () => {
+    if (this.mounted) {
+      let ok = !!(this.root && this.root.isConnected);
+      if (ok && typeof this.mountTarget === "string") ok = document.querySelector(this.mountTarget) === this.root;
+      if (!ok) this.dismount();
+    }
+    if (!this.mounted) {
+      const el = this.resolveTarget();
+      if (el) this.mount(el);
+    }
+  };
+
+  /** A single render tick (no self-reschedule — the loop drives it). */
   update = () => {
     processWarmQueue(this.imgWarmPerFrame);
+    if (this.mountOnAvailable) this.mountCheck();
+    if (!this.mounted) return;
     if (!this.renderLoop) {
       updateDOM(this);
       this.clearDirty();
       return;
     }
-    if (this.nextUpdate > Date.now()) {
-      window.requestAnimationFrame(this.update);
-      return;
-    }
-    if (this.sameState()) {
-      window.requestAnimationFrame(this.update);
-      return;
-    }
+    if (this.nextUpdate > Date.now()) return;
+    if (this.sameState()) return;
     this.setNextUpdate();
     updateDOM(this);
     this.clearDirty();
-    window.requestAnimationFrame(this.update);
   };
+
+  /** The requestAnimationFrame driver. Self-stops when renderLoop is turned off. */
+  private loop = () => {
+    if (!this.renderLoop) { this.looping = false; return; }
+    this.update();
+    window.requestAnimationFrame(this.loop);
+  };
+
   forceUpdate = () => {
-    updateDOM(this)
-    this.clearDirty();
-  }
-  /**
-   * Queues base64 image data URIs to be converted to cached blob URLs and
-   * pre-decoded during idle frames, so they render instantly when shown.
-   * @param list: string[] - base64 data URIs to warm
-   */
+    this.mountCheck();
+    if (this.mounted) { updateDOM(this); this.clearDirty(); }
+  };
+
+  /** Toggle preservation of the element at `ssid` (used by nested States). */
+  togglePreserve = (ssid: string, on?: boolean) => {
+    const want = on === undefined ? !this.preserveSet.has(ssid) : !!on;
+    if (want) this.preserveSet.add(ssid); else this.preserveSet.delete(ssid);
+  };
+
+  /** Change the mount target: dismount, set, and re-mount if the new target is found. */
+  setMountTarget = (target: Element | string) => {
+    this.dismount();
+    this.mountTarget = target;
+    this.mountCheck();
+  };
+
+  setRenderLoop = (on: boolean) => {
+    const next = !!on;
+    if (next === this.renderLoop) return;
+    this.renderLoop = next;
+    if (next && !this.looping) { this.looping = true; window.requestAnimationFrame(this.loop); }
+  };
+  setTargetFPS = (fps: number) => {
+    if (typeof fps === "number" && fps > 0) { this.targetFPS = fps; this.updateInterval = 1000 / fps; }
+  };
+  setImgMemoryBudget = (bytes: number) => {
+    if (typeof bytes === "number" && bytes > 0) setImageMemoryBudget(bytes);
+  };
+  setImgWarmPerFrame = (n: number) => {
+    if (typeof n === "number" && n > 0) this.imgWarmPerFrame = n;
+  };
+
+  /** Queue base64 data URIs for off-screen decode (see Image cache). */
   warmImages = (list: string[]) => enqueueWarm(list);
+
+  /** Tear down: dismount and unregister from the global state registry. */
+  destroy = () => {
+    this.dismount();
+    this.renderLoop = false;
+    this.looping = false;
+    unregister(this.id);
+  };
 }

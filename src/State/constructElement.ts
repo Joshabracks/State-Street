@@ -1,5 +1,5 @@
 import State from "./State.js";
-import { SSID } from "./const.js";
+import { SSID, STID } from "./const.js";
 import { parseSST } from "../Template/parseSST.js";
 import { resolveImageSrc, isBase64DataUri } from "./imageCache.js";
 import { makeDepTracker } from "./trackDeps.js";
@@ -139,9 +139,14 @@ function constructElement(data: any, parentSSID: string, state: State, ns?: stri
   }
   const attributes = data?.attributes || [];
   const isImg = tag === "img";
-  const reusable = REUSABLE_TAGS.has(tag);
-  const cached = reusable ? state.nodeMap[currentSSID] : undefined;
-  const reuse = cached && cached.tagName.toLowerCase() === tag ? cached : undefined;
+  // `preserve` (a child State mounted into this element registered its ssid via
+  // togglePreserve) reuses the live element in place and skips rebuilding its
+  // children, so the child's DOM survives the parent's re-render. Reusable tags
+  // reuse via nodeMap; preserved elements reuse via idMap (any tag).
+  const preserve = !!(state.preserveSet && state.preserveSet.has(currentSSID));
+  const reusable = REUSABLE_TAGS.has(tag) || preserve;
+  const cached = reusable ? (preserve ? state.idMap[currentSSID] : state.nodeMap[currentSSID]) : undefined;
+  const reuse = cached && cached.tagName && cached.tagName.toLowerCase() === tag ? cached : undefined;
   // Namespace: <svg>/<math> open a namespaced subtree; descendants inherit it via
   // `ns`. <foreignObject> hosts HTML again. Without a namespace we use the HTML
   // path (document.createElement) exactly as before.
@@ -179,8 +184,12 @@ function constructElement(data: any, parentSSID: string, state: State, ns?: stri
   if (isImg && !desired.has("decoding")) desired.set("decoding", "async");
 
   if (reuse) {
-    for (const attr of Array.from((element as HTMLElement).attributes)) {
-      if (attr.name !== SSID && !desired.has(attr.name)) element.removeAttribute(attr.name);
+    // Don't reconcile-away attributes on a preserved element (the child State may
+    // rely on them). Never strip our own SSID/STID branding.
+    if (!preserve) {
+      for (const attr of Array.from((element as HTMLElement).attributes)) {
+        if (attr.name !== SSID && attr.name !== STID && !desired.has(attr.name)) element.removeAttribute(attr.name);
+      }
     }
     desired.forEach((v, n) => { if (element.getAttribute(n) !== v) setAttr(element, n, v); });
   } else {
@@ -205,7 +214,11 @@ function constructElement(data: any, parentSSID: string, state: State, ns?: stri
 
   state.idMap[currentSSID] = element;
   element.setAttribute(SSID, currentSSID);
-  if (reusable) state.nodeMap[currentSSID] = element;
+  element.setAttribute(STID, state.id);   // brand with the owning State's id (nested-State boundaries)
+  if (REUSABLE_TAGS.has(tag)) state.nodeMap[currentSSID] = element;
+  // `:preserve` directive — register this ssid so subsequent re-renders reuse this
+  // element in place (skip rebuilding its children). First render builds it empty.
+  if (data?.preserve && state.preserveSet) state.preserveSet.add(currentSSID);
   // Raw element (RAWTEXT tag or `:raw`): its content was stashed verbatim by the
   // parser. Plain raw -> literal textContent. `:raw=formatter` -> feed the text
   // to the named method and use its return value as HTML (the formatter owns

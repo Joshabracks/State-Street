@@ -15,6 +15,7 @@ const REGEX = {
   EVENT: /:(\w+)=(\w+)\(((?:"(?:[^"\\]|\\.)*"|'(?:[^'\\]|\\.)*'|`(?:[^`\\]|\\.)*`|[^)"'`])*)\)/g,
   PROP: /([\w-]+)\s*=\s*("(?:[^"\\]|\\.)*"|'(?:[^'\\]|\\.)*'|`(?:[^`\\]|\\.)*`|[^,]*)/g,
   RAW_ATTR: /:raw(?:=\w+)?/gi,
+  PRESERVE_ATTR: /:preserve\b/gi,
 };
 
 // Sticky (`y`) clones of the element regexes, anchored at `lastIndex` so the
@@ -34,7 +35,8 @@ function getAttributes(tag: string): any[] {
   const cleanTag = tag
     .replace(/^<[\w:-]+\s*/, '')
     .replace(REGEX.EVENT, '')
-    .replace(REGEX.RAW_ATTR, '')   // never surface :raw as a `raw="…"` attribute
+    .replace(REGEX.RAW_ATTR, '')        // never surface :raw as a `raw="…"` attribute
+    .replace(REGEX.PRESERVE_ATTR, '')   // nor :preserve as a `preserve` attribute
     .replace(/\s+/g, ' ');
   REGEX.ATTRIBUTE.lastIndex = 0;
   let attributesMatch = (cleanTag && REGEX.ATTRIBUTE.exec(cleanTag)) || null;
@@ -152,12 +154,16 @@ function getElements(data: string, components: any, pos: number, content: any[],
         pos = child.pos;
         continue;
       }
-      content.push({
+      const node: any = {
         type: tagName,
         attributes: attributes,
         events: events,
         content: child.content,
-      });
+      };
+      // `:preserve` — reuse this element in place and never rebuild its children
+      // (for hosting third-party DOM, or a child State, with no child-State auto-registration).
+      if (/(^|\s):preserve\b/i.test(elementString)) node.preserve = true;
+      content.push(node);
       pos = child.pos;
       continue;
     }

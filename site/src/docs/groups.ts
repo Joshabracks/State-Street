@@ -50,6 +50,7 @@ export const DOC_GROUPS: DocGroup[] = [
       { id: "no-directives", label: "No if / for / bind" },
       { id: "raw", label: "Raw content & formatters" },
       { id: "svg", label: "Inline SVG & namespaces" },
+      { id: "preserve", label: "Preserving elements" },
     ],
   },
   {
@@ -60,7 +61,8 @@ export const DOC_GROUPS: DocGroup[] = [
       { id: "constructor", label: "Constructor" },
       { id: "options", label: "Options" },
       { id: "instance", label: "Instance members" },
-      { id: "mounting", label: "Mounting" },
+      { id: "mounting", label: "Mounting & lifecycle" },
+      { id: "nested-states", label: "Nested States" },
       { id: "methods", label: "Methods" },
     ],
   },

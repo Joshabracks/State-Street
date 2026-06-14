@@ -64,6 +64,12 @@ const TEMPLATE_STRING = /*html*/`
         <Chart/>
         <button :click=growBars()>grow bars</button>
     </div>
+    <div>
+        <div>Nested State (child mounts into #childpanel):</div>
+        <ChildHost/>
+        <button :click=toggleHost()>toggle host</button>
+        <div id="childpanel2" class="altpanel">alt panel (empty)</div>
+    </div>
     <TestComponent name="Test Component"/>
     <ImgReuseTest/>
     <AttrTest/>
@@ -79,6 +85,18 @@ function increment({ state }) {
 
 function grow({ state }) {
     state.data.radius = state.data.radius >= 45 ? 5 : state.data.radius + 5;
+}
+
+// Host whose body re-renders on `total` (so #childpanel's container is rebuilt). A
+// CHILD State mounts into #childpanel; the parent must preserve it across re-renders.
+// Toggling showHost removes/re-adds #childpanel to exercise dismount/remount.
+function ChildHost({ state }) {
+    return state.data.showHost
+        ? /*html*/`<div class="childhost">host tick: ${state.data.total} <div id="childpanel"></div> <div :preserve id="thirdparty"></div></div>`
+        : /*html*/`<div class="childhost">host hidden</div>`;
+}
+function toggleHost({ state }) {
+    state.data.showHost = !state.data.showHost;
 }
 
 // Reassign a NEW array so only `bars` is dirty -> Bars re-renders independently
@@ -201,6 +219,7 @@ const data = {
     whatItIs: 'button',
     radius: 20,
     bars: [30, 60, 45, 80],
+    showHost: true,
     showImg: true,
     childVal: "A",
     portrait: "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==",
@@ -217,13 +236,14 @@ const methods = {
     increment,
     grow,
     growBars,
+    toggleHost,
     whatIsIt,
     clickTab,
     updateMsg
 }
 
 const components = {
-    TestComponent, Tab, ImgReuseTest, AttrTest, GateOuter, GateInner, PropTest, Chart, Bars
+    TestComponent, Tab, ImgReuseTest, AttrTest, GateOuter, GateInner, PropTest, Chart, Bars, ChildHost
 }
 
 
@@ -231,4 +251,16 @@ const components = {
 window.onload = () => {
     // eslint-disable-next-line no-undef
     window.state = new State(TEMPLATE_STRING, data, components, methods)
+
+    // A second, independent State mounted INTO the parent's #childpanel element.
+    // mountOnAvailable (default) keeps it mounted across the parent's re-renders and
+    // re-mounts it when #childpanel is toggled back on.
+    const childTemplate = /*html*/`<div class="childinner">child count: {{ccount}} <button :click=cinc()>+</button> <input id="cinput" :input=cnoop()/></div>`
+    const childData = { ccount: 0 }
+    const childMethods = {
+        cinc: ({ state }) => { state.data.ccount += 1 },
+        cnoop: () => {},
+    }
+    // eslint-disable-next-line no-undef
+    window.childState = new State(childTemplate, childData, {}, childMethods, { mountTarget: "#childpanel" })
 }

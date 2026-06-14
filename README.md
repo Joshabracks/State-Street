@@ -45,7 +45,7 @@ Want to contribute or need help? [Join the State Street Discord!](https://discor
 - **Mutate state directly.** `state.data.foo = bar` triggers a dep-gated re-render on the next animation frame. No setters, no actions, no reducers.
 - **One file, one class.** The entire library is `new State(template, data, components, methods)`. Read the source in an afternoon.
 - **First-class tooling.** Written in TypeScript and happy to be consumed as TS or plain JS, with any bundler or none at all. The official [State Street SST](https://marketplace.visualstudio.com/items?itemName=beetnick82.vscode-sst) VS Code extension gives you HTML highlighting + completion inside `.sst.js` / `.sst.ts` template literals.
-- **Tiny.** ~10 KB minified, zero runtime dependencies.
+- **Tiny.** Small enough to disappear into whatever you ship, with zero runtime dependencies.
 
 ### Is this for me?
 
@@ -359,6 +359,59 @@ function CartSummary({ state }) {
 
 This is the design: the template syntax is small because JavaScript already does the work.
 
+### Raw content: `<code>`, `:raw`, and formatters
+
+Some elements opt out of template parsing so you can show literal markup (code samples, user text) or post-process content:
+
+- **RAWTEXT** — `<script>`, `<style>`, `<code>`: contents are verbatim text — no child-tag parsing, no `{{ }}` interpolation.
+- **RCDATA** — `<textarea>`, `<title>`: child tags aren't parsed (a literal `<` is safe), but `{{ }}` interpolation and entity decoding are kept.
+- **`:raw`** — makes any element's content verbatim text.
+
+```js
+// shown literally — not parsed, not interpolated
+`<code><button :click=inc()>{{count}}</button></code>`
+
+// :raw on any element
+`<div :raw>literal {{x}} and <b>not bold</b></div>`
+```
+
+`:raw=formatterName` feeds the raw text to a method (resolved from `methods`, called as `fn({ text, state })`) and sets the returned string as the element's `innerHTML` — the hook for syntax highlighting, Markdown, etc.
+
+```js
+const methods = {
+  shout: ({ text }) => `<strong>${text.toUpperCase()}!</strong>`,
+};
+// `<div :raw=shout>hello</div>` renders <strong>HELLO!</strong>
+```
+
+> **Heads up:** `<pre>` is intentionally **not** RAWTEXT, so the common `<pre><code>…</code></pre>` idiom keeps working. RAWTEXT content can't contain the element's own closing tag (a literal `</code>` inside a `<code>` ends it early). Formatter output is set via `innerHTML` — the formatter owns escaping.
+
+### Inline SVG & namespaced elements
+
+Inline `<svg>` (and `<math>`) render as real namespaced elements — State Street builds them with `createElementNS` and threads the namespace through the subtree, across component boundaries and independent re-renders. Attribute interpolation and events work as usual.
+
+```js
+function Chart({ state }) {
+  return `
+    <svg viewBox="0 0 100 100" width="120">
+      <circle cx="50" cy="50" r="{{radius}}" fill="tomato"/>
+    </svg>
+  `;
+}
+```
+
+Legacy `xlink:` / `xml:` namespaced attributes are supported via `setAttributeNS`; prefer the modern SVG2 plain `href` where you can.
+
+### Preserving elements: `:preserve`
+
+`:preserve` makes State **reuse** an element in place across re-renders and never rebuild its children — for hosting DOM State doesn't own (a chart, a map, a rich-text editor):
+
+```js
+`<div :preserve id="chart"></div>`
+```
+
+On first render the element is built (empty); after that it's moved, not recreated, so whatever drew into it survives. For composing two States you usually don't need `:preserve` — see [Mounting & lifecycle](#mounting--lifecycle), where a child mounted into a parent's element registers itself automatically.
+
 ---
 
 ## The `State` class — API reference
@@ -372,7 +425,7 @@ new State(template, data, components, methods, options?)
 | Parameter | Type | Purpose |
 |---|---|---|
 | `template` | `string` | Root template. Any `<Component/>` tag references a key in `components`. |
-| `data` | `object` | Initial state. Becomes reactive on construction. If it has a `title` property, that value becomes `document.title` at mount time. |
+| `data` | `object` | Initial state. Becomes reactive on construction. If it has a `title` property, that value becomes `document.title` when mounted to `<body>`. |
 | `components` | `{ [name]: (props) => string }` | Component registry. |
 | `methods` | `{ [name]: (args) => void }` | Method registry. Bound to `:event=name()` directives. |
 | `options` | `object` | See below. |
@@ -385,20 +438,54 @@ new State(template, data, components, methods, options?)
 | `targetFPS` | `60` | When the render loop is on, throttle to roughly this many updates per second. |
 | `imgMemoryBudget` | `256 MB` | Max bytes of cached image blobs from base64 → blob URL conversion. LRU eviction over this budget; blobs still in the DOM are never evicted. |
 | `imgWarmPerFrame` | `4` | When `warmImages()` queues data URIs, how many to decode per idle frame. |
+| `mountTarget` | `document.body` | Where to mount: an `Element`, or a CSS-selector string (re-resolved over time). State **owns** the target (clears it on mount); `document.title` is set from `data.title` only when the target is `<body>`. |
+| `mountOnAvailable` | `true` | For non-body targets: while the render loop runs, auto-mount when the target appears, dismount if it's removed, re-mount when it returns. When `false`, mounting is manual (see `mountCheck()`). |
 
 ### Instance properties + methods
 
 | Member | Type | Purpose |
 |---|---|---|
 | `.data` | getter / setter | Reactive proxy. Reads + writes go through it. The setter replaces the whole tree and marks every top-level key dirty. |
-| `.update()` | `() => void` | Process one frame: drain warm queue, then re-render dirty components if it's time for the next update. Re-schedules itself when `renderLoop: true`. |
+| `.update()` | `() => void` | One render tick: drain the warm queue, mount-check, then re-render dirty components (throttled to the target FPS when the loop is on). The internal loop drives this; call it yourself when `renderLoop` is off. |
 | `.forceUpdate()` | `() => void` | Immediately re-render every dirty component and clear the dirty set. Bypasses the FPS throttle. |
 | `.sameState()` | `() => boolean` | `true` if nothing is dirty. |
 | `.warmImages(uris)` | `(string[]) => void` | Queue base64 data URIs for off-screen decode. See [Image cache](#image-cache). |
+| `.mountCheck()` | `() => void` | Reconcile mount state with the DOM: dismount if the target is gone, mount if available. Call it yourself when `renderLoop` is off. |
+| `.setMountTarget(t)` | `(Element \| string) => void` | Dismount, set a new target, re-mount if found. |
+| `.togglePreserve(ssid, on?)` | `(string, boolean?) => void` | Preserve/release the element at `ssid` across re-renders (used automatically by nested States). |
+| `.setRenderLoop(b)` / `.setTargetFPS(n)` / `.setImgMemoryBudget(n)` / `.setImgWarmPerFrame(n)` | setters | Adjust the matching option at runtime. `setRenderLoop` is guarded against starting a second loop. |
+| `.destroy()` | `() => void` | Dismount and unregister from the global state registry. Call it for transient States to avoid leaks. |
 
-### Mounting
+### Mounting & lifecycle
 
-The `State` constructor mounts to `document.body` automatically — it clears `document.body` and appends the rendered root. There's no `app.mount(el)` step.
+By default the constructor mounts to `document.body` (it owns the target: clears it, appends the render, sets `document.title` from `data.title`). Pass `mountTarget` to mount elsewhere — an `Element` or a CSS-selector string:
+
+```js
+new State(template, data, components, methods, { mountTarget: "#app" });
+```
+
+For non-body targets, `mountOnAvailable` (default `true`) makes mounting a **lifecycle**: while the render loop runs, State waits for the target, mounts when it appears, dismounts if it's removed, and re-mounts when it returns. `state.data` survives a dismount — only the DOM is rebuilt, so a panel can come and go and keep its state. With `renderLoop: false` there's no loop, so you drive it yourself:
+
+```js
+const s = new State(tpl, data, comps, methods, { mountTarget: "#panel", renderLoop: false });
+s.mountCheck();              // mount/dismount as needed
+s.update();                 // render once
+s.setMountTarget("#other"); // dismount, move, re-mount
+```
+
+A string `mountTarget` is a live selector — if it stops matching the mounted element (e.g. you toggle a class), State dismounts and waits. That lets you drive mounting from markup.
+
+### Nested States
+
+You can mount a State into an element owned by another State. Every element is branded with its owner State's id (a `stid` attribute, alongside `ssid`), so a child mounting into a parent's element looks the parent up and registers itself; the parent then **preserves** that element across its own re-renders — reusing it in place (moved, not rebuilt), so the child's DOM and state are never clobbered. On dismount the child un-registers.
+
+```js
+new State(`<main><div id="widget"></div></main>`, parentData, comps, methods);
+// The child auto-registers with the parent; #widget survives the parent's re-renders.
+new State(widgetTpl, widgetData, {}, widgetMethods, { mountTarget: "#widget" });
+```
+
+For non-State DOM (third-party widgets), mark the host element with [`:preserve`](#preserving-elements-preserve) instead, or call `togglePreserve(ssid)` directly.
 
 ---
 
@@ -883,7 +970,7 @@ In one Tauri narrative game running State Street, this layout currently runs ~21
 
 **Can I use TypeScript?** Yes — the source is TypeScript. The reactive proxy types as `any` (a proxy fundamentally can't be type-checked at compile time without significant ceremony). Wrap your own typed accessors if you want stricter types in your app.
 
-**How big is it?** ~10 KB minified. Zero runtime dependencies.
+**How big is it?** Small enough that it's never the reason your bundle is big. Zero runtime dependencies.
 
 **Does it work in Node?** Not directly — it touches `document.body` and `requestAnimationFrame`. For testing components in Node, use jsdom or run in a browser. The reactive proxy logic itself is environment-agnostic.
 

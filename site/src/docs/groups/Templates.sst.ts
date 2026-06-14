@@ -73,6 +73,13 @@ export function DocTemplates(_ctx: Ctx): string {
         <div class="callout"><span class="callout__tag">Note</span> Legacy <code>xlink:</code> and <code>xml:</code> namespaced attributes are supported via <code>setAttributeNS</code>; prefer the modern SVG2 plain <code>href</code> where you can.</div>
       </section>
 
+      <section class="docs-section" id="preserve">
+        <h2>Preserving elements</h2>
+        <p>The <code>:preserve</code> attribute tells State to <strong>reuse</strong> that element in place across re-renders and never rebuild its children. Use it to host DOM that State doesn't own — a chart, a map, a rich-text editor — or an element a separate child State mounts into.</p>
+        <DocCode id="preserve" label="preserve"/>
+        <p>On first render the element is built (empty); after that it is moved, not recreated, so whatever drew into it survives. For composing two States, you usually don't need <code>:preserve</code> at all — see <code>Nested States</code> in the API reference, where a child mounted into a parent's element registers itself automatically.</p>
+      </section>
+
       <DocPrevNext group="templates"/>
     </div>
   `;
