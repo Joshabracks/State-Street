@@ -2,7 +2,7 @@ import type { Ctx } from "../types";
 
 const FEATURES: Array<{ no: string; title: string; body: string }> = [
   { no: "01", title: "Reactive state", body: "Mutate a plain object. Only the components that actually read the changed key re-render." },
-  { no: "02", title: "No virtual DOM", body: "Components are functions that return HTML strings. What you write is what renders." },
+  { no: "02", title: "No virtual DOM", body: "No per-element diffing, no reconciler — a component re-runs only when its tracked state changes, and what you write is what renders." },
   { no: "03", title: "Dep-gating", body: "Tracking is per top-level key. A change touches just the subtree that depends on it." },
   { no: "04", title: "Image cache", body: "Base64 sources become cached blob URLs automatically, with LRU eviction and pre-warming." },
   { no: "05", title: "State preserved", body: "Scroll, focus and selection survive re-renders. Inputs, canvas and media are reused, not rebuilt." },
@@ -11,7 +11,7 @@ const FEATURES: Array<{ no: string; title: string; body: string }> = [
 
 const SPECS: Array<[string, string]> = [
   ["Version", "2.0.0"],
-  ["Bundle size", "~10 kb min"],
+  ["Bundle size", "negligible"],
   ["Dependencies", "0"],
   ["Module", "ESM + UMD"],
   ["Renderer", "rAF loop, dep-gated"],
@@ -35,7 +35,7 @@ export function Landing(_ctx: Ctx): string {
       <div class="wrap stack">
         <div class="eyebrow">Cat. No. SS&middot;2.0.0 // single page framework</div>
         <h1 class="hero__wordmark">State<br/><span>Street</span></h1>
-        <p class="hero__lead">A ~10kb reactive framework. Components are functions that return HTML &mdash; no virtual DOM, no compiler, no ceremony.</p>
+        <p class="hero__lead">A reactive framework so small it disappears into whatever you ship. No virtual DOM, no compiler, no ceremony.</p>
         <div class="hero__cta">
           <a class="btn btn--accent" href="#docs" :click=setView(target=docs)>Get started</a>
           <a class="btn" href="#examples" :click=setView(target=examples)>Examples</a>

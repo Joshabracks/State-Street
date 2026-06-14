@@ -17,7 +17,7 @@ export function SiteFooter(_ctx: Ctx): string {
         </nav>
       </div>
       <div class="wrap site-footer__meta" style="padding-bottom: var(--sp-5)">
-        &copy; 2026 &middot; ISC License &middot; 0 dependencies &middot; ~10kb min
+        &copy; 2026 &middot; ISC License &middot; 0 dependencies &middot; negligible footprint
       </div>
     </footer>
   `;

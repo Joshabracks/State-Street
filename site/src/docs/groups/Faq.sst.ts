@@ -19,7 +19,7 @@ export function DocFaq(_ctx: Ctx): string {
         <p>Yes — the source is TypeScript. The reactive proxy types as <code>any</code> (a proxy can't be type-checked at compile time without significant ceremony). Wrap your own typed accessors if you want stricter types.</p>
 
         <h3>How big is it?</h3>
-        <p>~10&nbsp;KB minified. Zero runtime dependencies.</p>
+        <p>Small enough that it's never the reason your bundle is big. Zero runtime dependencies.</p>
 
         <h3>Does it work in Node?</h3>
         <p>Not directly — it touches <code>document.body</code> and <code>requestAnimationFrame</code>. Use jsdom or a browser for tests. The reactive proxy logic itself is environment-agnostic.</p>

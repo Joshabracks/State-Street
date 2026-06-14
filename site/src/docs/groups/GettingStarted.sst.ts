@@ -12,7 +12,7 @@ export function DocGettingStarted(_ctx: Ctx): string {
           <li><strong>Plain template strings.</strong> No JSX, no required compile step. Views are template literals that return HTML strings — your editor highlights them, your tests can read them.</li>
           <li><strong>Mutate state directly.</strong> <code>state.data.foo = bar</code> triggers a dep-gated re-render on the next animation frame. No setters, actions, or reducers.</li>
           <li><strong>One file, one class.</strong> The whole library is <code>new State(template, data, components, methods)</code>.</li>
-          <li><strong>Tiny.</strong> ~10&nbsp;KB minified, zero runtime dependencies.</li>
+          <li><strong>Tiny.</strong> Small enough to disappear into whatever you ship; zero runtime dependencies.</li>
         </ul>
         <p>It stays small on purpose: there is no virtual DOM, and conditionals and loops are plain JavaScript inside your component functions rather than template directives.</p>
       </section>

@@ -40,7 +40,7 @@ const initial = parseHash();
 
 /** The single reactive state object. Top-level keys are the dep-gating unit. */
 export const data: Record<string, any> = {
-  title: "State Street — the 10kb framework",
+  title: "State Street — a tiny reactive framework",
   view: initial.view,
   // Docs sub-route + scroll-spy state.
   docGroup: DOC_GROUP_MAP[initial.group] ? initial.group : DEFAULT_DOC_GROUP,

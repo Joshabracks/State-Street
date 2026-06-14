@@ -44,7 +44,7 @@ export function StyleGuide(_ctx: Ctx): string {
           <h5>Heading 5</h5>
           <h6>Heading 6</h6>
           <p>Body copy in Space Grotesk. The quick brown fox jumps over the lazy dog. Inline elements: <a href="#styleguide">a link</a>, <strong>strong</strong>, <em>emphasis</em>, <mark>highlight</mark>, <code>inline code</code>, <kbd>Ctrl</kbd> + <kbd>K</kbd>, <abbr title="Single Page Application">SPA</abbr>, <del>removed</del> <ins>added</ins>, H<sub>2</sub>O, x<sup>2</sup>, and <small>small print</small>.</p>
-          <blockquote>Components are just functions that return strings.<cite>The State Street README</cite></blockquote>
+          <blockquote>Mutate state directly — the next frame re-renders what changed.<cite>The State Street README</cite></blockquote>
         </div>
 
         <div class="grid grid--2">
@@ -54,7 +54,7 @@ export function StyleGuide(_ctx: Ctx): string {
             <ol><li>Ordered item</li><li>Second step</li><li>Third step</li></ol>
             <dl>
               <dt>Version</dt><dd>2.0.0</dd>
-              <dt>Size</dt><dd>~10 kb</dd>
+              <dt>Size</dt><dd>negligible</dd>
               <dt>Deps</dt><dd>0</dd>
             </dl>
           </div>
