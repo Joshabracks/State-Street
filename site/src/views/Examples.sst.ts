@@ -1,24 +1,53 @@
 import type { Ctx } from "../types";
+import { EXAMPLES, EXAMPLE_MAP, DEFAULT_EXAMPLE } from "../examples";
 
-/** Placeholder — built out in Phases 3 (Useful) and 4 (Unique). */
+/** Examples shell: sidebar (example list) + content (live demo + source). */
 export function Examples(_ctx: Ctx): string {
   return `
-    <section class="section">
-      <div class="wrap stack">
-        <div class="eyebrow">Section 03 // examples</div>
-        <h1>Examples</h1>
-        <div class="panel ticked stack">
-          <span class="panel__label">status // pending</span>
-          <p>Interactive examples land in <strong>Phase 3</strong> (useful: forms, lists, modals, tabs, fetch) and <strong>Phase 4</strong> (unique: canvas render loops, media reuse, drag, a mini game) &mdash; each one a self-contained <code>.sst.ts</code> reference and a benchmark surface.</p>
-          <div class="flex">
-            <span class="tag tag--signal">Phase 3</span>
-            <span class="tag tag--signal">Phase 4</span>
-            <span class="tag">canvas</span>
-            <span class="tag">forms</span>
-            <span class="tag">drag</span>
-          </div>
-        </div>
+    <div class="docs-layout examples-layout">
+      <ExamplesSidebar/>
+      <div class="docs-main"><ExamplesContent/></div>
+    </div>
+  `;
+}
+
+/** Left rail: one link per example, active one highlighted. */
+export function ExamplesSidebar({ state }: Ctx): string {
+  const cur = state.data.exampleId || DEFAULT_EXAMPLE;
+  const links = EXAMPLES.map(
+    (ex) =>
+      `<a class="docs-nav__link" href="#examples/${ex.id}" aria-current="${ex.id === cur}" :click=setExample(id=${ex.id})>${ex.title}</a>`
+  ).join("");
+  return `
+    <aside class="docs-sidebar">
+      <div class="eyebrow">Examples // useful</div>
+      <nav class="docs-nav">${links}</nav>
+    </aside>
+  `;
+}
+
+/**
+ * Content pane for the active example: title, blurb, a live demo frame (the
+ * #ex-demo-<id> element a child State mounts into), and the source. Reads only
+ * exampleId, so switching rebuilds the demo container — mounting/dismounting the
+ * example child States as you navigate.
+ */
+export function ExamplesContent({ state }: Ctx): string {
+  const ex = EXAMPLE_MAP[state.data.exampleId] || EXAMPLE_MAP[DEFAULT_EXAMPLE];
+  return `
+    <div class="docs-content examples-content">
+      <div class="eyebrow">Live // running on State Street</div>
+      <h1>${ex.title}</h1>
+      <p class="examples-blurb">${ex.blurb}</p>
+      <div class="demo-frame ticked">
+        <div class="demo-frame__bar"><b>live</b><span>#ex-demo-${ex.id}</span></div>
+        <div class="demo-frame__mount" id="ex-demo-${ex.id}"></div>
       </div>
-    </section>
+      <div class="eyebrow">Source</div>
+      <div class="code">
+        <div class="code__bar"><b>${ex.title}</b><span>${ex.id}.sst.ts</span></div>
+        <pre :raw=highlightSST>${ex.source}</pre>
+      </div>
+    </div>
   `;
 }

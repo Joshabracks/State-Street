@@ -3,13 +3,14 @@ import "./styles/index.css";
 
 import { data, methods, parseHash } from "./state";
 import { DOC_GROUP_MAP } from "./docs/groups";
+import { EXAMPLES, EXAMPLE_MAP } from "./examples";
 import { AppRoot, Content } from "./app.sst";
 import { SiteHeader } from "./components/SiteHeader.sst";
 import { SiteFooter } from "./components/SiteFooter.sst";
 import { CodeBlock } from "./components/CodeBlock.sst";
 import { Landing } from "./views/Landing.sst";
 import { StyleGuide } from "./views/StyleGuide.sst";
-import { Examples } from "./views/Examples.sst";
+import { Examples, ExamplesSidebar, ExamplesContent } from "./views/Examples.sst";
 
 // Docs shell + helpers + group pages.
 import { Docs, DocsSidebar, DocsContent, DocsToc } from "./views/Docs.sst";
@@ -26,7 +27,7 @@ import { DocFaq } from "./docs/groups/Faq.sst";
 // Component registry. State Street matches `<Tag/>` against these keys.
 const components = {
   AppRoot, Content, SiteHeader, SiteFooter, CodeBlock,
-  Landing, StyleGuide, Examples,
+  Landing, StyleGuide, Examples, ExamplesSidebar, ExamplesContent,
   // docs shell + parts
   Docs, DocsSidebar, DocsContent, DocsToc, DocCode, DocPrevNext,
   // docs group pages (names match DOC_GROUPS[].component)
@@ -38,11 +39,24 @@ const template = `<AppRoot/>`;
 function boot(): void {
   const app = new State(template, data, components, methods);
 
-  // Keep view + docs group in sync with the URL (back/forward, deep links).
+  // Each example is its own isolated State, mounted into the Examples page via the
+  // public mountTarget API. They're created once and wait (mountOnAvailable) until
+  // their #ex-demo-<id> container is rendered — so navigating examples mounts and
+  // dismounts them. preserveInParent:false lets the main State tear the container
+  // down on a switch (the parent manages the panel lifecycle here).
+  EXAMPLES.forEach((ex) => {
+    new State(ex.template, ex.data, ex.components, ex.methods, {
+      mountTarget: "#ex-demo-" + ex.id,
+      preserveInParent: false,
+    });
+  });
+
+  // Keep view + docs group + example in sync with the URL (back/forward, deep links).
   window.addEventListener("hashchange", () => {
     const { view, group } = parseHash();
     if (app.data.view !== view) app.data.view = view;
-    if (group && DOC_GROUP_MAP[group] && app.data.docGroup !== group) app.data.docGroup = group;
+    if (view === "docs" && group && DOC_GROUP_MAP[group] && app.data.docGroup !== group) app.data.docGroup = group;
+    if (view === "examples" && group && EXAMPLE_MAP[group] && app.data.exampleId !== group) app.data.exampleId = group;
   });
 
   // Docs scroll-spy: rAF-throttled, only while on the docs view. Sets the active

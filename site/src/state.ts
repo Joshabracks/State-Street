@@ -1,6 +1,7 @@
 import type { Ctx } from "./types";
 import { highlightSST } from "./highlight";
 import { DOC_GROUP_MAP, DEFAULT_DOC_GROUP } from "./docs/groups";
+import { EXAMPLE_MAP, DEFAULT_EXAMPLE } from "./examples";
 // Routed through webpack's asset pipeline so it resolves in dev and prod.
 import logoUrl from "../static/sstlogo.png";
 
@@ -45,6 +46,8 @@ export const data: Record<string, any> = {
   // Docs sub-route + scroll-spy state.
   docGroup: DOC_GROUP_MAP[initial.group] ? initial.group : DEFAULT_DOC_GROUP,
   docActiveSection: "",
+  // Examples sub-route.
+  exampleId: initial.view === "examples" && EXAMPLE_MAP[initial.group] ? initial.group : DEFAULT_EXAMPLE,
   logoUrl,
   // Live-demo state (landing page), proving the site runs on State Street.
   count: 0,
@@ -61,10 +64,22 @@ export const methods: Record<string, (ctx: Ctx) => void | string> = {
       const g = state.data.docGroup || DEFAULT_DOC_GROUP;
       state.data.docGroup = g;
       if (location.hash.replace(/^#/, "") !== `docs/${g}`) location.hash = `docs/${g}`;
+    } else if (target === "examples") {
+      const id = state.data.exampleId || DEFAULT_EXAMPLE;
+      state.data.exampleId = id;
+      if (location.hash.replace(/^#/, "") !== `examples/${id}`) location.hash = `examples/${id}`;
     } else if (location.hash.replace(/^#/, "") !== target) {
       location.hash = target;
     }
     state.data.view = target;
+  },
+  // Switch the active example (sidebar). A `#examples/<id>` sub-route.
+  setExample: ({ id, state }: Ctx) => {
+    if (!EXAMPLE_MAP[id]) return;
+    window.scrollTo(0, 0);
+    state.data.exampleId = id;
+    state.data.view = "examples";
+    if (location.hash.replace(/^#/, "") !== `examples/${id}`) location.hash = `examples/${id}`;
   },
   // Switch the active docs group (sidebar). A `#docs/<group>` sub-route.
   setDocGroup: ({ group, state }: Ctx) => {

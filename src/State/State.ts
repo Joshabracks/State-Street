@@ -49,6 +49,10 @@ export default class State {
   mounted: boolean = false;
   mountTarget: Element | string = (typeof document !== "undefined" ? document.body : "body");
   mountOnAvailable: boolean = true;
+  // When mounted into another State's element, ask that parent to preserve the
+  // element across its re-renders. Set false when the parent intentionally manages
+  // the container's lifecycle (e.g. a router/tabs that mounts/unmounts panels).
+  preserveInParent: boolean = true;
   preserveSet: Set<string> = new Set();
   private looping: boolean = false;
   private _parentMount: { parent: State; ssid: string } | null = null;
@@ -73,6 +77,7 @@ export default class State {
     if (typeof options?.imgWarmPerFrame === "number" && options.imgWarmPerFrame > 0) this.imgWarmPerFrame = options.imgWarmPerFrame;
     if (options?.mountTarget != null) this.mountTarget = options.mountTarget;
     if (options?.mountOnAvailable === false) this.mountOnAvailable = false;
+    if (options?.preserveInParent === false) this.preserveInParent = false;
     this.updateInterval = 1000 / this.targetFPS;
     this.nextUpdate = this.updateInterval + Date.now();
     this.mountCheck();                                  // initial mount attempt
@@ -119,14 +124,17 @@ export default class State {
     this.clearDirty();
     if (el === document.body && this._data && this._data.title) document.title = this._data.title;
     // If we mounted into an element owned by another State, ask that parent to
-    // preserve this element across its re-renders (so it won't clobber our DOM).
-    const stid = el.getAttribute(STID);
-    const ssid = el.getAttribute(SSID);
-    if (stid !== null && ssid !== null) {
-      const parent = getState(stid);
-      if (parent && parent !== this) {
-        parent.togglePreserve(ssid, true);
-        this._parentMount = { parent, ssid };
+    // preserve this element across its re-renders (so it won't clobber our DOM) —
+    // unless this State opted out (the parent manages the container itself).
+    if (this.preserveInParent) {
+      const stid = el.getAttribute(STID);
+      const ssid = el.getAttribute(SSID);
+      if (stid !== null && ssid !== null) {
+        const parent = getState(stid);
+        if (parent && parent !== this) {
+          parent.togglePreserve(ssid, true);
+          this._parentMount = { parent, ssid };
+        }
       }
     }
   };

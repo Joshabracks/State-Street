@@ -1,0 +1,134 @@
+/* ============================================================================
+   examples.css — paged Examples section (sidebar + live demo + source) and the
+   small per-example styles the demos rely on. Demos otherwise inherit base.css.
+   ============================================================================ */
+
+/* 2-column variant of the docs layout (no right TOC). */
+.examples-layout { grid-template-columns: 14rem minmax(0, 1fr); }
+.examples-content { max-width: 70ch; }
+.examples-blurb { color: var(--ink-soft); max-width: 64ch; }
+
+/* --- Live demo frame ----------------------------------------------------- */
+.demo-frame {
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  overflow: hidden;
+  margin: var(--sp-4) 0 var(--sp-6);
+  background: var(--paper-hi);
+}
+.demo-frame__bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: var(--accent);
+  color: var(--accent-ink);
+  font-family: var(--font-mono);
+  font-size: var(--fs-300);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  padding: var(--sp-2) var(--sp-3);
+}
+.demo-frame__bar b { font-weight: 700; }
+.demo-frame__mount { padding: var(--sp-5); }
+
+/* --- Shared example primitives ------------------------------------------- */
+.demo-frame__mount .ex-input {
+  width: 100%;
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: var(--sp-2) var(--sp-3);
+  font: inherit;
+}
+.demo-frame__mount .ex-input.is-invalid { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(207,77,26,.16); }
+.demo-frame__mount .ex-btn {
+  font-family: var(--font-display);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-size: var(--fs-400);
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: var(--sp-2) var(--sp-4);
+  cursor: pointer;
+}
+.demo-frame__mount .ex-btn:hover { box-shadow: 2px 2px 0 var(--ink); }
+.demo-frame__mount .ex-btn:disabled { opacity: 0.45; cursor: not-allowed; box-shadow: none; }
+.demo-frame__mount .ex-btn--accent { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+.demo-frame__mount .ex-link { background: none; border: none; color: var(--accent); cursor: pointer; font: inherit; padding: 0; }
+.demo-frame__mount .ex-muted { color: var(--ink-faint); font-size: var(--fs-400); }
+.demo-frame__mount .ex-err { color: var(--accent); font-size: var(--fs-300); }
+.demo-frame__mount .ex-row { display: flex; gap: var(--sp-3); align-items: center; flex-wrap: wrap; }
+.demo-frame__mount .ex-row--end { justify-content: flex-end; }
+
+/* --- Todo ---------------------------------------------------------------- */
+.ex-todo__list { list-style: none; padding: 0; margin: 0 0 var(--sp-4); }
+.ex-todo__row { display: flex; align-items: center; justify-content: space-between; padding: var(--sp-1) 0; border-bottom: 1px solid var(--line-faint); }
+.ex-todo__row label { display: flex; align-items: center; gap: var(--sp-2); cursor: pointer; }
+.ex-todo__row.is-done label { text-decoration: line-through; color: var(--ink-faint); }
+.ex-todo__row .ex-x { background: none; border: none; color: var(--ink-faint); cursor: pointer; font-size: var(--fs-600); line-height: 1; }
+.ex-todo__row .ex-x:hover { color: var(--accent); }
+.ex-todo__add { display: flex; gap: var(--sp-2); }
+.ex-todo__add .ex-input { flex: 1; }
+.ex-todo__foot { display: flex; justify-content: space-between; align-items: center; margin-top: var(--sp-3); font-size: var(--fs-400); color: var(--ink-faint); }
+
+/* --- Form ---------------------------------------------------------------- */
+.ex-form { display: flex; flex-direction: column; gap: var(--sp-3); max-width: 22rem; }
+.ex-field { display: flex; flex-direction: column; gap: var(--sp-1); }
+.ex-field__label { font-size: var(--fs-400); font-weight: 500; }
+
+/* --- Tabs ---------------------------------------------------------------- */
+.ex-tabbar { display: flex; gap: var(--sp-1); border-bottom: 1px solid var(--line); margin-bottom: var(--sp-3); }
+.ex-tab {
+  font-family: var(--font-display);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-size: var(--fs-400);
+  background: none;
+  border: 1px solid transparent;
+  border-bottom: none;
+  border-radius: var(--radius) var(--radius) 0 0;
+  padding: var(--sp-2) var(--sp-3);
+  cursor: pointer;
+  color: var(--ink-soft);
+  margin-bottom: -1px;
+}
+.ex-tab.is-active { color: var(--accent); border-color: var(--line); border-bottom: 1px solid var(--paper-hi); background: var(--paper-hi); }
+.ex-tabpanel { color: var(--ink-soft); min-height: 4rem; }
+
+/* --- Modal --------------------------------------------------------------- */
+.ex-modal { position: relative; }
+.ex-overlay {
+  position: fixed; inset: 0; z-index: 50;
+  background: rgba(22,23,28,.5);
+  display: flex; align-items: center; justify-content: center;
+}
+.ex-dialog {
+  background: var(--paper-hi);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-2);
+  box-shadow: 8px 8px 0 var(--ink);
+  padding: var(--sp-5);
+  max-width: 22rem;
+}
+
+/* --- Fetch --------------------------------------------------------------- */
+.ex-fetch { display: flex; flex-direction: column; gap: var(--sp-3); align-items: flex-start; }
+.ex-usercard { display: flex; flex-direction: column; border: 1px solid var(--line); border-radius: var(--radius); padding: var(--sp-3) var(--sp-4); background: var(--paper); }
+
+/* --- Stopwatch ----------------------------------------------------------- */
+.ex-stopwatch { display: flex; flex-direction: column; gap: var(--sp-4); align-items: flex-start; }
+.ex-stopwatch__time {
+  font-family: var(--font-poster);
+  font-size: clamp(2.5rem, 8vw, 4rem);
+  line-height: 1;
+  color: var(--accent);
+  font-variant-numeric: tabular-nums;
+}
+
+/* --- Responsive ---------------------------------------------------------- */
+@media (max-width: 760px) {
+  .examples-layout { grid-template-columns: 1fr; }
+}

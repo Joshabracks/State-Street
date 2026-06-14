@@ -152,11 +152,17 @@ export function highlightSST(code: string): string {
       if (c === "/" && src[i + 1] === ">") { out.push(span("hl-tag", "/>")); i += 2; return true; }
       if (/\s/.test(c)) { pushText(c); i++; continue; }
       if (c === ":" && identStart(src[i + 1])) { scanEvent(); continue; }
+      if (c === "$" && src[i + 1] === "{") {
+        out.push(span("hl-punct", "${")); i += 2;
+        scanJS(true);
+        if (src[i] === "}") { out.push(span("hl-punct", "}")); i++; }
+        continue;
+      }
       if (c === "{" && src[i + 1] === "{") {
         const end = src.indexOf("}}", i + 2);
         if (end !== -1) { out.push(interp(src.slice(i + 2, end))); i = end + 2; continue; }
       }
-      if (identStart(c) || c === "-") { scanAttr(); continue; }
+      if (/[A-Za-z_-]/.test(c)) { scanAttr(); continue; }
       if (c === "'" || c === '"') { scanAttrString(c); continue; }
       pushText(c); i++;
     }
@@ -192,6 +198,7 @@ export function highlightSST(code: string): string {
   function scanAttr() {
     let j = i;
     while (j < n && /[\w-]/.test(src[j])) j++;
+    if (j === i) { pushText(src[i]); i++; return; }   // safety: always make progress
     out.push(span("hl-attr", src.slice(i, j)));
     i = j;
     if (src[i] === "=") {
