@@ -14,6 +14,7 @@ Want to contribute or need help? [Join the State Street Discord!](https://discor
 ## Table of contents
 
 - [Why State Street](#why-state-street)
+- [Using with AI coding agents](#using-state-street-with-ai-coding-agents)
 - [Install](#install)
 - [Quick start — direct style](#quick-start--direct-style)
 - [Quick start — registry style](#quick-start--registry-style)
@@ -55,9 +56,27 @@ It stays small on purpose: there's no virtual DOM, and conditionals and loops ar
 
 ---
 
+## Using State Street with AI coding agents
+
+State Street isn't React/Vue, so coding assistants often misapply patterns from those frameworks (JSX, hooks, `className`, a router). Give your agent the correct mental model up front:
+
+- **Drop [`AGENTS.md`](./AGENTS.md) into your project.** It lives at this repo's root and ships inside the npm package (`node_modules/@state-street/state-street/AGENTS.md`). Copy it to your project root as `AGENTS.md` (read by most agents) or `CLAUDE.md` (Claude Code), or paste it into your assistant's rules/context.
+- **Or point your agent at the hosted guide:** [`/llms-full.txt`](https://joshabracks.github.io/State-Street/llms-full.txt) (the full guide) — discoverable via [`/llms.txt`](https://joshabracks.github.io/State-Street/llms.txt).
+
+It's a distilled cheat-sheet — what State Street is *not*, the reactivity model, the directive syntax, and the gotchas that trip up agents — so they write idiomatic State Street instead of guessing from other frameworks. The package also ships TypeScript declarations (`build/*.d.ts`), so editors and agents get real type signatures.
+
+---
+
 ## Install
 
-**npm / module bundler:**
+**Scaffold a new app** (a starter landing page, agent-ready):
+
+```bash
+npm create @state-street@latest my-app                 # plain JS, no build step
+npm create @state-street@latest my-app -- --typescript  # TypeScript + webpack
+```
+
+**Add to an existing project (npm / module bundler):**
 
 ```bash
 npm i @state-street/state-street

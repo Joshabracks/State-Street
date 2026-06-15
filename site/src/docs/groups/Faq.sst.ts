@@ -3,7 +3,7 @@ import type { Ctx } from "../../types";
 export function DocFaq(_ctx: Ctx): string {
   return `
     <div class="docs-content">
-      <div class="eyebrow">Section 07 // faq</div>
+      <div class="eyebrow">Section 08 // faq</div>
       <h1>FAQ</h1>
 
       <section class="docs-section" id="faq">

@@ -3,8 +3,10 @@
   "version": "2.2.0",
   "description": "light weight single page framework",
   "main": "build/index.js",
+  "types": "build/index.d.ts",
   "files": [
-    "build"
+    "build",
+    "AGENTS.md"
   ],
   "repository": {
     "type": "git",

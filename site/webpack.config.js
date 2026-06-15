@@ -1,5 +1,6 @@
 const path = require("path");
 const HtmlWebpackPlugin = require("html-webpack-plugin");
+const CopyPlugin = require("copy-webpack-plugin");
 
 module.exports = (_env, argv) => {
   const isProd = argv.mode === "production";
@@ -32,6 +33,14 @@ module.exports = (_env, argv) => {
         template: "./index.html",
         inject: "body",
         favicon: "./static/state_street_icon_256.png",
+      }),
+      // Agent-onboarding assets served at the site root: /llms.txt (index) and
+      // /llms-full.txt (the full guide, single-sourced from the repo's AGENTS.md).
+      new CopyPlugin({
+        patterns: [
+          { from: "static/llms.txt", to: "llms.txt" },
+          { from: path.resolve(__dirname, "../AGENTS.md"), to: "llms-full.txt" },
+        ],
       }),
     ],
     devServer: {
