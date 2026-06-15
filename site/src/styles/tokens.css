@@ -19,17 +19,19 @@
   --accent-hi:  #e8682c;   /* hover / glow */
   --accent-ink: #fbf4e8;   /* text on accent */
   --signal:     #2f49c4;   /* royalblue — secondary signal (links of record) */
+  --signal-ink: #ffffff;   /* text on the signal / link chip */
 
   /* --- Inverted (code panels, footer) ------------------------------------ */
   --invert-bg:  #16171c;
   --invert-fg:  #e7e3d6;
   --invert-faint: #8a897e;
+  --logo-fg:    #ffffff;   /* State Street logo letterforms (on the dark header) */
 
   /* --- Lines ------------------------------------------------------------- */
-  --line:       #16171c;          /* hard hairline (ink) */
-  --line-soft:  rgba(22,23,28,.28);
-  --line-faint: rgba(22,23,28,.14);
-  --grid:       rgba(22,23,28,.05);
+  --line:       var(--ink);                                  /* hard hairline (ink) */
+  --line-soft:  color-mix(in srgb, var(--ink) 28%, transparent);
+  --line-faint: color-mix(in srgb, var(--ink) 14%, transparent);
+  --grid:       color-mix(in srgb, var(--ink) 5%, transparent);
 
   /* --- Type -------------------------------------------------------------- */
   --font-poster: "Anton", "Arial Narrow", sans-serif;          /* huge wordmarks */

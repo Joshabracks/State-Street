@@ -175,7 +175,7 @@ th, td {
   text-align: left;
 }
 thead th {
-  background: var(--ink);
+  background: var(--invert-bg);
   color: var(--invert-fg);
   font-family: var(--font-mono);
   font-size: var(--fs-300);
@@ -216,7 +216,7 @@ input[type="tel"], input[type="date"], textarea, select {
 input:focus, textarea:focus, select:focus {
   outline: none;
   border-color: var(--accent);
-  box-shadow: 0 0 0 3px rgba(207, 77, 26, 0.18);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 18%, transparent);
 }
 textarea { min-height: 5rem; resize: vertical; }
 
@@ -281,7 +281,7 @@ dialog {
   padding: var(--sp-5);
   box-shadow: 8px 8px 0 var(--ink);
 }
-dialog::backdrop { background: rgba(22, 23, 28, 0.45); }
+dialog::backdrop { background: color-mix(in srgb, var(--ink) 45%, transparent); }
 
 /* --- Selection ----------------------------------------------------------- */
 ::selection { background: var(--accent); color: var(--accent-ink); }

@@ -23,7 +23,7 @@ main { flex: 1 0 auto; }
   position: sticky;
   top: 0;
   z-index: 20;
-  background: var(--ink);
+  background: var(--invert-bg);
   color: var(--invert-fg);
   /* Thin light underline so the dark header's black text/elements read as
      separate from the page below instead of bleeding into it. */
@@ -43,7 +43,7 @@ main { flex: 1 0 auto; }
    paths are the letterforms. Recolor: fill -> the version-stamp orange, text -> white.
    CSS `fill` overrides the SVG presentation attribute. */
 .brand__logo path { fill: var(--accent-hi); }
-.brand__logo path[fill="#FFFFFF"] { fill: #fff; }
+.brand__logo path[fill="#FFFFFF"] { fill: var(--logo-fg); }
 .brand__mark {
   font-family: var(--font-display);
   font-weight: 700;
@@ -133,7 +133,7 @@ main { flex: 1 0 auto; }
   color: var(--ink-soft);
 }
 .tag--accent { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
-.tag--signal { background: var(--signal); color: #fff; border-color: var(--signal); }
+.tag--signal { background: var(--signal); color: var(--signal-ink); border-color: var(--signal); }
 
 /* --- Eyebrow + ruled dividers ------------------------------------------- */
 .eyebrow {
@@ -191,7 +191,7 @@ main { flex: 1 0 auto; }
 }
 .spec__row + .spec__row { border-top: 1px solid var(--line-soft); }
 .spec__k {
-  background: var(--ink);
+  background: var(--invert-bg);
   color: var(--invert-fg);
   padding: var(--sp-2) var(--sp-3);
   text-transform: uppercase;
@@ -272,7 +272,7 @@ main { flex: 1 0 auto; }
   display: flex;
   align-items: center;
   justify-content: space-between;
-  background: var(--ink);
+  background: var(--invert-bg);
   color: var(--invert-faint);
   font-family: var(--font-mono);
   font-size: var(--fs-300);
@@ -301,7 +301,7 @@ main { flex: 1 0 auto; }
 
 /* --- Footer -------------------------------------------------------------- */
 .site-footer {
-  background: var(--ink);
+  background: var(--invert-bg);
   color: var(--invert-fg);
   border-top: 2px solid var(--ink);
   margin-top: var(--sp-8);

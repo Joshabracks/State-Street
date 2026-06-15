@@ -11,6 +11,8 @@ import { CodeBlock } from "./components/CodeBlock.sst";
 import { Landing } from "./views/Landing.sst";
 import { StyleGuide } from "./views/StyleGuide.sst";
 import { Examples, ExamplesSidebar, ExamplesContent } from "./views/Examples.sst";
+import { Studio } from "./views/Studio.sst";
+import { studioApp } from "./studio/app";
 
 // Docs shell + helpers + group pages.
 import { Docs, DocsSidebar, DocsContent, DocsToc } from "./views/Docs.sst";
@@ -27,7 +29,7 @@ import { DocFaq } from "./docs/groups/Faq.sst";
 // Component registry. State Street matches `<Tag/>` against these keys.
 const components = {
   AppRoot, Content, SiteHeader, SiteFooter, CodeBlock,
-  Landing, StyleGuide, Examples, ExamplesSidebar, ExamplesContent,
+  Landing, StyleGuide, Examples, ExamplesSidebar, ExamplesContent, Studio,
   // docs shell + parts
   Docs, DocsSidebar, DocsContent, DocsToc, DocCode, DocPrevNext,
   // docs group pages (names match DOC_GROUPS[].component)
@@ -49,6 +51,14 @@ function boot(): void {
       mountTarget: "#ex-demo-" + ex.id,
       preserveInParent: false,
     });
+  });
+
+  // The Studio is its own isolated State too, mounted into #studio-root when the
+  // Studio view is rendered. preserveInParent:false lets the main State own the
+  // container's lifecycle (mount on enter, dismount on leave) like the examples.
+  new State(studioApp.template, studioApp.data, studioApp.components, studioApp.methods, {
+    mountTarget: "#studio-root",
+    preserveInParent: false,
   });
 
   // Keep view + docs group + example in sync with the URL (back/forward, deep links).

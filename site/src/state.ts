@@ -15,6 +15,7 @@ export const VIEWS: Record<string, string> = {
   styleguide: "StyleGuide",
   docs: "Docs",
   examples: "Examples",
+  studio: "Studio",
 };
 
 /** Nav items shown in the header, in order. */
@@ -23,6 +24,7 @@ export const NAV: Array<{ key: string; label: string }> = [
   { key: "styleguide", label: "Type Specimen" },
   { key: "docs", label: "Docs" },
   { key: "examples", label: "Examples" },
+  { key: "studio", label: "Studio" },
 ];
 
 /**
