@@ -4,6 +4,10 @@
    .demo-frame__mount, so it inherits the ex-* primitives from examples.css).
    ============================================================================ */
 
+.studio {
+  margin: 40px;
+}
+
 .studio-lede { color: var(--ink-soft); max-width: 64ch; }
 
 .st-app { display: flex; flex-direction: column; gap: var(--sp-4); }
