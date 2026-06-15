@@ -13,6 +13,21 @@
 
 html { -webkit-text-size-adjust: 100%; }
 
+/* Smooth ~1s cross-fade between themes. The Studio adds .theming to <html> around a
+   token change (see theme.ts); it's transient + scoped so it never slows interactions,
+   and the !important wins over elements' own (faster) transitions for the duration. */
+@media (prefers-reduced-motion: no-preference) {
+  html.theming,
+  html.theming *,
+  html.theming *::before,
+  html.theming *::after {
+    transition:
+      background-color 1s ease, background-image 1s ease, color 1s ease,
+      border-color 1s ease, box-shadow 1s ease, outline-color 1s ease,
+      fill 1s ease, stroke 1s ease, border-radius 1s ease !important;
+  }
+}
+
 body {
   font-family: var(--font-body);
   font-size: var(--fs-500);

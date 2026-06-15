@@ -21,6 +21,19 @@ const DEFAULTS: Record<string, string> = (() => {
   return d;
 })();
 
+// Toggle the .theming class on <html> so token changes cross-fade (~1s, see base.css).
+// Debounced: a batch of edits adds it once and removes it 1s after the last change.
+let themingTimer: ReturnType<typeof setTimeout> | null = null;
+function beginTransition(): void {
+  const el = root();
+  if (!el.classList.contains("theming")) {
+    el.classList.add("theming");
+    void el.offsetWidth; // reflow so the transition is registered before the var changes
+  }
+  if (themingTimer) clearTimeout(themingTimer);
+  themingTimer = setTimeout(() => { el.classList.remove("theming"); themingTimer = null; }, 1000);
+}
+
 /** Persist the current overrides as the chosen theme (compact [name,value] pairs). */
 function persistChosen(): void {
   const e = currentEdits();
@@ -50,6 +63,7 @@ export function getCurrent(name: string): string {
 
 /** Set a token on :root (affects the whole site) and record + persist the override. */
 export function applyEdit(name: string, value: string): void {
+  beginTransition();
   root().style.setProperty(name, value);
   overrides[name] = value;
   persistChosen();
@@ -57,6 +71,7 @@ export function applyEdit(name: string, value: string): void {
 
 /** Remove all our overrides — back to the stylesheet defaults. */
 export function resetTheme(): void {
+  beginTransition();
   for (const name in overrides) root().style.removeProperty(name);
   for (const name in overrides) delete overrides[name];
   persistChosen();
