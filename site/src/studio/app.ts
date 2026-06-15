@@ -51,7 +51,7 @@ function edit(state: any, name: string, value: string) {
 function StudioApp(): string {
   return `
     <div class="st-app">
-      <div class="st-banner">⚠ This restyles the <b>live site</b> by overwriting its CSS variables. Things can look broken or unreadable — that's half the fun. <b>Refresh resets the live look</b> (your saved styles stay).</div>
+      <div class="st-banner">⚠ This restyles the <b>live site</b> by overwriting its CSS variables. Things can look broken or unreadable — that's half the fun. Your theme is <b>remembered across visits</b>; pick <b>State Street</b> to restore the original.</div>
       <div class="st-stage"><StudioStatus/><StudioPrompt/></div>
       <StudioStyles/>
       <div class="st-manual"><div class="eyebrow">Manual tokens</div><StudioPanel/></div>
@@ -158,7 +158,7 @@ function StudioFooter({ state }: any): string {
         <button class="ex-btn" :click=undo() ${state.data.history.length ? "" : "disabled"}>Undo</button>
         <button class="ex-btn" :click=saveCurrent() ${hasOverrides() ? "" : "disabled"}>Save look</button>
         <button class="ex-btn" :click=exportTheme() ${hasOverrides() ? "" : "disabled"}>Export CSS</button>
-        <span class="ex-muted">${esc(state.data.toast || "Refresh resets the live look; saved styles persist.")}</span>
+        <span class="ex-muted">${esc(state.data.toast || "Your theme & styles are saved in cookies. Pick State Street to restore the original.")}</span>
       </div>
     </div>`;
 }

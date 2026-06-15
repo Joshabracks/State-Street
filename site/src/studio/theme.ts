@@ -1,28 +1,65 @@
 /**
  * Live theme manipulation: edits the site's :root design tokens (global), tracks
  * overrides for export/reset, normalizes colors, and runs a WCAG contrast check.
- * Nothing here is persisted — a page refresh wipes the inline overrides.
+ * The chosen theme is persisted to a cookie, so the applied look survives a refresh
+ * (the built-in "State Street" style restores the original).
  */
 import { EDITABLE_TOKENS } from "./tokens";
+import { getCookie, setCookie } from "./cookies";
 
 const root = () => document.documentElement;
 const overrides: Record<string, string> = {};
+
+const CHOSEN = "sst_theme";
+
+// Capture the stylesheet's original token values ONCE, up front — before any persisted
+// theme is restored — so the built-in "State Street" style always reflects the originals.
+const DEFAULTS: Record<string, string> = (() => {
+  const cs = getComputedStyle(root());
+  const d: Record<string, string> = {};
+  for (const t of EDITABLE_TOKENS) d[t.name] = cs.getPropertyValue(t.name).trim();
+  return d;
+})();
+
+/** Persist the current overrides as the chosen theme (compact [name,value] pairs). */
+function persistChosen(): void {
+  const e = currentEdits();
+  setCookie(CHOSEN, e.length ? JSON.stringify(e.map((x) => [x.variable, x.value])) : "");
+}
+
+/** Re-apply the persisted chosen theme on load (directly, without re-persisting). */
+function restoreChosen(): void {
+  try {
+    const raw = getCookie(CHOSEN);
+    if (!raw) return;
+    const arr = JSON.parse(raw);
+    if (!Array.isArray(arr)) return;
+    for (const p of arr) {
+      if (typeof p?.[0] === "string" && typeof p?.[1] === "string") {
+        root().style.setProperty(p[0], p[1]);
+        overrides[p[0]] = p[1];
+      }
+    }
+  } catch { /* malformed cookie — ignore */ }
+}
 
 /** Current computed value of a token (reflects any override). */
 export function getCurrent(name: string): string {
   return getComputedStyle(root()).getPropertyValue(name).trim();
 }
 
-/** Set a token on :root (affects the whole site) and record the override. */
+/** Set a token on :root (affects the whole site) and record + persist the override. */
 export function applyEdit(name: string, value: string): void {
   root().style.setProperty(name, value);
   overrides[name] = value;
+  persistChosen();
 }
 
 /** Remove all our overrides — back to the stylesheet defaults. */
 export function resetTheme(): void {
   for (const name in overrides) root().style.removeProperty(name);
   for (const name in overrides) delete overrides[name];
+  persistChosen();
 }
 
 export function hasOverrides(): boolean {
@@ -94,17 +131,9 @@ export function contrastWarning(): string {
   return "";
 }
 
-// The stylesheet's original token values, captured once on first use (which happens
-// before any override is applied), so the built-in "State Street" style previews and
-// restores the original look.
-let DEFAULTS: Record<string, string> | null = null;
+/** The original token values, for the built-in "State Street" style. */
 export function defaultEdits(): { variable: string; value: string }[] {
-  if (!DEFAULTS) {
-    const cs = getComputedStyle(root());
-    DEFAULTS = {};
-    for (const t of EDITABLE_TOKENS) DEFAULTS[t.name] = cs.getPropertyValue(t.name).trim();
-  }
-  return EDITABLE_TOKENS.map((t) => ({ variable: t.name, value: (DEFAULTS as Record<string, string>)[t.name] }));
+  return EDITABLE_TOKENS.map((t) => ({ variable: t.name, value: DEFAULTS[t.name] }));
 }
 
 /** A snapshot of current token values (for the panel + diff). */
@@ -113,3 +142,6 @@ export function snapshotTokens(): Record<string, string> {
   for (const t of EDITABLE_TOKENS) out[t.name] = getCurrent(t.name);
   return out;
 }
+
+// Re-apply the persisted chosen theme on load (after DEFAULTS is captured above).
+restoreChosen();
