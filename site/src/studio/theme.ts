@@ -94,6 +94,19 @@ export function contrastWarning(): string {
   return "";
 }
 
+// The stylesheet's original token values, captured once on first use (which happens
+// before any override is applied), so the built-in "State Street" style previews and
+// restores the original look.
+let DEFAULTS: Record<string, string> | null = null;
+export function defaultEdits(): { variable: string; value: string }[] {
+  if (!DEFAULTS) {
+    const cs = getComputedStyle(root());
+    DEFAULTS = {};
+    for (const t of EDITABLE_TOKENS) DEFAULTS[t.name] = cs.getPropertyValue(t.name).trim();
+  }
+  return EDITABLE_TOKENS.map((t) => ({ variable: t.name, value: (DEFAULTS as Record<string, string>)[t.name] }));
+}
+
 /** A snapshot of current token values (for the panel + diff). */
 export function snapshotTokens(): Record<string, string> {
   const out: Record<string, string> = {};

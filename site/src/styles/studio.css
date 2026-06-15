@@ -43,18 +43,23 @@
 /* --- Saved styles library ------------------------------------------------ */
 .st-styles { display: flex; flex-direction: column; gap: var(--sp-2); }
 .st-styles__list { display: flex; flex-wrap: wrap; gap: var(--sp-2); }
-.st-style { display: inline-flex; align-items: stretch; border: 1px solid var(--line); border-radius: var(--radius); overflow: hidden; background: var(--paper-hi); }
+/* Each chip previews its own theme via the inline --pv-* vars set in StudioStyles. */
+.st-style { display: inline-flex; align-items: stretch; border: 1px solid var(--pv-accent, var(--line)); border-radius: var(--radius); overflow: hidden; background: var(--pv-bg, var(--paper-hi)); }
+/* The built-in "State Street" chip: an accent stripe marks it as the home/original. */
+.st-style--home { box-shadow: inset 3px 0 0 0 var(--pv-accent, var(--accent)); }
+.st-style--home .st-style__apply { padding-left: var(--sp-4); }
 .st-style__apply {
   font: inherit; font-size: var(--fs-400);
+  font-family: var(--pv-font, inherit);
   display: flex; align-items: center; gap: var(--sp-2);
   background: none; border: none; cursor: pointer;
-  padding: var(--sp-1) var(--sp-3); color: var(--ink);
+  padding: var(--sp-1) var(--sp-3); color: var(--pv-ink, var(--ink));
 }
-.st-style__apply em { font-style: normal; font-family: var(--font-mono); font-size: var(--fs-300); color: var(--ink-faint); }
-.st-style__apply:hover { background: var(--accent); color: var(--accent-ink); }
-.st-style__apply:hover em { color: var(--accent-ink); }
-.st-style__del { font: inherit; font-size: var(--fs-500); line-height: 1; background: none; border: none; border-left: 1px solid var(--line); cursor: pointer; padding: 0 var(--sp-2); color: var(--ink-faint); }
-.st-style__del:hover { background: var(--accent); color: var(--accent-ink); }
+.st-style__apply em { font-style: normal; font-family: var(--font-mono); font-size: var(--fs-300); color: var(--pv-faint, var(--ink-faint)); }
+.st-style__apply:hover { background: var(--pv-accent, var(--accent)); color: var(--pv-accent-ink, var(--accent-ink)); }
+.st-style__apply:hover em { color: var(--pv-accent-ink, var(--accent-ink)); }
+.st-style__del { font: inherit; font-size: var(--fs-500); line-height: 1; background: none; border: none; border-left: 1px solid var(--pv-accent, var(--line)); cursor: pointer; padding: 0 var(--sp-2); color: var(--pv-faint, var(--ink-faint)); }
+.st-style__del:hover { background: var(--pv-accent, var(--accent)); color: var(--pv-accent-ink, var(--accent-ink)); }
 
 /* --- Manual token panel (multi-column control board) --------------------- */
 .st-manual { display: flex; flex-direction: column; gap: var(--sp-3); }

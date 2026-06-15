@@ -5,7 +5,7 @@
  * panel lets you tune every token by hand.
  */
 import { EDITABLE_TOKENS, FONT_OPTIONS } from "./tokens";
-import { applyEdit, resetTheme, exportCss, toHex, getCurrent, contrastWarning, hasOverrides, currentEdits } from "./theme";
+import { applyEdit, resetTheme, exportCss, toHex, getCurrent, contrastWarning, hasOverrides, currentEdits, defaultEdits } from "./theme";
 import { loadStyles, addStyle, removeStyle, getStyle } from "./styles";
 
 const esc = (s: any) => String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
@@ -29,7 +29,7 @@ async function runPrompt(state: any, text: string) {
     const title = theme.title || text;
     state.data.lastLabel = title;
     // Auto-save the titled theme to the persistent library.
-    if (theme.edits.length) state.data.styles = addStyle(title, theme.edits);
+    if (theme.edits.length) { state.data.styles = addStyle(title, theme.edits); state.data.justSaved = true; }
   } catch (err: any) {
     state.data.lastCount = -1;
     state.data.toast = "The model glitched: " + (err?.message || err);
@@ -85,7 +85,8 @@ function StudioPrompt({ state }: any): string {
   let status: string;
   if (thinking) status = `<div class="st-result is-thinking">Designing the theme…</div>`;
   else if (state.data.lastCount < 0) status = `<div class="st-result ex-err">The model couldn't theme that — try again.</div>`;
-  else if (state.data.lastLabel) status = `<div class="st-result">Applied “${esc(state.data.lastLabel)}” — ${state.data.lastCount} change${state.data.lastCount === 1 ? "" : "s"}. Saved below.</div>`;
+  else if (state.data.lastLabel && state.data.lastCount <= 0) status = `<div class="st-result">Restored “${esc(state.data.lastLabel)}”.</div>`;
+  else if (state.data.lastLabel) status = `<div class="st-result">Applied “${esc(state.data.lastLabel)}” — ${state.data.lastCount} change${state.data.lastCount === 1 ? "" : "s"}.${state.data.justSaved ? " Saved below." : ""}</div>`;
   else status = `<div class="st-result ex-muted">One prompt restyles the whole site — try “moody cyberpunk”, “warm newspaper”, “vaporwave sunset”, “brutalist mono”. Each theme is saved automatically.</div>`;
   return `
     <form class="st-prompt" onsubmit="return false">
@@ -97,17 +98,34 @@ function StudioPrompt({ state }: any): string {
 
 // The saved-styles library. AI themes auto-save here (titled by the model); a saved
 // style re-applies on click. Persisted in localStorage, so it survives a refresh.
+// Build the inline --pv-* preview vars so a chip wears its own theme (falling back to
+// the site tokens for anything that theme didn't set) — a partial at-a-glance preview.
+// Keep " (font stacks need it) but drop ' and ; so a value can't break the attr.
+function previewVars(edits: any[]): string {
+  const sv = (v: string) => esc(String(v)).replace(/[';]/g, "");
+  const m: Record<string, string> = {};
+  edits.forEach((e: any) => { m[e.variable] = e.value; });
+  return [
+    `--pv-bg:${sv(m["--paper"] || m["--paper-hi"] || "var(--paper-hi)")}`,
+    `--pv-ink:${sv(m["--ink"] || "var(--ink)")}`,
+    `--pv-faint:${sv(m["--ink-faint"] || m["--ink-soft"] || "var(--ink-faint)")}`,
+    `--pv-accent:${sv(m["--accent"] || "var(--line)")}`,
+    `--pv-accent-ink:${sv(m["--accent-ink"] || "var(--accent-ink)")}`,
+    `--pv-font:${m["--font-display"] ? sv(m["--font-display"]) : "inherit"}`,
+  ].join(";");
+}
+
 function StudioStyles({ state }: any): string {
-  const styles = state.data.styles;
-  if (!styles.length) return "";
-  const chips = styles
-    .map((s: any) => `
-      <div class="st-style">
-        <button class="st-style__apply" :click=applyStyle(id=${s.id}) title="Apply this style">${esc(s.title)} <em>${s.edits.length}</em></button>
-        <button class="st-style__del" :click=deleteStyle(id=${s.id}) title="Delete">×</button>
-      </div>`)
-    .join("");
-  return `<div class="st-styles"><div class="eyebrow">Saved styles</div><div class="st-styles__list">${chips}</div></div>`;
+  // The built-in "State Street" chip restores the original look. It applies through the
+  // same path as the others (applyStyle), can't be deleted, and previews the defaults.
+  const chip = (id: string, title: string, edits: any[], builtin: boolean) => `
+      <div class="st-style${builtin ? " st-style--home" : ""}" style='${previewVars(edits)}'>
+        <button class="st-style__apply" :click=applyStyle(id=${id}) title="Apply this style">${esc(title)}${builtin ? "" : ` <em>${edits.length}</em>`}</button>
+        ${builtin ? "" : `<button class="st-style__del" :click=deleteStyle(id=${id}) title="Delete">×</button>`}
+      </div>`;
+  const home = chip("default", "State Street", defaultEdits(), true);
+  const saved = state.data.styles.map((s: any) => chip(s.id, s.title, s.edits, false)).join("");
+  return `<div class="st-styles"><div class="eyebrow">Styles</div><div class="st-styles__list">${home}${saved}</div></div>`;
 }
 
 function StudioPanel({ state }: any): string {
@@ -138,7 +156,6 @@ function StudioFooter({ state }: any): string {
       ${warn}
       <div class="st-row">
         <button class="ex-btn" :click=undo() ${state.data.history.length ? "" : "disabled"}>Undo</button>
-        <button class="ex-btn" :click=reset()>Reset</button>
         <button class="ex-btn" :click=saveCurrent() ${hasOverrides() ? "" : "disabled"}>Save look</button>
         <button class="ex-btn" :click=exportTheme() ${hasOverrides() ? "" : "disabled"}>Export CSS</button>
         <span class="ex-muted">${esc(state.data.toast || "Refresh resets the live look; saved styles persist.")}</span>
@@ -159,13 +176,6 @@ const methods: Record<string, (ctx: any) => void> = {
     state.data.rev++;
     state.data.warning = contrastWarning();
   },
-  reset: ({ state }: any) => {
-    resetTheme();
-    state.data.history = [];
-    state.data.rev++;
-    state.data.warning = "";
-    state.data.toast = "Reset to defaults.";
-  },
   exportTheme: ({ state }: any) => {
     const css = exportCss();
     if (navigator.clipboard) navigator.clipboard.writeText(css).catch(() => {});
@@ -174,7 +184,8 @@ const methods: Record<string, (ctx: any) => void> = {
   },
   // --- Saved styles ---
   applyStyle: ({ state, id }: any) => {
-    const s = getStyle(id);
+    // id "default" is the built-in State Street style: a clean reset to the original.
+    const s = id === "default" ? { title: "State Street", edits: [] as any[] } : getStyle(id);
     if (!s) return;
     resetTheme();
     state.data.history = [];
@@ -183,6 +194,7 @@ const methods: Record<string, (ctx: any) => void> = {
     state.data.warning = contrastWarning();
     state.data.lastLabel = s.title;
     state.data.lastCount = s.edits.length;
+    state.data.justSaved = false;
   },
   deleteStyle: ({ state, id }: any) => { state.data.styles = removeStyle(id); },
   saveCurrent: ({ state }: any) => {
@@ -193,6 +205,7 @@ const methods: Record<string, (ctx: any) => void> = {
     state.data.styles = addStyle(title, edits);
     state.data.lastLabel = title;
     state.data.lastCount = edits.length;
+    state.data.justSaved = true;
     state.data.toast = `Saved “${title}”.`;
   },
   // --- AI: load the local model (WebLLM, lazily loaded) ---
@@ -238,6 +251,7 @@ export const studioApp = {
     thinking: false,
     lastLabel: "",
     lastCount: 0,
+    justSaved: false,
     styles: loadStyles(),
     rev: 0,
     history: [] as { name: string; prev: string }[],
