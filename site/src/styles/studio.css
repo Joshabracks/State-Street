@@ -30,6 +30,17 @@
 .st-progress { flex: 1; min-width: 8rem; height: 8px; background: var(--paper); border: 1px solid var(--line); border-radius: 99px; overflow: hidden; }
 .st-progress__bar { height: 100%; background: var(--accent); transition: width .2s ease; }
 
+/* The "Load the design model" button pulses to show it must be clicked to enable the AI. */
+@media (prefers-reduced-motion: no-preference) {
+  .st-load { animation: st-pulse 1.8s ease-out infinite; }
+}
+.st-load:hover { animation: none; }
+@keyframes st-pulse {
+  0%   { box-shadow: 0 0 0 0 color-mix(in srgb, var(--accent) 55%, transparent); }
+  70%  { box-shadow: 0 0 0 9px color-mix(in srgb, var(--accent) 0%, transparent); }
+  100% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--accent) 0%, transparent); }
+}
+
 /* --- The single prompt that drives the whole aesthetic ------------------- */
 .st-stage { display: flex; flex-direction: column; gap: var(--sp-2); }
 .st-prompt { display: flex; gap: var(--sp-2); }

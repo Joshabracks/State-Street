@@ -12,7 +12,7 @@ import { Landing } from "./views/Landing.sst";
 import { StyleGuide } from "./views/StyleGuide.sst";
 import { Examples, ExamplesSidebar, ExamplesContent } from "./views/Examples.sst";
 import { Studio } from "./views/Studio.sst";
-import { studioApp } from "./studio/app";
+import { studioApp, autoLoadIfCached } from "./studio/app";
 
 // Docs shell + helpers + group pages.
 import { Docs, DocsSidebar, DocsContent, DocsToc } from "./views/Docs.sst";
@@ -56,10 +56,14 @@ function boot(): void {
   // The Studio is its own isolated State too, mounted into #studio-root when the
   // Studio view is rendered. preserveInParent:false lets the main State own the
   // container's lifecycle (mount on enter, dismount on leave) like the examples.
-  new State(studioApp.template, studioApp.data, studioApp.components, studioApp.methods, {
+  const studio = new State(studioApp.template, studioApp.data, studioApp.components, studioApp.methods, {
     mountTarget: "#studio-root",
     preserveInParent: false,
   });
+
+  // When the Studio is opened, auto-start the model load if it's already cached locally
+  // (a returning user shouldn't have to click again). Cheap no-op otherwise.
+  if (app.data.view === "studio") autoLoadIfCached(studio);
 
   // Keep view + docs group + example in sync with the URL (back/forward, deep links).
   window.addEventListener("hashchange", () => {
@@ -67,6 +71,7 @@ function boot(): void {
     if (app.data.view !== view) app.data.view = view;
     if (view === "docs" && group && DOC_GROUP_MAP[group] && app.data.docGroup !== group) app.data.docGroup = group;
     if (view === "examples" && group && EXAMPLE_MAP[group] && app.data.exampleId !== group) app.data.exampleId = group;
+    if (view === "studio") autoLoadIfCached(studio);
   });
 
   // Docs scroll-spy: rAF-throttled, only while on the docs view. Sets the active

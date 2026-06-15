@@ -60,6 +60,22 @@ prompt: moody cyberpunk terminal
 let engine: any = null;
 let loading: Promise<any> | null = null;
 
+/**
+ * Is the model already downloaded? A lightweight probe of WebLLM's Cache Storage
+ * (the `webllm/model` cache) — it does NOT import the heavy WebLLM runtime, so it's
+ * cheap to call on Studio open for users who never load the AI.
+ */
+export async function isModelCached(): Promise<boolean> {
+  if (typeof caches === "undefined") return false;
+  try {
+    if (!(await caches.has("webllm/model"))) return false;
+    const c = await caches.open("webllm/model");
+    return (await c.keys()).length > 0;
+  } catch {
+    return false;
+  }
+}
+
 /** Lazily create (or reuse) the worker-hosted engine. onProgress drives the bar. */
 export async function loadEngine(onProgress: (pct: number, text: string) => void): Promise<any> {
   if (engine) return engine;

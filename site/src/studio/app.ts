@@ -38,6 +38,41 @@ async function runPrompt(state: any, text: string) {
   }
 }
 
+// Load the WebLLM engine into the studio state, driving the status/progress UI.
+async function startEngineLoad(state: any) {
+  if (typeof navigator === "undefined" || !(navigator as any).gpu) { state.data.modelStatus = "nogpu"; return; }
+  if (state.data.modelStatus === "loading" || state.data.modelStatus === "ready") return;
+  state.data.modelStatus = "loading";
+  state.data.modelProgress = 0;
+  state.data.modelMsg = "Loading the design model…";
+  try {
+    const { loadEngine } = await import("./llm");
+    await loadEngine((pct: number, txt: string) => {
+      state.data.modelProgress = pct;
+      state.data.modelMsg = txt;
+    });
+    state.data.modelStatus = "ready";
+    state.data.modelMsg = "";
+  } catch (err: any) {
+    state.data.modelStatus = "error";
+    state.data.modelMsg = "Couldn't load the model: " + (err?.message || err);
+  }
+}
+
+/**
+ * Called when the Studio is opened: if there's no WebGPU, surface that; if the model
+ * is already cached locally, kick the load off automatically (it'll init from cache,
+ * fast). Otherwise leave the (pulsing) "Load the design model" button for an explicit click.
+ */
+export async function autoLoadIfCached(state: any) {
+  if (state.data.modelStatus !== "idle") return;
+  if (typeof navigator === "undefined" || !(navigator as any).gpu) { state.data.modelStatus = "nogpu"; return; }
+  try {
+    const { isModelCached } = await import("./llm");
+    if (await isModelCached()) startEngineLoad(state);
+  } catch { /* probe failed — leave the manual button */ }
+}
+
 // --- helpers shared by manual + AI edits ---------------------------------
 function edit(state: any, name: string, value: string) {
   const prev = getCurrent(name);
@@ -51,7 +86,7 @@ function edit(state: any, name: string, value: string) {
 function StudioApp(): string {
   return `
     <div class="st-app">
-      <div class="st-banner">⚠ This restyles the <b>live site</b> by overwriting its CSS variables. Things can look broken or unreadable — that's half the fun. Your theme is <b>remembered across visits</b>; pick <b>State Street</b> to restore the original.</div>
+      <div class="st-banner">⚠ This restyles the <b>live site&nbsp</b> by overwriting its CSS variables. Things can look broken or unreadable. That's half the fun. Your theme is <b>remembered across visits</b>; pick <b>State Street&nbsp</b> to restore the original.</div>
       <div class="st-stage"><StudioStatus/><StudioPrompt/></div>
       <StudioStyles/>
       <div class="st-manual"><div class="eyebrow">Manual tokens</div><StudioPanel/></div>
@@ -73,7 +108,7 @@ function StudioStatus({ state }: any): string {
     </div>`;
   }
   return `<div class="st-status">
-    <button class="ex-btn ex-btn--accent" :click=loadModel()>Load the design model</button>
+    <button class="ex-btn ex-btn--accent st-load" :click=loadModel()>Load the design model</button>
     <span class="ex-muted">~1&nbsp;GB one-time download, runs fully on your device.</span>
   </div>`;
 }
@@ -209,25 +244,7 @@ const methods: Record<string, (ctx: any) => void> = {
     state.data.toast = `Saved “${title}”.`;
   },
   // --- AI: load the local model (WebLLM, lazily loaded) ---
-  loadModel: async ({ state }: any) => {
-    if (typeof navigator === "undefined" || !(navigator as any).gpu) { state.data.modelStatus = "nogpu"; return; }
-    if (state.data.modelStatus === "loading" || state.data.modelStatus === "ready") return;
-    state.data.modelStatus = "loading";
-    state.data.modelProgress = 0;
-    state.data.modelMsg = "Loading the design model…";
-    try {
-      const { loadEngine } = await import("./llm");
-      await loadEngine((pct: number, txt: string) => {
-        state.data.modelProgress = pct;
-        state.data.modelMsg = txt;
-      });
-      state.data.modelStatus = "ready";
-      state.data.modelMsg = "";
-    } catch (err: any) {
-      state.data.modelStatus = "error";
-      state.data.modelMsg = "Couldn't load the model: " + (err?.message || err);
-    }
-  },
+  loadModel: ({ state }: any) => { startEngineLoad(state); },
   applyPrompt: ({ state, event }: any) => {
     const input = event?.target?.previousElementSibling;
     const text = (input?.value || "").trim();
