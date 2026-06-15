@@ -20,11 +20,10 @@ export const VIEWS: Record<string, string> = {
 
 /** Nav items shown in the header, in order. */
 export const NAV: Array<{ key: string; label: string }> = [
-  { key: "landing", label: "Index" },
-  { key: "styleguide", label: "Type Specimen" },
   { key: "docs", label: "Docs" },
   { key: "examples", label: "Examples" },
   { key: "studio", label: "Studio" },
+  { key: "styleguide", label: "Type Specimen" },
 ];
 
 /**

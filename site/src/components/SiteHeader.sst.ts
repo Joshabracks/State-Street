@@ -19,8 +19,10 @@ export function SiteHeader({ state }: Ctx): string {
     <header class="site-header">
       <div class="wrap site-header__bar">
         <div class="brand">
-          ${LOGO_SVG}
-          <span class="brand__mark">State Street</span>
+          <a class="brand__home" href="#landing" aria-label="State Street — home" :click=setView(target=landing)>
+            ${LOGO_SVG}
+            <span class="brand__mark">State Street</span>
+          </a>
           <span class="brand__cat">[SS&middot;2.0.0]</span>
         </div>
         <nav class="nav">
