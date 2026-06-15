@@ -31,6 +31,7 @@ module.exports = (_env, argv) => {
       new HtmlWebpackPlugin({
         template: "./index.html",
         inject: "body",
+        favicon: "./static/state_street_icon_256.png",
       }),
     ],
     devServer: {
