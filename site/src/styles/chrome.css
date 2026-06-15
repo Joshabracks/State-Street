@@ -290,6 +290,10 @@ main { flex: 1 0 auto; }
 }
 .site-footer a { color: var(--invert-fg); border-bottom-color: var(--invert-faint); }
 .site-footer a:hover { color: var(--accent-hi); }
+/* Icon links (GitHub / Discord) — icon inherits the link colour via currentColor. */
+.footer-link { display: inline-flex; align-items: center; gap: var(--sp-2); border-bottom: none; }
+.footer-link .ico { width: 1.1em; height: 1.1em; fill: currentColor; flex: none; }
+.footer-link .ico--wide { width: 1.35em; }
 .site-footer__grid {
   display: flex;
   align-items: flex-end;

@@ -1,0 +1,59 @@
+name: Publish @state-street/create
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "create-state-street/**"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  id-token: write # OIDC trusted publishing to npm (no NPM_TOKEN needed)
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: create-state-street
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      # Trusted publishing (OIDC) requires npm >= 11.5.1, newer than Node 20's bundled npm.
+      - name: Upgrade npm for OIDC trusted publishing
+        run: npm install -g npm@latest
+
+      # Publish only when create-state-street's version changed vs the previous commit,
+      # so ordinary edits to the directory don't attempt a duplicate publish.
+      - name: Detect version bump
+        id: ver
+        run: |
+          CUR="$(node -p "require('./package.json').version")"
+          echo "version=$CUR" >> "$GITHUB_OUTPUT"
+          if git cat-file -e HEAD~1:create-state-street/package.json 2>/dev/null; then
+            git show HEAD~1:create-state-street/package.json > /tmp/prev.json
+            PREV="$(node -p "require('/tmp/prev.json').version")"
+          else
+            PREV=""
+          fi
+          if [ "$CUR" != "$PREV" ]; then
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+            echo "create: ${PREV:-<none>} -> $CUR"
+          else
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+            echo "create version unchanged ($CUR); skipping publish."
+          fi
+
+      - name: Syntax check
+        if: steps.ver.outputs.changed == 'true'
+        run: node --check index.js
+
+      - name: Publish to npm
+        if: steps.ver.outputs.changed == 'true'
+        run: npm publish

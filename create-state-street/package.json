@@ -1,0 +1,37 @@
+{
+  "name": "@state-street/create",
+  "version": "0.2.0",
+  "description": "Scaffold a new State Street app — `npm create @state-street`.",
+  "type": "module",
+  "bin": {
+    "create-state-street": "index.js"
+  },
+  "files": [
+    "index.js",
+    "templates"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "scripts": {
+    "sync-agents": "node scripts/sync-agents.js",
+    "prepack": "node scripts/sync-agents.js"
+  },
+  "keywords": [
+    "state-street",
+    "create",
+    "scaffold",
+    "starter",
+    "spa"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Joshabracks/State-Street.git",
+    "directory": "create-state-street"
+  },
+  "homepage": "https://joshabracks.github.io/State-Street/",
+  "license": "ISC",
+  "engines": {
+    "node": ">=16"
+  }
+}

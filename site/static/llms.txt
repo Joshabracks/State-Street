@@ -1,0 +1,20 @@
+# State Street
+
+> A lightweight, zero-dependency reactive single-page-app framework. Components are
+> plain functions that return HTML strings; one reactive state object drives
+> dependency-gated re-renders. It is NOT React/Vue/Svelte — it has no JSX, virtual
+> DOM, hooks, or router. If you are an AI coding agent, read the agent guide first.
+
+## Agent guide (read first)
+
+- [Full agent guide](https://joshabracks.github.io/State-Street/llms-full.txt): mental model, core API, template + directive syntax, reactivity rules, common gotchas, and canonical examples — written to prevent React/Vue assumptions.
+
+## Documentation
+
+- [Documentation site](https://joshabracks.github.io/State-Street/): getting started, core concepts, templates & rendering, API reference, reactivity & performance, patterns, FAQ.
+- [Live examples](https://joshabracks.github.io/State-Street/#examples): runnable todo, form, tabs, modal, fetch, stopwatch, and a client-side AI Studio.
+
+## Source & package
+
+- [GitHub repository](https://github.com/Joshabracks/State-Street)
+- [npm: @state-street/state-street](https://www.npmjs.com/package/@state-street/state-street)

@@ -88,6 +88,17 @@ export const DOC_GROUPS: DocGroup[] = [
     ],
   },
   {
+    key: "ai-agents",
+    label: "AI Coding Agents",
+    component: "DocAiAgents",
+    sections: [
+      { id: "ai-why", label: "Why agents need a primer" },
+      { id: "ai-setup", label: "Set up your agent" },
+      { id: "ai-rules", label: "The rules, in brief" },
+      { id: "ai-resources", label: "Resources" },
+    ],
+  },
+  {
     key: "faq",
     label: "FAQ",
     component: "DocFaq",

@@ -24,6 +24,7 @@ import { DocTemplates } from "./docs/groups/Templates.sst";
 import { DocApi } from "./docs/groups/Api.sst";
 import { DocReactivity } from "./docs/groups/Reactivity.sst";
 import { DocPatterns } from "./docs/groups/Patterns.sst";
+import { DocAiAgents } from "./docs/groups/AiAgents.sst";
 import { DocFaq } from "./docs/groups/Faq.sst";
 
 // Component registry. State Street matches `<Tag/>` against these keys.
@@ -33,7 +34,7 @@ const components = {
   // docs shell + parts
   Docs, DocsSidebar, DocsContent, DocsToc, DocCode, DocPrevNext,
   // docs group pages (names match DOC_GROUPS[].component)
-  DocGettingStarted, DocCoreConcepts, DocTemplates, DocApi, DocReactivity, DocPatterns, DocFaq,
+  DocGettingStarted, DocCoreConcepts, DocTemplates, DocApi, DocReactivity, DocPatterns, DocAiAgents, DocFaq,
 };
 
 const template = `<AppRoot/>`;

@@ -283,4 +283,14 @@ new State(widgetTpl, widgetData, {}, widgetMethods, { mountTarget: "#widget" });
 
 // Works.
 \`<button :click=submit()>Save</button>\``,
+
+  // --- AI agents ---------------------------------------------------------
+  "agent-setup": `# Most agents read a root AGENTS.md — copy it from the installed package:
+cp node_modules/@state-street/state-street/AGENTS.md ./AGENTS.md
+
+# Claude Code reads CLAUDE.md (same content):
+cp AGENTS.md CLAUDE.md
+
+# No install yet? Fetch the hosted guide:
+curl -o AGENTS.md https://joshabracks.github.io/State-Street/llms-full.txt`,
 };

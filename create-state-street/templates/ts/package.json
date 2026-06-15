@@ -1,15 +1,17 @@
 {
-  "name": "state-street-site",
-  "version": "1.0.0",
+  "name": "{{PROJECT_NAME}}",
+  "version": "0.0.0",
   "private": true,
-  "description": "Landing + documentation + benchmark site for the State Street framework, built with State Street in TypeScript (.sst.ts).",
+  "description": "A State Street app (TypeScript + webpack).",
   "scripts": {
     "dev": "webpack serve --mode development",
     "build": "webpack --mode production",
     "typecheck": "tsc --noEmit"
   },
+  "dependencies": {
+    "@state-street/state-street": "^2.2.0"
+  },
   "devDependencies": {
-    "copy-webpack-plugin": "^14.0.0",
     "css-loader": "^6.10.0",
     "html-webpack-plugin": "^5.6.0",
     "style-loader": "^3.3.4",
@@ -18,8 +20,5 @@
     "webpack": "^5.90.0",
     "webpack-cli": "^5.1.4",
     "webpack-dev-server": "^5.0.4"
-  },
-  "dependencies": {
-    "@mlc-ai/web-llm": "^0.2.84"
   }
 }

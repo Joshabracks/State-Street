@@ -1,10 +1,12 @@
 {
   "name": "@state-street/state-street",
-  "version": "2.1.0",
+  "version": "2.3.0",
   "description": "light weight single page framework",
   "main": "build/index.js",
+  "types": "build/index.d.ts",
   "files": [
-    "build"
+    "build",
+    "AGENTS.md"
   ],
   "repository": {
     "type": "git",
