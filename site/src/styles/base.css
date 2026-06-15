@@ -1,0 +1,304 @@
+/* ============================================================================
+   base.css — reset + defaults for every standard HTML element.
+   This is the "living style guide": the StyleGuide view renders these elements
+   raw, and the rest of the site inherits them. Edit here to restyle the whole
+   site's typography and form controls.
+   ============================================================================ */
+
+*,
+*::before,
+*::after { box-sizing: border-box; }
+
+* { margin: 0; }
+
+html { -webkit-text-size-adjust: 100%; }
+
+/* Smooth ~1s cross-fade between themes. The Studio adds .theming to <html> around a
+   token change (see theme.ts); it's transient + scoped so it never slows interactions,
+   and the !important wins over elements' own (faster) transitions for the duration. */
+@media (prefers-reduced-motion: no-preference) {
+  html.theming,
+  html.theming *,
+  html.theming *::before,
+  html.theming *::after {
+    transition:
+      background-color 1s ease, background-image 1s ease, color 1s ease,
+      border-color 1s ease, box-shadow 1s ease, outline-color 1s ease,
+      fill 1s ease, stroke 1s ease, border-radius 1s ease !important;
+  }
+}
+
+body {
+  font-family: var(--font-body);
+  font-size: var(--fs-500);
+  line-height: 1.6;
+  color: var(--ink);
+  background-color: var(--paper);
+  /* faint engineering grid printed on the paper */
+  background-image:
+    linear-gradient(var(--grid) 1px, transparent 1px),
+    linear-gradient(90deg, var(--grid) 1px, transparent 1px);
+  background-size: 28px 28px;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+  min-height: 100vh;
+}
+
+/* --- Headings ------------------------------------------------------------ */
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-display);
+  font-weight: 700;
+  line-height: 1.05;
+  letter-spacing: 0.01em;
+  color: var(--ink);
+  text-wrap: balance;
+}
+h1 { font-size: var(--fs-900); text-transform: uppercase; letter-spacing: 0.02em; }
+h2 { font-size: var(--fs-800); text-transform: uppercase; }
+h3 { font-size: var(--fs-700); }
+h4 { font-size: var(--fs-600); }
+h5 { font-size: var(--fs-500); text-transform: uppercase; letter-spacing: 0.08em; }
+h6 { font-size: var(--fs-400); text-transform: uppercase; letter-spacing: 0.12em; color: var(--ink-faint); }
+
+/* --- Text flow ----------------------------------------------------------- */
+p { max-width: 68ch; }
+p + p { margin-top: var(--sp-4); }
+
+a {
+  color: var(--accent);
+  text-decoration: none;
+  text-underline-offset: 3px;
+  border-bottom: 1px solid var(--line-soft);
+  transition: color 120ms ease, border-color 120ms ease, background-color 120ms ease;
+}
+a:hover { color: var(--accent-hi); border-bottom-color: var(--accent-hi); }
+a:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+strong, b { font-weight: 700; }
+em, i { font-style: italic; }
+small { font-size: var(--fs-300); color: var(--ink-faint); }
+
+mark {
+  background: var(--accent);
+  color: var(--accent-ink);
+  padding: 0 0.25em;
+}
+
+del { color: var(--ink-faint); }
+ins { text-decoration: underline; text-decoration-color: var(--accent); }
+
+abbr[title] {
+  text-decoration: underline dotted;
+  text-underline-offset: 3px;
+  cursor: help;
+}
+
+sub, sup { font-size: 0.72em; }
+
+kbd {
+  font-family: var(--font-mono);
+  font-size: 0.82em;
+  background: var(--paper-hi);
+  border: 1px solid var(--line);
+  border-bottom-width: 2px;
+  border-radius: var(--radius);
+  padding: 0.05em 0.45em;
+  color: var(--ink);
+}
+
+/* --- Lists --------------------------------------------------------------- */
+ul, ol { padding-left: 1.35em; }
+li + li { margin-top: var(--sp-1); }
+li::marker { color: var(--accent); }
+
+dl { display: grid; grid-template-columns: max-content 1fr; gap: var(--sp-1) var(--sp-4); }
+dt { font-family: var(--font-mono); font-size: var(--fs-300); text-transform: uppercase; letter-spacing: 0.08em; color: var(--ink-faint); align-self: center; }
+dd { margin: 0; }
+
+/* --- Quotes -------------------------------------------------------------- */
+blockquote {
+  border-left: 3px solid var(--accent);
+  padding: var(--sp-1) 0 var(--sp-1) var(--sp-4);
+  color: var(--ink-soft);
+  font-style: italic;
+}
+blockquote cite { display: block; margin-top: var(--sp-2); font-style: normal; font-size: var(--fs-300); color: var(--ink-faint); }
+
+/* --- Code ---------------------------------------------------------------- */
+code, samp {
+  font-family: var(--font-mono);
+  font-size: 0.86em;
+  background: var(--paper-lo);
+  padding: 0.08em 0.4em;
+  border-radius: var(--radius);
+}
+pre {
+  font-family: var(--font-mono);
+  font-size: var(--fs-400);
+  line-height: 1.55;
+  background: var(--invert-bg);
+  color: var(--invert-fg);
+  padding: var(--sp-4) var(--sp-5);
+  border-radius: var(--radius);
+  overflow-x: auto;
+  tab-size: 2;
+}
+pre code { background: none; padding: 0; font-size: inherit; color: inherit; }
+
+/* --- Rules + media ------------------------------------------------------- */
+hr {
+  border: none;
+  border-top: 1px solid var(--line);
+  margin: var(--sp-5) 0;
+}
+
+img, picture, svg, video, canvas, audio, iframe { max-width: 100%; }
+img, picture, svg, video, canvas { display: block; height: auto; }
+
+figure { margin: var(--sp-4) 0; }
+figure img { border: 1px solid var(--line); border-radius: var(--radius); }
+figcaption {
+  font-family: var(--font-mono);
+  font-size: var(--fs-300);
+  color: var(--ink-faint);
+  margin-top: var(--sp-2);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+/* --- Tables -------------------------------------------------------------- */
+table {
+  border-collapse: collapse;
+  width: 100%;
+  font-size: var(--fs-400);
+}
+caption {
+  font-family: var(--font-mono);
+  font-size: var(--fs-300);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--ink-faint);
+  text-align: left;
+  padding-bottom: var(--sp-2);
+}
+th, td {
+  border: 1px solid var(--line-soft);
+  padding: var(--sp-2) var(--sp-3);
+  text-align: left;
+}
+thead th {
+  background: var(--invert-bg);
+  color: var(--invert-fg);
+  font-family: var(--font-mono);
+  font-size: var(--fs-300);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+tbody tr:nth-child(even) { background: var(--paper-lo); }
+
+/* --- Forms --------------------------------------------------------------- */
+fieldset {
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: var(--sp-4);
+}
+legend {
+  font-family: var(--font-mono);
+  font-size: var(--fs-300);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  padding: 0 var(--sp-2);
+}
+label { font-size: var(--fs-400); font-weight: 500; }
+
+input, textarea, select, button {
+  font: inherit;
+  color: var(--ink);
+}
+input[type="text"], input[type="email"], input[type="password"],
+input[type="search"], input[type="number"], input[type="url"],
+input[type="tel"], input[type="date"], textarea, select {
+  width: 100%;
+  background: var(--paper-hi);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: var(--sp-2) var(--sp-3);
+  transition: border-color 120ms ease, box-shadow 120ms ease;
+}
+input:focus, textarea:focus, select:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 18%, transparent);
+}
+textarea { min-height: 5rem; resize: vertical; }
+
+input[type="range"] { accent-color: var(--accent); width: 100%; }
+input[type="checkbox"], input[type="radio"] { accent-color: var(--accent); width: 1.05em; height: 1.05em; }
+input[type="color"] { width: 3rem; height: 2rem; padding: 2px; border: 1px solid var(--line); }
+
+progress {
+  width: 100%;
+  height: 0.75rem;
+  accent-color: var(--accent);
+}
+meter { width: 100%; height: 0.75rem; }
+
+::placeholder { color: var(--ink-faint); }
+
+/* --- Buttons ------------------------------------------------------------- */
+button, .btn {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: var(--fs-400);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  cursor: pointer;
+  background: var(--paper-hi);
+  color: var(--ink);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: var(--sp-2) var(--sp-4);
+  transition: transform 80ms ease, background-color 120ms ease, color 120ms ease, box-shadow 120ms ease;
+}
+button:hover, .btn:hover { box-shadow: 3px 3px 0 var(--ink); transform: translate(-1px, -1px); }
+button:active, .btn:active { box-shadow: 0 0 0 var(--ink); transform: translate(0, 0); }
+button:disabled { opacity: 0.5; cursor: not-allowed; box-shadow: none; transform: none; }
+button:focus-visible, .btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+/* --- Disclosure / dialog ------------------------------------------------- */
+details {
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: var(--sp-3) var(--sp-4);
+  background: var(--paper-hi);
+}
+details + details { margin-top: var(--sp-2); }
+summary {
+  cursor: pointer;
+  font-family: var(--font-display);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+summary::marker { color: var(--accent); }
+
+dialog {
+  border: 1px solid var(--line);
+  border-radius: var(--radius-2);
+  background: var(--paper-hi);
+  color: var(--ink);
+  padding: var(--sp-5);
+  box-shadow: 8px 8px 0 var(--ink);
+}
+dialog::backdrop { background: color-mix(in srgb, var(--ink) 45%, transparent); }
+
+/* --- Selection ----------------------------------------------------------- */
+::selection { background: var(--accent); color: var(--accent-ink); }
+
+:focus-visible { outline-color: var(--accent); }

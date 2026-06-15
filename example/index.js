@@ -49,6 +49,27 @@ const TEMPLATE_STRING = /*html*/`
         </div>
         <div title="A &amp; B">Tom &amp; Jerry &copy; 2026 &lt;tag&gt;</div>
     </form>
+    <div>
+        <div>Inline SVG (static):</div>
+        <svg id="svgstatic" viewBox="0 0 24 24" width="48" height="48">
+            <rect x="2" y="2" width="20" height="20" rx="3" fill="royalblue"/>
+            <path d="M6 12 L11 17 L18 7" stroke="white" stroke-width="2" fill="none"/>
+        </svg>
+        <div>Inline SVG (reactive radius {{radius}}):</div>
+        <svg id="svgreactive" viewBox="0 0 100 100" width="100" height="100">
+            <circle id="svgcircle" cx="50" cy="50" r="{{radius}}" fill="tomato"/>
+        </svg>
+        <button :click=grow()>grow circle</button>
+        <div>Inline SVG sub-component (independent re-render):</div>
+        <Chart/>
+        <button :click=growBars()>grow bars</button>
+    </div>
+    <div>
+        <div>Nested State (child mounts into #childpanel):</div>
+        <ChildHost/>
+        <button :click=toggleHost()>toggle host</button>
+        <div id="childpanel2" class="altpanel">alt panel (empty)</div>
+    </div>
     <TestComponent name="Test Component"/>
     <ImgReuseTest/>
     <AttrTest/>
@@ -60,6 +81,29 @@ const TEMPLATE_STRING = /*html*/`
 
 function increment({ state }) {
     state.data.total++;
+}
+
+function grow({ state }) {
+    state.data.radius = state.data.radius >= 45 ? 5 : state.data.radius + 5;
+}
+
+// Host whose body re-renders on `total` (so #childpanel's container is rebuilt). A
+// CHILD State mounts into #childpanel; the parent must preserve it across re-renders.
+// Toggling showHost removes/re-adds #childpanel to exercise dismount/remount.
+function ChildHost({ state }) {
+    return state.data.showHost
+        ? /*html*/`<div class="childhost">host tick: ${state.data.total} <div id="childpanel"></div> <div :preserve id="thirdparty"></div></div>`
+        : /*html*/`<div class="childhost">host hidden</div>`;
+}
+function toggleHost({ state }) {
+    state.data.showHost = !state.data.showHost;
+}
+
+// Reassign a NEW array so only `bars` is dirty -> Bars re-renders independently
+// while Chart (which owns the <svg> and doesn't read `bars`) does not. This is the
+// case that requires updateDom to rebuild Bars in the SVG namespace.
+function growBars({ state }) {
+    state.data.bars = state.data.bars.map((h) => (h >= 90 ? 20 : h + 15));
 }
 
 function whatIsIt({ thingList, state }) {
@@ -150,6 +194,20 @@ function PropTest({ numberVal, booleanVal, stringVal, varVal }) {
     return /*html*/`<div id="proptest">n=${numberVal}/${typeof numberVal} b=${booleanVal}/${typeof booleanVal} s=${stringVal}/${typeof stringVal} v=${varVal}</div>`;
 }
 
+// SVG namespace test for INDEPENDENT sub-component re-render.
+// Chart owns the <svg> but reads no state -> never dirty. Bars renders naked SVG
+// <rect>s from state.data.bars. Changing `bars` dep-gates to Bars ALONE, which
+// updateDom rebuilds in place -> the rects must be created in the SVG namespace
+// (not HTML) or they vanish on update.
+function Chart() {
+    return /*html*/`<svg id="chart" viewBox="0 0 100 100" width="200" height="100"><Bars/></svg>`;
+}
+function Bars({ state }) {
+    return state.data.bars
+        .map((h, i) => `<rect class="bar" x="${i * 24 + 4}" y="${100 - h}" width="18" height="${h}" fill="seagreen"/>`)
+        .join("");
+}
+
 // State data for regular access/manipulation used to render and update the State template
 const data = {
     title: "State Street",
@@ -159,6 +217,9 @@ const data = {
     value2: "value 2",
     total: 0,
     whatItIs: 'button',
+    radius: 20,
+    bars: [30, 60, 45, 80],
+    showHost: true,
     showImg: true,
     childVal: "A",
     portrait: "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==",
@@ -173,13 +234,16 @@ const data = {
 
 const methods = {
     increment,
+    grow,
+    growBars,
+    toggleHost,
     whatIsIt,
     clickTab,
     updateMsg
 }
 
 const components = {
-    TestComponent, Tab, ImgReuseTest, AttrTest, GateOuter, GateInner, PropTest
+    TestComponent, Tab, ImgReuseTest, AttrTest, GateOuter, GateInner, PropTest, Chart, Bars, ChildHost
 }
 
 
@@ -187,4 +251,16 @@ const components = {
 window.onload = () => {
     // eslint-disable-next-line no-undef
     window.state = new State(TEMPLATE_STRING, data, components, methods)
+
+    // A second, independent State mounted INTO the parent's #childpanel element.
+    // mountOnAvailable (default) keeps it mounted across the parent's re-renders and
+    // re-mounts it when #childpanel is toggled back on.
+    const childTemplate = /*html*/`<div class="childinner">child count: {{ccount}} <button :click=cinc()>+</button> <input id="cinput" :input=cnoop()/></div>`
+    const childData = { ccount: 0 }
+    const childMethods = {
+        cinc: ({ state }) => { state.data.ccount += 1 },
+        cnoop: () => {},
+    }
+    // eslint-disable-next-line no-undef
+    window.childState = new State(childTemplate, childData, {}, childMethods, { mountTarget: "#childpanel" })
 }

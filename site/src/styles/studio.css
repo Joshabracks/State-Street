@@ -1,0 +1,116 @@
+/* ============================================================================
+   studio.css — Phase 4 "Studio": a client-side SLM style editor + manual token
+   panel. The Studio is its own child State mounted into #studio-root (inside a
+   .demo-frame__mount, so it inherits the ex-* primitives from examples.css).
+   ============================================================================ */
+
+.studio {
+  margin: 40px;
+}
+
+.studio-lede { color: var(--ink-soft); max-width: 64ch; }
+
+.st-app { display: flex; flex-direction: column; gap: var(--sp-4); }
+
+/* --- Warning banner ------------------------------------------------------ */
+.st-banner {
+  border: 1px solid var(--accent);
+  border-left-width: 4px;
+  background: color-mix(in srgb, var(--accent) 7%, transparent);
+  color: var(--ink);
+  font-size: var(--fs-400);
+  line-height: 1.5;
+  padding: var(--sp-2) var(--sp-3);
+  border-radius: var(--radius);
+}
+
+/* --- Status / model loading --------------------------------------------- */
+.st-status { display: flex; align-items: center; gap: var(--sp-3); flex-wrap: wrap; font-size: var(--fs-400); }
+.st-status--warn { color: var(--ink-soft); }
+.st-progress { flex: 1; min-width: 8rem; height: 8px; background: var(--paper); border: 1px solid var(--line); border-radius: 99px; overflow: hidden; }
+.st-progress__bar { height: 100%; background: var(--accent); transition: width .2s ease; }
+
+/* The "Load the design model" button pulses to show it must be clicked to enable the AI. */
+@media (prefers-reduced-motion: no-preference) {
+  .st-load { animation: st-pulse 1.8s ease-out infinite; }
+}
+.st-load:hover { animation: none; }
+@keyframes st-pulse {
+  0%   { box-shadow: 0 0 0 0 color-mix(in srgb, var(--accent) 55%, transparent); }
+  70%  { box-shadow: 0 0 0 9px color-mix(in srgb, var(--accent) 0%, transparent); }
+  100% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--accent) 0%, transparent); }
+}
+
+/* --- The single prompt that drives the whole aesthetic ------------------- */
+.st-stage { display: flex; flex-direction: column; gap: var(--sp-2); }
+.st-prompt { display: flex; gap: var(--sp-2); }
+.st-prompt__input {
+  flex: 1;
+  font-size: var(--fs-600);
+  padding: var(--sp-3) var(--sp-4);
+}
+.st-prompt__go { font-size: var(--fs-500); padding-inline: var(--sp-5); white-space: nowrap; }
+.st-result { font-size: var(--fs-400); color: var(--ink-soft); min-height: 1.2em; }
+.st-result.is-thinking { color: var(--accent); font-family: var(--font-mono); letter-spacing: .04em; }
+.st-result.is-thinking::after { content: ""; animation: st-dots 1.2s steps(4, end) infinite; }
+@keyframes st-dots { 0% { content: ""; } 25% { content: "."; } 50% { content: ".."; } 75% { content: "..."; } }
+
+/* --- Saved styles library ------------------------------------------------ */
+.st-styles { display: flex; flex-direction: column; gap: var(--sp-2); }
+.st-styles__list { display: flex; flex-wrap: wrap; gap: var(--sp-2); }
+/* Each chip previews its own theme via the inline --pv-* vars set in StudioStyles. */
+.st-style { display: inline-flex; align-items: stretch; border: 1px solid var(--pv-accent, var(--line)); border-radius: var(--radius); overflow: hidden; background: var(--pv-bg, var(--paper-hi)); }
+/* The built-in "State Street" chip: an accent stripe marks it as the home/original. */
+.st-style--home { box-shadow: inset 3px 0 0 0 var(--pv-accent, var(--accent)); }
+.st-style--home .st-style__apply { padding-left: var(--sp-4); }
+.st-style__apply {
+  font: inherit; font-size: var(--fs-400);
+  font-family: var(--pv-font, inherit);
+  display: flex; align-items: center; gap: var(--sp-2);
+  background: none; border: none; cursor: pointer;
+  padding: var(--sp-1) var(--sp-3); color: var(--pv-ink, var(--ink));
+}
+.st-style__apply em { font-style: normal; font-family: var(--font-mono); font-size: var(--fs-300); color: var(--pv-faint, var(--ink-faint)); }
+.st-style__apply:hover { background: var(--pv-accent, var(--accent)); color: var(--pv-accent-ink, var(--accent-ink)); }
+.st-style__apply:hover em { color: var(--pv-accent-ink, var(--accent-ink)); }
+.st-style__del { font: inherit; font-size: var(--fs-500); line-height: 1; background: none; border: none; border-left: 1px solid var(--pv-accent, var(--line)); cursor: pointer; padding: 0 var(--sp-2); color: var(--pv-faint, var(--ink-faint)); }
+.st-style__del:hover { background: var(--pv-accent, var(--accent)); color: var(--pv-accent-ink, var(--accent-ink)); }
+
+/* --- Manual token panel (multi-column control board) --------------------- */
+.st-manual { display: flex; flex-direction: column; gap: var(--sp-3); }
+.st-panel { display: grid; grid-template-columns: repeat(auto-fill, minmax(15rem, 1fr)); gap: var(--sp-4); align-items: start; }
+.st-tgroup { display: flex; flex-direction: column; gap: var(--sp-2); }
+.st-tgroup h4 {
+  margin: 0;
+  font-family: var(--font-mono);
+  font-size: var(--fs-300);
+  text-transform: uppercase;
+  letter-spacing: .12em;
+  color: var(--ink-faint);
+  border-bottom: 1px solid var(--line-faint);
+  padding-bottom: 2px;
+}
+.st-ctrl { display: grid; grid-template-columns: 1fr auto; align-items: center; gap: var(--sp-2); font-size: var(--fs-400); }
+.st-ctrl span { color: var(--ink-soft); }
+.st-ctrl input[type="color"] { width: 2.4rem; height: 1.6rem; padding: 0; border: 1px solid var(--line); border-radius: 4px; background: none; cursor: pointer; }
+.st-ctrl input[type="range"] { width: 6rem; }
+.st-ctrl select { font: inherit; font-size: var(--fs-400); max-width: 9rem; background: var(--paper); border: 1px solid var(--line); border-radius: var(--radius); padding: 2px 4px; }
+.st-ctrl code { font-size: var(--fs-300); color: var(--ink-faint); }
+
+/* --- Footer: undo / reset / export / contrast --------------------------- */
+.st-footer { display: flex; flex-direction: column; gap: var(--sp-2); border-top: 1px solid var(--line-faint); padding-top: var(--sp-3); }
+.st-row { display: flex; gap: var(--sp-3); align-items: center; flex-wrap: wrap; }
+.st-warn {
+  background: var(--accent);
+  color: var(--accent-ink);
+  font-size: var(--fs-400);
+  font-style: italic;
+  padding: var(--sp-2) var(--sp-3);
+  border-radius: var(--radius);
+}
+
+/* --- Responsive ---------------------------------------------------------- */
+@media (max-width: 760px) {
+  .st-panel { grid-template-columns: 1fr; }
+  .st-prompt { flex-wrap: wrap; }
+}
