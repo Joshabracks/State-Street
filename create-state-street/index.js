@@ -2,13 +2,14 @@
 /**
  * create-state-street — scaffolds a new State Street app.
  *
- *   npm create @state-street@latest my-app            # plain JS, no build step
- *   npm create @state-street@latest my-app -- --typescript   # TS + webpack
+ *   npm create @state-street@latest my-app                # asks JS or TS
+ *   npm create @state-street@latest my-app --typescript   # TS + webpack (skips the prompt)
  *
  * Zero dependencies: Node built-ins only.
  */
 import fs from "node:fs";
 import path from "node:path";
+import readline from "node:readline";
 import { fileURLToPath } from "node:url";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -27,7 +28,6 @@ function fail(msg) {
 }
 
 const argv = process.argv.slice(2);
-const useTs = argv.includes("--typescript") || argv.includes("--ts");
 const dirArg = argv.find((a) => !a.startsWith("-")) || "state-street-app";
 
 const target = path.resolve(process.cwd(), dirArg);
@@ -37,6 +37,29 @@ const pkgName =
 
 if (fs.existsSync(target) && fs.readdirSync(target).length > 0) {
   fail(`Target directory "${dirArg}" already exists and is not empty.`);
+}
+
+// Detect the variant. `--typescript` may land in argv (some shells) OR, notably on
+// Windows/PowerShell, npm parses it into config and drops it from argv — so also read
+// the npm_config_* env var. If nothing is specified, ask interactively (default JS when
+// non-interactive, e.g. piped or CI).
+const hasFlag = (...names) => names.some((n) => argv.includes(n));
+const envTrue = (...keys) => keys.some((k) => process.env["npm_config_" + k] === "true");
+
+let useTs;
+if (hasFlag("--typescript", "--ts") || envTrue("typescript", "ts")) useTs = true;
+else if (hasFlag("--javascript", "--js") || envTrue("javascript", "js")) useTs = false;
+else if (process.stdin.isTTY) useTs = await askYesNo("Use TypeScript? (y/N) ");
+else useTs = false;
+
+async function askYesNo(question) {
+  const rl = readline.createInterface({ input: process.stdin, output: process.stdout });
+  try {
+    const answer = await new Promise((resolve) => rl.question(question, resolve));
+    return /^y(es)?$/i.test(answer.trim());
+  } finally {
+    rl.close();
+  }
 }
 
 const variant = useTs ? "ts" : "js";

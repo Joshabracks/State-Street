@@ -1,6 +1,6 @@
 {
   "name": "@state-street/create",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Scaffold a new State Street app — `npm create @state-street`.",
   "type": "module",
   "bin": {

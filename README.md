@@ -72,9 +72,11 @@ It's a distilled cheat-sheet — what State Street is *not*, the reactivity mode
 **Scaffold a new app** (a starter landing page, agent-ready):
 
 ```bash
-npm create @state-street@latest my-app                 # plain JS, no build step
-npm create @state-street@latest my-app -- --typescript  # TypeScript + webpack
+npm create @state-street@latest my-app          # asks: JavaScript or TypeScript?
 ```
+
+Pass `--typescript` (or `--js`) to skip the prompt. The default JS template has no build step;
+TypeScript adds a webpack toolchain.
 
 **Add to an existing project (npm / module bundler):**
 
