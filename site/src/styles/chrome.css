@@ -151,31 +151,9 @@ main { flex: 1 0 auto; }
 .rule { height: 1px; background: var(--line); border: 0; }
 .rule--dotted { height: 0; border-top: 2px dotted var(--line-soft); background: none; }
 
-/* --- Barcode (pure CSS) -------------------------------------------------- */
-.barcode {
-  height: 38px;
-  width: 180px;
-  background-image: repeating-linear-gradient(
-    90deg,
-    var(--ink) 0, var(--ink) 2px,
-    transparent 2px, transparent 4px,
-    var(--ink) 4px, var(--ink) 5px,
-    transparent 5px, transparent 9px,
-    var(--ink) 9px, var(--ink) 12px,
-    transparent 12px, transparent 14px
-  );
-}
-.barcode--invert { background-color: transparent; }
-.barcode--invert.barcode { background-image: repeating-linear-gradient(
-    90deg,
-    var(--invert-fg) 0, var(--invert-fg) 2px,
-    transparent 2px, transparent 4px,
-    var(--invert-fg) 4px, var(--invert-fg) 5px,
-    transparent 5px, transparent 9px,
-    var(--invert-fg) 9px, var(--invert-fg) 12px,
-    transparent 12px, transparent 14px
-  );
-}
+/* --- Barcode (inline SVG; bars use currentColor) ------------------------- */
+.barcode { display: block; height: 38px; width: 180px; color: var(--ink); }
+.barcode--invert { color: var(--invert-fg); }
 
 /* --- Spec sheet (key/value technical table) ----------------------------- */
 .spec {
