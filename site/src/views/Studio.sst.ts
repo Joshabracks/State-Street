@@ -12,7 +12,7 @@ export function Studio(_ctx: Ctx): string {
       <div class="studio-head">
         <div class="eyebrow">Studio // a client-side design model</div>
         <h1>Redress the site, live.</h1>
-        <p class="studio-lede">A tiny language model runs <b>entirely in your browser</b> and turns <b>one prompt</b> into a full design — or skip the AI and turn the knobs yourself. Everything you change here re-themes the <b>whole site</b> instantly.</p>
+        <p class="studio-lede">A tiny language model runs <b>entirely in your browser&nbsp</b> and turns <b>one prompt&nbsp</b> into a full design. Or skip the AI and turn the knobs yourself. Everything you change here re-themes the <b>whole site&nbsp</b> instantly.</p>
       </div>
       <div class="demo-frame ticked">
         <div class="demo-frame__bar"><b>live</b><span>#studio-root — its own State</span></div>
