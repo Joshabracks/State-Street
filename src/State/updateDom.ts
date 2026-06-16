@@ -145,9 +145,16 @@ function updateDOM(state: State) {
     // already recreated (stamped with the current tick) this frame.
     if (!rec.startMarker.isConnected) continue;
     if (rec.tick === state.tick) continue;
-    // Dep-gate: skip re-running a component whose tracked deps are all clean.
+    // Dep-gate: during a key-driven update, skip any component that can't be affected by a
+    // dirty key. A component with a known-empty dep set reads nothing from state.data, so it
+    // can only change when its parent rebuilds it -> it never needs an independent re-run.
+    // (When dirtyKeys is empty this is a full refresh: fall through and re-run everything.)
     // (Value updates still flow via the textMap/attrMap passes below.)
-    if (rec.deps?.size && state.dirtyKeys.size && !intersects(rec.deps, state.dirtyKeys)) continue;
+    if (
+      state.dirtyKeys.size &&
+      rec.deps &&
+      (rec.deps.size === 0 || !intersects(rec.deps, state.dirtyKeys))
+    ) continue;
     const stash = captureScroll(ssid, state);
     const focusSnap = captureFocus(ssid);
     const changed = rebuildComponentRange(rec, ssid, state);

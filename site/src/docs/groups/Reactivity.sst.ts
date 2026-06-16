@@ -15,8 +15,8 @@ export function DocReactivity(_ctx: Ctx): string {
           <li><strong>Dirty flips.</strong> <code>state.dirty = true; state.dirtyKeys.add("foo")</code>.</li>
           <li><strong>Render loop ticks.</strong> On the next frame (respecting target FPS), <code>updateDom(state)</code> runs.</li>
           <li><strong>Dep gating.</strong> Each tracked component is skipped unless its deps intersect <code>dirtyKeys</code>.</li>
-          <li><strong>Re-render survivors.</strong> Identical output short-circuits; otherwise the component's nodes are swapped in place between its markers.</li>
-          <li><strong>Interpolations.</strong> Standalone <code>{{path}}</code> text/attrs update if their key is dirty.</li>
+          <li><strong>Re-render survivors.</strong> A survivor runs against a fresh dep-tracking proxy — every <code>state.data</code> key it reads fires the <code>get</code> trap and is recorded as next frame's deps. Identical output short-circuits; otherwise the component's nodes are swapped in place between its markers.</li>
+          <li><strong>State Bindings.</strong> Standalone <code>{{path}}</code> text/attrs update in place if their key is dirty — independently of step 6, so a binding refreshes without re-running its component.</li>
           <li><strong>Dirty cleared</strong> until the next mutation.</li>
         </ol>
         <h3>Nested mutations</h3>

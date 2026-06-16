@@ -43,7 +43,7 @@ export const DOC_GROUPS: DocGroup[] = [
     label: "Templates & Rendering",
     component: "DocTemplates",
     sections: [
-      { id: "interpolation", label: "Interpolation" },
+      { id: "interpolation", label: "State Bindings" },
       { id: "component-tags", label: "Component tags" },
       { id: "events", label: "Event directives" },
       { id: "coercion", label: "Attribute coercion" },

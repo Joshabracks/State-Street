@@ -84,6 +84,18 @@ export default class State {
     if (this.renderLoop) { this.looping = true; window.requestAnimationFrame(this.loop); }
   }
 
+  /**
+   * The reactive state, a `Proxy` with two traps:
+   * - **set** — writing a top-level key (`state.data.foo = bar`) marks `foo` dirty and schedules a
+   *   re-render. Mutating into a nested object marks its *top-level* key dirty (replace to be safe).
+   * - **get** — reading a key while a component runs records it as a dependency of that component.
+   *   The read *is* the subscription: any `state.data.<key>` touched anywhere in the body (a
+   *   conditional, a computed local, an existence check, or inside a `${}`) subscribes the
+   *   component to that key — even if the value never appears in the output. Read only what you need.
+   *
+   * Prefer a `{{path}}` State Binding over `${state.data.x}` for reactive values: a binding patches
+   * its own node in place, while `${}` re-runs the whole component on every change to what it read.
+   */
   get data(): any {
     return this._data;
   }

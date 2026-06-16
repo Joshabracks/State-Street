@@ -3,7 +3,7 @@ import "../styles.css";
 import { App } from "./App.sst";
 
 const data = {
-  name: "{{PROJECT_NAME}}", // shown via {{name}} — State Street's reactive interpolation
+  name: "{{PROJECT_NAME}}", // shown via the {{name}} State Binding — updates in place, no re-render
   count: 0,
 };
 

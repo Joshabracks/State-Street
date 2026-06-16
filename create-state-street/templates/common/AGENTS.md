@@ -25,7 +25,12 @@ https://joshabracks.github.io/State-Street/ — this file is the distilled, agen
 - There is **one reactive state object**, `state.data` (a Proxy). Assigning to a top-level key marks
   it dirty and schedules a re-render on the next animation frame.
 - Re-rendering is **dependency-gated**: a component re-runs only when a `state.data` key it *read
-  during its last render* changes. Reading more keys = more re-renders; read only what you need.
+  during its last render* changes. `state.data` is a Proxy with two traps — the **set trap**
+  (writing a key marks that top-level key dirty) and the **get trap** (reading a key records it as a
+  dependency of the component running). **The read is the subscription:** any `state.data.<key>`
+  touched anywhere in the body subscribes the component to that key — in a conditional, a computed
+  local, an existence check, or inside a `${}` — *even if the value never appears in the output*.
+  Reading more keys = more re-renders; read only what you need.
 - Components are referenced as **tags** in templates: `<Counter/>`. State Street finds them by name
   in the `components` registry and renders each as its own dep-tracked subtree, delimited by HTML
   comment markers (there is no wrapper element).
@@ -61,14 +66,21 @@ const methods = {
 new State(template, data, components, methods);
 ```
 
-## Templates: two kinds of interpolation
+## Templates: State Bindings vs `${}`
 
-- `{{ path }}` — **State Street interpolation.** Reads `state.data.path` reactively and renders as a
-  standalone text/attribute node that can update **without re-running the component**. Use it in the
-  root `template` and inside component strings for live values: `<h1>{{title}}</h1>`.
-- `${ ... }` — **plain JavaScript** template-literal interpolation, evaluated once when the function
-  runs (it is not special to State Street). Reading `state.data.x` inside `${}` still registers `x`
-  as a dependency of that component.
+- `{{ path }}` — a **State Binding**, State Street's official term for this syntax. A State Binding
+  is a reactive reference to a `state.data` value: it renders as a standalone text/attribute node
+  and updates that node **in place** when the bound key changes, **without re-running the
+  component**. Use it in the root `template` and inside component strings for live values:
+  `<h1>{{title}}</h1>`.
+- `${ ... }` — **plain JavaScript** template-literal interpolation, evaluated **once** when the
+  function runs (it is not special to State Street). If it reads `state.data.x`, that read
+  subscribes the *whole* component, so changing `x` re-runs and rebuilds it.
+
+> **Best practice: prefer State Bindings over `${}` for reactive values.** `{{count}}` updates just
+> that node in place; `${state.data.count}` re-runs the whole component whenever `count` changes.
+> Reserve `${}` for control flow (loops, conditionals), derived/computed strings, and composition —
+> things a binding can't express.
 
 Component tags accept attributes, passed to the component as named props with **type coercion**:
 
@@ -145,9 +157,9 @@ function Cart({ state }) {
 
 ## Raw content & inline SVG
 
-- `<code>`, `<script>`, `<style>` are **RAWTEXT**: contents are verbatim — not parsed, not
-  interpolated (`{{ }}`/`<tags>` are literal). `<textarea>`/`<title>` are **RCDATA**: literal `<` is
-  safe, but `{{ }}` still interpolates.
+- `<code>`, `<script>`, `<style>` are **RAWTEXT**: contents are verbatim — not parsed, no State
+  Bindings (`{{ }}`/`<tags>` are literal). `<textarea>`/`<title>` are **RCDATA**: literal `<` is
+  safe, but State Bindings (`{{ }}`) still resolve.
 - `:raw` makes **any** element verbatim text: `<div :raw>literal {{x}} and <b>not bold</b></div>`.
 - `:raw=formatterName` feeds the raw text to a method and sets the returned string as `innerHTML`
   (e.g. syntax highlighting, Markdown): `formatter: ({ text }) => "<strong>" + text + "</strong>"`.

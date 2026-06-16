@@ -29,7 +29,8 @@ export function DocAiAgents(_ctx: Ctx): string {
         <p>The guide covers everything in full; these are the corrections that prevent the most common mistakes.</p>
         <ul>
           <li><strong>Components return HTML strings</strong> from plain functions — no JSX, no <code>.tsx</code>.</li>
-          <li><strong>Two interpolations.</strong> <code>{{path}}</code> is State Street's reactive interpolation (it updates on its own); <code>\${...}</code> is ordinary JavaScript, evaluated once when the function runs.</li>
+          <li><strong>State Bindings vs <code>\${}</code>.</strong> <code>{{path}}</code> is a <strong>State Binding</strong> — a reactive reference that updates its own node in place, without re-running the component; <code>\${...}</code> is ordinary JavaScript, evaluated once when the function runs. <strong>Prefer State Bindings for reactive values;</strong> reserve <code>\${}</code> for control flow, derived strings, and composition.</li>
+          <li><strong>The read is the subscription.</strong> Any <code>state.data.<key></code> read anywhere in a component's body subscribes it — even in a conditional or inside a <code>\${}</code>, even if the value isn't shown. Read only what you need.</li>
           <li><strong>Event directives need parentheses.</strong> <code>:click=save()</code> works; <code>:click=save</code> is treated as a plain attribute and does nothing. The method receives <code>{ state, event, ...args }</code>.</li>
           <li><strong>Use <code>class</code>, not <code>className</code>; use <code>:click</code>, not <code>onClick</code>.</strong></li>
           <li><strong>Loops and conditionals are JavaScript</strong> — there is no <code>:for</code> or <code>:if</code>. Build the string with <code>.map().join("")</code> and early returns.</li>
