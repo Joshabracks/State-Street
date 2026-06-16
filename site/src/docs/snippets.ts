@@ -95,8 +95,15 @@ function App({ state }) {
 }`,
 
   // --- Templates ---------------------------------------------------------
-  "interp-card": `function Card({ state, npc }) {
+  "interp-card": `// State Bindings — {{path}} — patch just their own node in place, no re-run.
+function Card({ state, npc }) {
   return \`<h2>{{npc.name}} — age {{npc.age}}</h2>\`;
+}
+
+// Binding vs \${}: same output, different cost on change.
+function Count({ state }) {
+  return \`<p>{{count}}</p>\`;             // ✅ patches this text node only
+  // return \`<p>\${state.data.count}</p>\`;  // ⛔ reading count re-runs all of Count
 }`,
 
   "component-tags": `const components = {

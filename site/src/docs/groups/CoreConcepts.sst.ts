@@ -9,13 +9,14 @@ export function DocCoreConcepts(_ctx: Ctx): string {
 
       <section class="docs-section" id="reactive-state">
         <h2>1. Reactive state</h2>
-        <p><code>state.data</code> is a <code>Proxy</code>. Reading <code>state.data.foo</code> is a normal lookup; writing <code>state.data.foo = bar</code> trips the <code>set</code> trap, which marks the top-level key <code>foo</code> dirty for the next render frame.</p>
+        <p><code>state.data</code> is a <code>Proxy</code> with two traps. Writing <code>state.data.foo = bar</code> trips the <code>set</code> trap, which marks the top-level key <code>foo</code> dirty for the next render frame. Reading <code>state.data.foo</code> trips the <code>get</code> trap, which records <code>foo</code> as a dependency of the component currently running (see below).</p>
         <DocCode id="reactive-state" label="mutation"/>
       </section>
 
       <section class="docs-section" id="dep-gating">
         <h2>2. Top-level-key dep gating</h2>
-        <p>Each component instance has its own dep-tracking proxy. While the component function runs, every <code>state.data.<key></code> it reads is recorded into that instance's <code>deps</code> set. On the next frame the scheduler only re-runs components whose tracked keys intersect the dirty set.</p>
+        <p>Each component instance has its own dep-tracking proxy. While the component function runs, every <code>state.data.<key></code> it reads (via the <code>get</code> trap) is recorded into that instance's <code>deps</code> set. On the next frame the scheduler only re-runs components whose tracked keys intersect the dirty set.</p>
+        <div class="callout"><span class="callout__tag">The read is the subscription</span> Any <code>state.data.<key></code> touched <em>anywhere</em> in the body subscribes the component to that key — in a conditional, a computed local, an existence check, or inside a <code>\${}</code> — <strong>even if the value never appears in the output</strong>. Read only what you need.</div>
         <div class="callout"><span class="callout__tag">Granularity</span> Gating is top-level-key granular. <code>state.data.user.name</code> marks <code>user</code> dirty, not <code>user.name</code> — any component reading <code>user</code> re-runs. Need finer reactivity? Split into more top-level keys.</div>
       </section>
 

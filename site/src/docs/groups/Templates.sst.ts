@@ -7,9 +7,10 @@ export function DocTemplates(_ctx: Ctx): string {
       <h1>Templates &amp; Rendering</h1>
 
       <section class="docs-section" id="interpolation">
-        <h2>Interpolation: <code>{{path}}</code></h2>
-        <p>Replaces with the value at <code>path</code> in the local scope (props + values in scope). Resolves dotted paths. <code>{{ }}</code> is rebuilt at update time, so it tracks across re-renders; inline <code>\${js}</code> works too but is computed once.</p>
-        <DocCode id="interp-card" label="interpolation"/>
+        <h2>State Bindings: <code>{{path}}</code></h2>
+        <p>A <strong>State Binding</strong> — <code>{{path}}</code> — is a reactive reference to a <code>state.data</code> value. State Street keeps it as a standalone text or attribute node and updates that node <strong>in place</strong> when the bound key changes, <strong>without re-running the component</strong>. It resolves the value at <code>path</code> in the local scope (props + values in scope), including dotted paths. Inline <code>\${js}</code> works too but is plain JavaScript, computed <strong>once</strong> when the function runs.</p>
+        <DocCode id="interp-card" label="state bindings"/>
+        <div class="callout"><span class="callout__tag">Best practice</span> Prefer State Bindings over <code>\${}</code> for reactive values. <code>{{count}}</code> patches just that node; <code>\${state.data.count}</code> re-runs the whole component whenever <code>count</code> changes. Reserve <code>\${}</code> for control flow (loops, conditionals), derived strings, and composition — things a binding can't express.</div>
       </section>
 
       <section class="docs-section" id="component-tags">
@@ -55,8 +56,8 @@ export function DocTemplates(_ctx: Ctx): string {
         <h2>Raw content &amp; formatters</h2>
         <p>Some elements opt out of template parsing so you can show literal markup (code samples, user text) or post-process content:</p>
         <ul>
-          <li><strong>RAWTEXT</strong> — <code><script></code>, <code><style></code>, <code><code></code>: contents are verbatim text — no child-tag parsing, no <code>{{ }}</code>.</li>
-          <li><strong>RCDATA</strong> — <code><textarea></code>, <code><title></code>: child tags are not parsed (a literal <code><</code> is safe), but <code>{{ }}</code> interpolation is kept.</li>
+          <li><strong>RAWTEXT</strong> — <code><script></code>, <code><style></code>, <code><code></code>: contents are verbatim text — no child-tag parsing, no State Bindings (<code>{{ }}</code> stays literal).</li>
+          <li><strong>RCDATA</strong> — <code><textarea></code>, <code><title></code>: child tags are not parsed (a literal <code><</code> is safe), but State Bindings (<code>{{ }}</code>) still resolve.</li>
           <li><strong><code>:raw</code></strong> — makes any element's content verbatim text.</li>
         </ul>
         <DocCode id="raw-elements" label="raw content"/>

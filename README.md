@@ -223,7 +223,7 @@ State Street has four ideas. That's the whole API surface to internalize.
 
 ### 1. Reactive state
 
-`state.data` is a `Proxy`. Reading `state.data.foo` is a normal property lookup; writing `state.data.foo = bar` triggers the proxy's `set` trap, which marks the top-level key `foo` as dirty for the next render frame.
+`state.data` is a `Proxy` with two traps. Writing `state.data.foo = bar` triggers the **`set` trap**, which marks the top-level key `foo` as dirty for the next render frame. Reading `state.data.foo` triggers the **`get` trap**, which records `foo` as a dependency of the component currently running — see dep gating below.
 
 ```js
 state.data.count = state.data.count + 1;        // marks "count" dirty
@@ -233,7 +233,9 @@ state.data.user.name = "Jasmine";               // marks "user" dirty (top-level
 
 ### 2. Top-level-key dep gating
 
-Each component instance has its own dep-tracking proxy. While the component function runs, every `state.data.<key>` it reads is recorded into that instance's `deps: Set<string>`. On the next frame, the render scheduler only re-runs components whose tracked keys intersect with the set of dirty keys.
+Each component instance has its own dep-tracking proxy. While the component function runs, every `state.data.<key>` it reads (via the `get` trap) is recorded into that instance's `deps: Set<string>`. On the next frame, the render scheduler only re-runs components whose tracked keys intersect with the set of dirty keys.
+
+> **The read is the subscription.** Any `state.data.<key>` you touch *anywhere in the body* subscribes the component to that key — in a conditional, a computed local, an existence check, or inside a `${}` — **even if the value never appears in the output**. Read only what you need.
 
 > **Gating is top-level-key granular.** `state.data.user.name` marks `user` dirty, not `user.name`. Components reading any part of `user` will re-run. If you need finer reactivity, split your state into more top-level keys.
 
@@ -288,9 +290,9 @@ Each `<Wv…/>` is independently gated. Changing the selected sidebar tab marks 
 
 ## Template syntax
 
-### Interpolation: `{{path}}`
+### State Bindings: `{{path}}`
 
-Replaces with the value at `path` in the local scope (the props you passed to the component plus the values returned in its scope). Resolves dotted paths.
+A **State Binding** — `{{path}}` — is a reactive reference to a `state.data` value. State Street keeps it as a standalone text or attribute node and updates that node **in place** when the bound key changes, **without re-running the component**. It replaces with the value at `path` in the local scope (the props you passed to the component plus the values in its scope) and resolves dotted paths.
 
 ```js
 function Card({ state, npc }) {
@@ -298,7 +300,9 @@ function Card({ state, npc }) {
 }
 ```
 
-If you'd rather inline JavaScript, template literals work too: `${npc.name}`. Both produce the same string; `{{ }}` is rebuilt at update time, so it tracks across re-renders.
+If you'd rather inline JavaScript, template literals work too: `${npc.name}`. Both produce the same string, but they behave differently on change: a `{{ }}` State Binding patches just its own node, while `${state.data.x}` is evaluated **once** when the function runs and its read subscribes the whole component, so a change to `x` re-runs and rebuilds it.
+
+> **Prefer State Bindings over `${}` for reactive values.** `{{count}}` updates just that node in place; `${state.data.count}` re-runs the whole component whenever `count` changes. Reserve `${}` for control flow (loops, conditionals), derived/computed strings, and composition — things a binding can't express.
 
 ### Component tags: `<Component prop="value"/>`
 
@@ -544,7 +548,8 @@ function LoadingScreen({ state }) {
 
 - **Components are pure functions of state.** Side-effects belong in methods (event handlers) or in external code (listeners, network callbacks).
 - **Use `<Tag/>` for any non-trivial subtree.** Inline interpolation `${tag()}` defeats dep gating — the parent inherits all the child's deps.
-- **Read what you need, no more.** Each `state.data.<key>` you touch becomes a dependency. Touching `state.data.game` even just to check if it exists subscribes the component to every change under `game`.
+- **Read what you need, no more.** Each `state.data.<key>` you touch becomes a dependency — the read *is* the subscription. Touching `state.data.game` even just to check if it exists subscribes the component to every change under `game`, whether or not the value reaches the output.
+- **Prefer State Bindings over `${}` for reactive values.** `{{count}}` patches just that node in place; `${state.data.count}` re-runs the whole component on every change to `count`. Reserve `${}` for control flow, derived strings, and composition.
 - **Props are typed values from the tag.** `<Avatar size="lg"/>` arrives as `{ state, size: "lg" }`. Unquoted `true`/`false` and numbers are coerced to booleans/numbers, `{{path}}` resolves from state, and a bare attribute with no value is `true`. See [Attribute & argument coercion](#attribute--argument-coercion).
 
 ---
@@ -601,8 +606,8 @@ The hot loop, end to end:
 3. **`onMutate` flips dirty.** `state.dirty = true; state.dirtyKeys.add("foo")`.
 4. **Render loop ticks.** On the next `requestAnimationFrame`, if enough time has elapsed for the target FPS, `updateDom(state)` runs.
 5. **Dep gating.** For each tracked component (outer → inner, including nested ones), the scheduler checks whether the component's recorded deps intersect with `dirtyKeys`. If not, skip.
-6. **Re-render the survivors.** Each surviving component function runs against a fresh dep-tracking proxy. If its output matches last frame, nothing changes; otherwise its rendered nodes are rebuilt and swapped in place between the component's comment markers.
-7. **Text + attr interpolations.** Any `{{path}}` outside of a component is updated if its source key is dirty.
+6. **Re-render the survivors.** Each surviving component function runs against a fresh dep-tracking proxy — every `state.data` key it reads fires the **`get` trap** and is recorded as next frame's deps. If its output matches last frame, nothing changes; otherwise its rendered nodes are rebuilt and swapped in place between the component's comment markers.
+7. **State Bindings.** Any `{{path}}` State Binding is updated in place if its source key is dirty — this happens independently of step 6, so a binding refreshes without re-running its component.
 8. **Dirty cleared.** Until the next mutation.
 
 ### Nested mutations
