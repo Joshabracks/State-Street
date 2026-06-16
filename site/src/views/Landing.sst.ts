@@ -1,4 +1,5 @@
 import type { Ctx } from "../types";
+import { VERSION } from "../state";
 
 const FEATURES: Array<{ no: string; title: string; body: string }> = [
   { no: "01", title: "Reactive state", body: "Mutate a plain object. Only the components that actually read the changed key re-render." },
@@ -10,7 +11,7 @@ const FEATURES: Array<{ no: string; title: string; body: string }> = [
 ];
 
 const SPECS: Array<[string, string]> = [
-  ["Version", "2.0.0"],
+  ["Version", VERSION],
   ["Bundle size", "negligible"],
   ["Dependencies", "0"],
   ["Module", "ESM + UMD"],
@@ -33,7 +34,7 @@ export function Landing(_ctx: Ctx): string {
   return `
     <section class="section hero">
       <div class="wrap stack">
-        <div class="eyebrow">Cat. No. SS&middot;2.0.0 // single page framework</div>
+        <div class="eyebrow">Cat. No. SS&middot;${VERSION} // single page framework</div>
         <h1 class="hero__wordmark">State<br/><span>Street</span></h1>
         <p class="hero__lead">A reactive framework so small it disappears into whatever you ship. No virtual DOM, no compiler, no ceremony.</p>
         <div class="hero__cta">
@@ -47,7 +48,7 @@ export function Landing(_ctx: Ctx): string {
     <section class="section">
       <div class="wrap">
         <div class="panel ticked stack">
-          <span class="panel__label">Fig. 01 &mdash; live // running on State Street 2.0.0</span>
+          <span class="panel__label">Fig. 01 &mdash; live // running on State Street ${VERSION}</span>
           <div class="demo">
             <button :click=dec()>&minus;</button>
             <div class="demo__count">{{count}}</div>

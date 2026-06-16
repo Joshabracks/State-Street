@@ -17,7 +17,7 @@ module.exports = (_env, argv) => {
       extensions: [".sst.ts", ".ts", ".js"],
       alias: {
         // Types come from src/state-street.d.ts; runtime resolves to the locally
-        // built framework so the site always dogfoods the current 2.0.0 source.
+        // built framework so the site always dogfoods the current source.
         "@state-street/state-street": path.resolve(__dirname, "../build/index.js"),
       },
     },
