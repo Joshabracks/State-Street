@@ -992,7 +992,12 @@ In one Tauri narrative game running State Street, this layout currently runs ~21
 
 **Why no JSX?** Plain template strings work in any editor, in any test runner, with no build step. JSX needs a transpiler. This is a tradeoff State Street picks.
 
-**Why no virtual DOM?** Top-level-key dep gating + in-place replacement of a component's rendered range is fast enough for the apps State Street targets. There's no per-element diff — just "did this component's tracked state change? If so, re-render its subtree."
+**Why no virtual DOM?** A virtual DOM is *overhead* other frameworks adopt to make coarse "re-render the whole tree on any change" tolerable — diffing a cheap in-memory tree beats blindly re-touching the real DOM. State Street is fine-grained instead of coarse, so it doesn't need one:
+
+- A `{{ }}` **State Binding** updates its text/attribute node **in place** — no component re-run, no tree, no diff (the same approach as Solid/Svelte, and less work than a vDOM diff).
+- A component re-runs **only** when a top-level key it read goes dirty (dep gating), and if its new output is byte-identical the DOM is left untouched.
+
+The one honest tradeoff: when a component *does* re-render, its whole rendered range is rebuilt and swapped in place rather than diffed element-by-element — so keep components small and put frequently-changing values in State Bindings, and there's nothing a diff engine would have saved. (Reusable elements — inputs, canvas, media — are transplanted across a re-render, not recreated.)
 
 **Can I use TypeScript?** Yes — the source is TypeScript. The reactive proxy types as `any` (a proxy fundamentally can't be type-checked at compile time without significant ceremony). Wrap your own typed accessors if you want stricter types in your app.
 
@@ -1000,7 +1005,7 @@ In one Tauri narrative game running State Street, this layout currently runs ~21
 
 **Does it work in Node?** Not directly — it touches `document.body` and `requestAnimationFrame`. For testing components in Node, use jsdom or run in a browser. The reactive proxy logic itself is environment-agnostic.
 
-**Can I render to a specific container instead of `document.body`?** Not in the current version. The constructor mounts to `document.body` unconditionally. If you need this, open an issue.
+**Can I render to a specific container instead of `document.body`?** Yes — `document.body` is just the default. Pass the `mountTarget` option (an `Element` or a CSS-selector string) to mount anywhere, run **multiple States** on one page, or mount one State into an element owned by another (nested States, auto-preserved). See [Mounting & lifecycle](#mounting--lifecycle) and [Nested States](#nested-states).
 
 **What if I want server-side rendering?** State Street is a runtime reactivity layer — not currently aimed at SSR. Component functions return strings, so you could call them server-side to get HTML, but you'd lose reactivity at runtime.
 

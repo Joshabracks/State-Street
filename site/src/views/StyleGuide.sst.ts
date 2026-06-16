@@ -110,7 +110,7 @@ export function StyleGuide(_ctx: Ctx): string {
           <div class="panel ticked stack">
             <span class="panel__label">006 // disclosure</span>
             <details open><summary>What is a component?</summary><p>A function that returns an HTML string. Register it and drop its tag into a template.</p></details>
-            <details><summary>Does it use a virtual DOM?</summary><p>No. It diffs registered components by output and patches in place.</p></details>
+            <details><summary>Does it use a virtual DOM?</summary><p>No — State Bindings update nodes in place, and a component re-renders only when a key it read changes. No per-element diff.</p></details>
             <dialog open>
               <h4>Inline dialog</h4>
               <p class="muted">Rendered with the <code>open</code> attribute.</p>
