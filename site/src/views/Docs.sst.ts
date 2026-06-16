@@ -1,4 +1,5 @@
 import type { Ctx } from "../types";
+import { VERSION } from "../state";
 import { DOC_GROUPS, DOC_GROUP_MAP, DEFAULT_DOC_GROUP } from "../docs/groups";
 
 /** Docs shell: sidebar (groups) · content · TOC. Reads nothing, so it never
@@ -22,7 +23,7 @@ export function DocsSidebar({ state }: Ctx): string {
   ).join("");
   return `
     <aside class="docs-sidebar">
-      <div class="eyebrow">Docs // SS&middot;2.0.0</div>
+      <div class="eyebrow">Docs // SS&middot;${VERSION}</div>
       <nav class="docs-nav">${links}</nav>
     </aside>
   `;

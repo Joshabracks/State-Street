@@ -4,6 +4,11 @@ import { DOC_GROUP_MAP, DEFAULT_DOC_GROUP } from "./docs/groups";
 import { EXAMPLE_MAP, DEFAULT_EXAMPLE } from "./examples";
 // Routed through webpack's asset pipeline so it resolves in dev and prod.
 import logoUrl from "../static/sstlogo.png";
+// Framework version, single-sourced from the framework's package.json so the version
+// stamped across the site (header, landing, type specimen, docs) can never drift.
+import pkg from "../../package.json";
+
+export const VERSION: string = pkg.version;
 
 /**
  * View registry — maps a hash key (in the URL) to a registered component name.

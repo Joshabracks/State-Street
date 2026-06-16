@@ -1,4 +1,5 @@
 import type { Ctx } from "../types";
+import { VERSION } from "../state";
 
 const SWATCHES: Array<[string, string]> = [
   ["--ink", "ink"],
@@ -24,7 +25,7 @@ export function StyleGuide(_ctx: Ctx): string {
   return `
     <section class="section">
       <div class="wrap stack-lg">
-        <div class="eyebrow">Cat. No. SS&middot;2.0.0 // type specimen</div>
+        <div class="eyebrow">Cat. No. SS&middot;${VERSION} // type specimen</div>
         <h1>Type Specimen</h1>
         <p class="hero__lead">The design system, printed. Tokens, type, and every HTML element the framework renders.</p>
 
@@ -53,7 +54,7 @@ export function StyleGuide(_ctx: Ctx): string {
             <ul><li>Unordered item</li><li>Another item</li><li>Third item</li></ul>
             <ol><li>Ordered item</li><li>Second step</li><li>Third step</li></ol>
             <dl>
-              <dt>Version</dt><dd>2.0.0</dd>
+              <dt>Version</dt><dd>${VERSION}</dd>
               <dt>Size</dt><dd>negligible</dd>
               <dt>Deps</dt><dd>0</dd>
             </dl>
@@ -126,7 +127,7 @@ export function StyleGuide(_ctx: Ctx): string {
         </div>
 
         <hr/>
-        <p class="muted center mono">end of specimen // SS&middot;2.0.0</p>
+        <p class="muted center mono">end of specimen // SS&middot;${VERSION}</p>
       </div>
     </section>
   `;

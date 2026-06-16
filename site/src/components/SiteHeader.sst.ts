@@ -1,5 +1,5 @@
 import type { Ctx } from "../types";
-import { NAV } from "../state";
+import { NAV, VERSION } from "../state";
 import { LOGO_SVG } from "./logo";
 
 /**
@@ -23,7 +23,7 @@ export function SiteHeader({ state }: Ctx): string {
             ${LOGO_SVG}
             <span class="brand__mark">State Street</span>
           </a>
-          <span class="brand__cat">[SS&middot;2.0.0]</span>
+          <span class="brand__cat">[SS&middot;${VERSION}]</span>
         </div>
         <nav class="nav">
           ${links}
