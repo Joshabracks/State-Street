@@ -1,6 +1,6 @@
 {
   "name": "state-street-site",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "private": true,
   "description": "Landing + documentation + benchmark site for the State Street framework, built with State Street in TypeScript (.sst.ts).",
   "scripts": {
