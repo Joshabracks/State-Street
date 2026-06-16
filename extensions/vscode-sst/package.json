@@ -2,8 +2,14 @@
   "name": "vscode-sst",
   "displayName": "State Street SST",
   "description": "Syntax highlighting for State Street (.sst.ts / .sst.js) template files",
-  "version": "0.5.0",
+  "version": "0.6.0",
   "publisher": "beetnick82",
+  "license": "ISC",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Joshabracks/State-Street.git",
+    "directory": "extensions/vscode-sst"
+  },
   "engines": {
     "vscode": "^1.80.0"
   },
@@ -22,6 +28,10 @@
         "extensions": [
           ".sst.ts"
         ],
+        "icon": {
+          "light": "./sst-ts-icon.svg",
+          "dark": "./sst-ts-icon.svg"
+        },
         "configuration": "./language-configuration.json"
       },
       {
@@ -33,6 +43,10 @@
         "extensions": [
           ".sst.js"
         ],
+        "icon": {
+          "light": "./sst-js-icon.svg",
+          "dark": "./sst-js-icon.svg"
+        },
         "configuration": "./language-configuration.json"
       }
     ],

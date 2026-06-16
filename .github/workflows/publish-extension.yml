@@ -1,0 +1,54 @@
+name: Publish vscode-sst extension
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "extensions/vscode-sst/**"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: extensions/vscode-sst
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      # Publish only when the extension's version changed vs the previous commit, so
+      # ordinary edits to the directory don't attempt to republish an existing version.
+      - name: Detect version bump
+        id: ver
+        run: |
+          CUR="$(node -p "require('./package.json').version")"
+          echo "version=$CUR" >> "$GITHUB_OUTPUT"
+          if git cat-file -e HEAD~1:extensions/vscode-sst/package.json 2>/dev/null; then
+            git show HEAD~1:extensions/vscode-sst/package.json > /tmp/prev.json
+            PREV="$(node -p "require('/tmp/prev.json').version")"
+          else
+            PREV=""
+          fi
+          if [ "$CUR" != "$PREV" ]; then
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+            echo "vscode-sst: ${PREV:-<none>} -> $CUR"
+          else
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+            echo "vscode-sst version unchanged ($CUR); skipping publish."
+          fi
+
+      # The extension is declarative (no runtime code), so skip dependency bundling.
+      # Requires a VSCE_PAT secret: an Azure DevOps PAT with the "Marketplace > Manage" scope.
+      - name: Publish to the VS Code Marketplace
+        if: steps.ver.outputs.changed == 'true'
+        run: npx --yes @vscode/vsce publish --no-dependencies -p "$VSCE_PAT"
+        env:
+          VSCE_PAT: ${{ secrets.VSCE_PAT }}
