@@ -437,6 +437,16 @@ Legacy `xlink:` / `xml:` namespaced attributes are supported via `setAttributeNS
 
 On first render the element is built (empty); after that it's moved, not recreated, so whatever drew into it survives. For composing two States you usually don't need `:preserve` — see [Mounting & lifecycle](#mounting--lifecycle), where a child mounted into a parent's element registers itself automatically.
 
+`:preserve` keeps an element alive when it stays at the **same** place in the template. If your app needs to relocate that element to a **different** place — e.g. dragging a panel between docks — a `:preserve`d element's live DOM node gets a `moveTo`/`resetLocation` pair for exactly that:
+
+```js
+const el = document.getElementById("chart");
+el.moveTo(otherContainer);   // real DOM move, not a rebuild; content/state survives
+el.resetLocation();          // returns it to its original template position
+```
+
+State Street keeps treating the element as though it never left its template position — content bindings, attribute diffing, and children continue to update normally regardless of where it physically lives. If the element you moved it into is later removed from the document, it automatically snaps back to its original position. Calling `moveTo`/`resetLocation` on an element that isn't `:preserve`d logs a warning and does nothing (a non-preserved element is rebuilt from scratch on its own next render anyway, so moving it wouldn't stick).
+
 ---
 
 ## The `State` class — API reference
@@ -478,6 +488,7 @@ new State(template, data, components, methods, options?)
 | `.mountCheck()` | `() => void` | Reconcile mount state with the DOM: dismount if the target is gone, mount if available. Call it yourself when `renderLoop` is off. |
 | `.setMountTarget(t)` | `(Element \| string) => void` | Dismount, set a new target, re-mount if found. |
 | `.togglePreserve(ssid, on?)` | `(string, boolean?) => void` | Preserve/release the element at `ssid` across re-renders (used automatically by nested States). |
+| `element.moveTo(target)` / `element.resetLocation()` | stamped on `:preserve`d elements | Relocate a preserved element to a different DOM parent without rebuilding it, or return it to its natural template position. See [`:preserve`](#preserving-elements-preserve). |
 | `.setRenderLoop(b)` / `.setTargetFPS(n)` / `.setImgMemoryBudget(n)` / `.setImgWarmPerFrame(n)` | setters | Adjust the matching option at runtime. `setRenderLoop` is guarded against starting a second loop. |
 | `.destroy()` | `() => void` | Dismount and unregister from the global state registry. Call it for transient States to avoid leaks. |
 

@@ -258,6 +258,18 @@ MY_APP.registerComponents({
 // Some third-party lib draws into #chart; it survives the parent's re-renders.
 new Chart(document.getElementById("chart"), config);`,
 
+  "preserve-move": `// :preserve keeps an element alive at the SAME template position.
+// To relocate it to a different DOM parent without rebuilding it (e.g. a dock
+// panel dragged to a new spot), use moveTo()/resetLocation() on the live node —
+// stamped onto every :preserve'd element.
+const chart = document.getElementById("chart");
+chart.moveTo(otherPanel);   // real DOM move; the Chart instance never rebuilds
+chart.resetLocation();      // back to its original template position
+
+// Removing otherPanel from the document snaps chart back to its natural
+// position automatically. Calling either on a non-:preserve'd element warns
+// and does nothing.`,
+
   "mount-target": `// Mount into a specific element instead of <body>:
 new State(template, data, components, methods, { mountTarget: "#app" });
 

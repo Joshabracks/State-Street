@@ -203,6 +203,13 @@ new State(tpl, data, comps, methods, { mountTarget: "#app" });     // selector o
 - **`:preserve`** tells State to keep an element across re-renders and not rebuild its children — for
   hosting DOM State doesn't own (a chart, a map, a code editor) or a manually-mounted child State:
   `<div :preserve id="chart"></div>`.
+- **Relocating a preserved element**: `:preserve` only keeps an element alive at its *same* template
+  position. To move it to a different DOM parent without rebuilding it (e.g. a dock panel dragged to a
+  new location), call `.moveTo(targetElement)` on the live element — it's stamped onto every
+  `:preserve`d element. `.resetLocation()` returns it to its original position; it also snaps back
+  there automatically if the element you moved it into is later removed. State keeps updating
+  bindings/attributes/children for it as if it never left its template spot. Calling either on a
+  non-`:preserve`d element warns and no-ops.
 
 ## API reference
 
