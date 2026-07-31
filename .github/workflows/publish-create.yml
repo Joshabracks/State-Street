@@ -23,7 +23,10 @@ jobs:
           fetch-depth: 2
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
+          # npm@latest's own engine requirement has outgrown Node 20 (needs
+          # ^22.22.2 || ^24.15.0 || >=26.0.0) -- this job needs a newer Node
+          # purely to be able to install a newer npm for OIDC trusted publishing.
+          node-version: 22
 
       # Trusted publishing (OIDC) requires npm >= 11.5.1, newer than Node 20's bundled npm.
       - name: Upgrade npm for OIDC trusted publishing
