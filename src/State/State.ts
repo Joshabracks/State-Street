@@ -23,6 +23,8 @@ import { register, get as getState, unregister } from "./registry.js";
  *    runs, auto-mount when the target appears, dismount if it disappears, and re-mount when it
  *    returns. When false, mounting/dismounting is manual (see mountCheck()).
  */
+type LocationEntry = { target: Element; placeholder: Comment };
+
 export default class State {
   private _data: any;
   template: any;
@@ -31,6 +33,10 @@ export default class State {
   attrMap: any;
   nodeMap: any;
   dataMap: any;
+  // ssid -> where a `:preserve`d element has been moved to via moveTo(), plus the
+  // comment-node placeholder left at its natural position (the anchor resetLocation()
+  // and automatic snap-back reinsert at).
+  locationMap: Record<string, LocationEntry> = {};
   dirty: boolean = true;
   dirtyKeys: Set<string> = new Set();
   components: any;
@@ -114,6 +120,7 @@ export default class State {
   setNextUpdate = () => { this.nextUpdate = Date.now() + this.updateInterval; };
   private resetMaps = () => {
     this.idMap = {}; this.textMap = {}; this.attrMap = {}; this.nodeMap = {}; this.componentMap = {};
+    this.locationMap = {};
   };
 
   /** Resolve the configured mountTarget to a live element (or null). */
@@ -157,6 +164,14 @@ export default class State {
     if (this._parentMount) {
       this._parentMount.parent.togglePreserve(this._parentMount.ssid, false);
       this._parentMount = null;
+    }
+    // A moveTo()'d element often lives outside this.root, so root.innerHTML = ""
+    // below won't reach it -- detach it explicitly or it leaks as an untracked
+    // duplicate once remount rebuilds a fresh element at the natural position.
+    for (const ssid in this.locationMap) {
+      const { target } = this.locationMap[ssid];
+      const el = this.idMap[ssid];
+      if (el && target.contains(el)) target.removeChild(el);
     }
     if (this.root) this.root.innerHTML = "";
     this.resetMaps();
@@ -215,6 +230,38 @@ export default class State {
   togglePreserve = (ssid: string, on?: boolean) => {
     const want = on === undefined ? !this.preserveSet.has(ssid) : !!on;
     if (want) this.preserveSet.add(ssid); else this.preserveSet.delete(ssid);
+  };
+
+  /**
+   * Move a `:preserve`d element to live under `target` instead of its natural template
+   * position, without destroying it. A comment placeholder is left at the natural position
+   * on first move so resetLocation()/automatic snap-back can restore exact sibling order.
+   * Backs the `moveTo` function stamped onto preserved elements (see constructElement.ts).
+   */
+  moveElement = (ssid: string, element: Element, target: Element) => {
+    if (!this.preserveSet.has(ssid)) {
+      console.warn(`moveTo called on an element that is not :preserve'd (ssid ${ssid}); ignored.`);
+      return;
+    }
+    const existing = this.locationMap[ssid];
+    if (existing) {
+      existing.target = target;
+      target.appendChild(element);
+      return;
+    }
+    const placeholder = document.createComment(`ss-moved:${ssid}`);
+    element.parentNode?.insertBefore(placeholder, element);
+    this.locationMap[ssid] = { target, placeholder };
+    target.appendChild(element);
+  };
+
+  /** Return a moved element to its natural template position. Backs `resetLocation`. */
+  resetElementLocation = (ssid: string, element: Element) => {
+    const entry = this.locationMap[ssid];
+    if (!entry) return;
+    entry.placeholder.parentNode?.insertBefore(element, entry.placeholder);
+    entry.placeholder.remove();
+    delete this.locationMap[ssid];
   };
 
   /** Change the mount target: dismount, set, and re-mount if the new target is found. */

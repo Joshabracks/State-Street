@@ -35,6 +35,11 @@ declare module "@state-street/state-street" {
     mountCheck(): void;
     setMountTarget(target: Element | string): void;
     togglePreserve(ssid: string, on?: boolean): void;
+    // moveElement/resetElementLocation back the moveTo()/resetLocation() functions
+    // stamped onto every constructed element (see :preserve docs) -- not typically
+    // called directly; prefer element.moveTo(target) / element.resetLocation().
+    moveElement(ssid: string, element: Element, target: Element): void;
+    resetElementLocation(ssid: string, element: Element): void;
     setRenderLoop(on: boolean): void;
     setTargetFPS(n: number): void;
     setImgMemoryBudget(n: number): void;

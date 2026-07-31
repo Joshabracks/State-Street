@@ -437,6 +437,16 @@ Legacy `xlink:` / `xml:` namespaced attributes are supported via `setAttributeNS
 
 On first render the element is built (empty); after that it's moved, not recreated, so whatever drew into it survives. For composing two States you usually don't need `:preserve` — see [Mounting & lifecycle](#mounting--lifecycle), where a child mounted into a parent's element registers itself automatically.
 
+`:preserve` keeps an element alive when it stays at the **same** place in the template. If your app needs to relocate that element to a **different** place — e.g. dragging a panel between docks — a `:preserve`d element's live DOM node gets a `moveTo`/`resetLocation` pair for exactly that:
+
+```js
+const el = document.getElementById("chart");
+el.moveTo(otherContainer);   // real DOM move, not a rebuild; content/state survives
+el.resetLocation();          // returns it to its original template position
+```
+
+State Street keeps treating the element as though it never left its template position — content bindings, attribute diffing, and children continue to update normally regardless of where it physically lives. If the element you moved it into is later removed from the document, it automatically snaps back to its original position. Calling `moveTo`/`resetLocation` on an element that isn't `:preserve`d logs a warning and does nothing (a non-preserved element is rebuilt from scratch on its own next render anyway, so moving it wouldn't stick).
+
 ---
 
 ## The `State` class — API reference
@@ -478,6 +488,7 @@ new State(template, data, components, methods, options?)
 | `.mountCheck()` | `() => void` | Reconcile mount state with the DOM: dismount if the target is gone, mount if available. Call it yourself when `renderLoop` is off. |
 | `.setMountTarget(t)` | `(Element \| string) => void` | Dismount, set a new target, re-mount if found. |
 | `.togglePreserve(ssid, on?)` | `(string, boolean?) => void` | Preserve/release the element at `ssid` across re-renders (used automatically by nested States). |
+| `element.moveTo(target)` / `element.resetLocation()` | stamped on `:preserve`d elements | Relocate a preserved element to a different DOM parent without rebuilding it, or return it to its natural template position. See [`:preserve`](#preserving-elements-preserve). |
 | `.setRenderLoop(b)` / `.setTargetFPS(n)` / `.setImgMemoryBudget(n)` / `.setImgWarmPerFrame(n)` | setters | Adjust the matching option at runtime. `setRenderLoop` is guarded against starting a second loop. |
 | `.destroy()` | `() => void` | Dismount and unregister from the global state registry. Call it for transient States to avoid leaks. |
 
@@ -992,7 +1003,12 @@ In one Tauri narrative game running State Street, this layout currently runs ~21
 
 **Why no JSX?** Plain template strings work in any editor, in any test runner, with no build step. JSX needs a transpiler. This is a tradeoff State Street picks.
 
-**Why no virtual DOM?** Top-level-key dep gating + in-place replacement of a component's rendered range is fast enough for the apps State Street targets. There's no per-element diff — just "did this component's tracked state change? If so, re-render its subtree."
+**Why no virtual DOM?** A virtual DOM is *overhead* other frameworks adopt to make coarse "re-render the whole tree on any change" tolerable — diffing a cheap in-memory tree beats blindly re-touching the real DOM. State Street is fine-grained instead of coarse, so it doesn't need one:
+
+- A `{{ }}` **State Binding** updates its text/attribute node **in place** — no component re-run, no tree, no diff (the same approach as Solid/Svelte, and less work than a vDOM diff).
+- A component re-runs **only** when a top-level key it read goes dirty (dep gating), and if its new output is byte-identical the DOM is left untouched.
+
+The one honest tradeoff: when a component *does* re-render, its whole rendered range is rebuilt and swapped in place rather than diffed element-by-element — so keep components small and put frequently-changing values in State Bindings, and there's nothing a diff engine would have saved. (Reusable elements — inputs, canvas, media — are transplanted across a re-render, not recreated.)
 
 **Can I use TypeScript?** Yes — the source is TypeScript. The reactive proxy types as `any` (a proxy fundamentally can't be type-checked at compile time without significant ceremony). Wrap your own typed accessors if you want stricter types in your app.
 
@@ -1000,7 +1016,7 @@ In one Tauri narrative game running State Street, this layout currently runs ~21
 
 **Does it work in Node?** Not directly — it touches `document.body` and `requestAnimationFrame`. For testing components in Node, use jsdom or run in a browser. The reactive proxy logic itself is environment-agnostic.
 
-**Can I render to a specific container instead of `document.body`?** Not in the current version. The constructor mounts to `document.body` unconditionally. If you need this, open an issue.
+**Can I render to a specific container instead of `document.body`?** Yes — `document.body` is just the default. Pass the `mountTarget` option (an `Element` or a CSS-selector string) to mount anywhere, run **multiple States** on one page, or mount one State into an element owned by another (nested States, auto-preserved). See [Mounting & lifecycle](#mounting--lifecycle) and [Nested States](#nested-states).
 
 **What if I want server-side rendering?** State Street is a runtime reactivity layer — not currently aimed at SSR. Component functions return strings, so you could call them server-side to get HTML, but you'd lose reactivity at runtime.
 

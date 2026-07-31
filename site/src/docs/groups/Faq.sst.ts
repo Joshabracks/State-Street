@@ -13,7 +13,12 @@ export function DocFaq(_ctx: Ctx): string {
         <p>Plain template strings work in any editor, any test runner, with no build step. JSX needs a transpiler — a tradeoff State Street declines.</p>
 
         <h3>Why no virtual DOM?</h3>
-        <p>Top-level-key dep gating plus in-place replacement of a component's rendered range is fast enough for the apps State Street targets. There is no per-element diff — just "did this component's tracked state change?".</p>
+        <p>A virtual DOM is <em>overhead</em> other frameworks adopt to make coarse "re-render the whole tree on any change" tolerable — diffing a cheap in-memory tree beats blindly re-touching the real DOM. State Street is fine-grained instead of coarse, so it does not need one:</p>
+        <ul>
+          <li>A <code>{{ }}</code> State Binding updates its text/attribute node <strong>in place</strong> — no component re-run, no tree, no diff (the same approach as Solid/Svelte, and less work than a vDOM diff).</li>
+          <li>A component re-runs <strong>only</strong> when a top-level key it read goes dirty (dep gating), and if its new output is byte-identical the DOM is left untouched.</li>
+        </ul>
+        <p>The one honest tradeoff: when a component <em>does</em> re-render, its whole rendered range is rebuilt and swapped in place rather than diffed element-by-element — so keep components small and put frequently-changing values in State Bindings, and there is nothing a diff engine would have saved.</p>
 
         <h3>Can I use TypeScript?</h3>
         <p>Yes — the source is TypeScript. The reactive proxy types as <code>any</code> (a proxy can't be type-checked at compile time without significant ceremony). Wrap your own typed accessors if you want stricter types.</p>
@@ -25,7 +30,7 @@ export function DocFaq(_ctx: Ctx): string {
         <p>Not directly — it touches <code>document.body</code> and <code>requestAnimationFrame</code>. Use jsdom or a browser for tests. The reactive proxy logic itself is environment-agnostic.</p>
 
         <h3>Can I render to a specific container?</h3>
-        <p>Not in the current version — the constructor mounts to <code>document.body</code> unconditionally.</p>
+        <p>Yes — <code>document.body</code> is just the default. Pass the <code>mountTarget</code> option (an <code>Element</code> or CSS selector) to mount anywhere, run multiple States on one page, or nest one State inside an element owned by another (auto-preserved). See the API reference &rarr; Mounting &amp; lifecycle and Nested States.</p>
 
         <h3>Server-side rendering?</h3>
         <p>State Street is a runtime reactivity layer, not currently aimed at SSR. Component functions return strings, so you could call them server-side for HTML, but you would lose runtime reactivity.</p>

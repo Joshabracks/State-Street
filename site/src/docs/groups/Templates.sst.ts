@@ -79,6 +79,9 @@ export function DocTemplates(_ctx: Ctx): string {
         <p>The <code>:preserve</code> attribute tells State to <strong>reuse</strong> that element in place across re-renders and never rebuild its children. Use it to host DOM that State doesn't own — a chart, a map, a rich-text editor — or an element a separate child State mounts into.</p>
         <DocCode id="preserve" label="preserve"/>
         <p>On first render the element is built (empty); after that it is moved, not recreated, so whatever drew into it survives. For composing two States, you usually don't need <code>:preserve</code> at all — see <code>Nested States</code> in the API reference, where a child mounted into a parent's element registers itself automatically.</p>
+        <p><code>:preserve</code> keeps an element alive at its <strong>same</strong> template position. To relocate it to a <strong>different</strong> DOM parent without rebuilding it — e.g. a dock panel dragged to a new spot — every <code>:preserve</code>d element's live node has a <code>moveTo(target)</code> / <code>resetLocation()</code> pair:</p>
+        <DocCode id="preserve-move" label="preserve-move"/>
+        <p>State keeps updating bindings, attributes, and children for that ssid as if it never left its template position — only the DOM parent changes. If the element you moved it into is later removed from the document, it automatically snaps back to its original position. Calling either function on an element that isn't <code>:preserve</code>d logs a warning and does nothing.</p>
       </section>
 
       <DocPrevNext group="templates"/>

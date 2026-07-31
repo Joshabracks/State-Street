@@ -49,6 +49,7 @@ export function DocApi(_ctx: Ctx): string {
             <tr><td><code>.mountCheck()</code></td><td>Reconcile mount state with the DOM: dismount if the target is gone, mount if it's available. Call it yourself when <code>renderLoop</code> is off.</td></tr>
             <tr><td><code>.setMountTarget(t)</code></td><td>Dismount, set a new target (Element or selector), and re-mount if found.</td></tr>
             <tr><td><code>.togglePreserve(ssid, on?)</code></td><td>Preserve (or release) the element at <code>ssid</code> across re-renders. Used automatically by nested States.</td></tr>
+            <tr><td><code>element.moveTo(target)</code> / <code>element.resetLocation()</code></td><td>Stamped on every <code>:preserve</code>d element. Relocate it to a different DOM parent without rebuilding, or return it to its natural template position. See <code>Templates &amp; Rendering &rarr; Preserving elements</code>.</td></tr>
             <tr><td><code>.setRenderLoop(b)</code></td><td>Turn the rAF loop on/off at runtime (guarded against starting a second loop).</td></tr>
             <tr><td><code>.setTargetFPS(n)</code> / <code>.setImgMemoryBudget(n)</code> / <code>.setImgWarmPerFrame(n)</code></td><td>Adjust the matching option at runtime.</td></tr>
             <tr><td><code>.destroy()</code></td><td>Dismount and unregister from the global state registry. Call it for transient States to avoid leaks.</td></tr>
