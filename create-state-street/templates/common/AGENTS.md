@@ -196,7 +196,7 @@ new State(tpl, data, comps, methods, { mountTarget: "#app" });     // selector o
 
 - A non-`<body>` target **waits for its element** (`mountOnAvailable`, default true): auto-mounts
   when it appears, dismounts if removed, re-mounts when it returns. `state.data` survives a dismount.
-- `renderLoop: false` disables the loop — drive it yourself with `s.mountCheck()` and `s.update()`.
+- `autoRender: false` disables automatic rendering — drive it yourself with `s.forceUpdate()` (mount-checks, then renders).
 - **Nested States:** mount a child State into an element owned by a parent State; every element is
   branded with its owner's id, so the child auto-registers and the parent **preserves** (moves, not
   rebuilds) that subtree across its re-renders. The child's DOM/state are never clobbered.
@@ -213,7 +213,7 @@ new State(
   components?: Record<string, (ctx: any) => string>,   // ctx: { state, ...props }
   methods?: Record<string, (ctx: any) => void | string>, // ctx: { state, event, ...args }
   options?: {
-    renderLoop?: boolean;       // default true
+    autoRender?: boolean;       // default true
     targetFPS?: number;
     mountTarget?: Element | string;   // default <body>
     mountOnAvailable?: boolean; // default true
@@ -225,8 +225,8 @@ new State(
 ```
 
 Instance: `state.data`, `state.dirty`, `state.id`, `state.root`, `state.mounted`,
-`update()`, `forceUpdate()`, `mountCheck()`, `setMountTarget(t)`, `togglePreserve(ssid, on?)`,
-`setRenderLoop(on)`, `setTargetFPS(n)`, `setImgMemoryBudget(n)`, `setImgWarmPerFrame(n)`,
+`forceUpdate()`, `mountCheck()`, `setMountTarget(t)`, `togglePreserve(ssid, on?)`,
+`setAutoRender(on)`, `setTargetFPS(n)`, `setImgMemoryBudget(n)`, `setImgWarmPerFrame(n)`,
 `warmImages(list)`, `destroy()`.
 
 ## Links

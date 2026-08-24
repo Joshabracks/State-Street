@@ -26,12 +26,12 @@ export function DocApi(_ctx: Ctx): string {
         <div class="docs-table"><table>
           <thead><tr><th>Option</th><th>Default</th><th>Purpose</th></tr></thead>
           <tbody>
-            <tr><td><code>renderLoop</code></td><td><code>true</code></td><td>When true, an internal <code>requestAnimationFrame</code> loop calls <code>update()</code> continuously. When false, call <code>update()</code> / <code>forceUpdate()</code> yourself after mutations.</td></tr>
-            <tr><td><code>targetFPS</code></td><td><code>60</code></td><td>When the render loop is on, throttle to roughly this many updates per second.</td></tr>
+            <tr><td><code>autoRender</code></td><td><code>true</code></td><td>When true, mutations render automatically (batched, throttled to <code>targetFPS</code>). When false, nothing renders implicitly -- call <code>forceUpdate()</code> yourself after mutations.</td></tr>
+            <tr><td><code>targetFPS</code></td><td><code>60</code></td><td>When <code>autoRender</code> is on, throttle to roughly this many updates per second.</td></tr>
             <tr><td><code>imgMemoryBudget</code></td><td><code>256 MB</code></td><td>Max bytes of cached image blobs. LRU eviction over budget; in-DOM blobs are never evicted.</td></tr>
             <tr><td><code>imgWarmPerFrame</code></td><td><code>4</code></td><td>How many queued data URIs <code>warmImages()</code> decodes per idle frame.</td></tr>
             <tr><td><code>mountTarget</code></td><td><code>document.body</code></td><td>Where to mount: an <code>Element</code>, or a CSS-selector string (re-resolved over time). State <strong>owns</strong> the target (clears it on mount); <code>document.title</code> is set from <code>data.title</code> only when the target is <code>&lt;body&gt;</code>.</td></tr>
-            <tr><td><code>mountOnAvailable</code></td><td><code>true</code></td><td>For non-body targets: while the render loop runs, auto-mount when the target appears, dismount if it's removed, re-mount when it returns. When <code>false</code>, mounting is manual (see <code>mountCheck()</code>).</td></tr>
+            <tr><td><code>mountOnAvailable</code></td><td><code>true</code></td><td>For non-body targets: while <code>autoRender</code> is on, auto-mount when the target appears, dismount if it's removed, re-mount when it returns. When <code>false</code>, mounting is manual (see <code>mountCheck()</code>).</td></tr>
           </tbody>
         </table></div>
       </section>
@@ -42,15 +42,14 @@ export function DocApi(_ctx: Ctx): string {
           <thead><tr><th>Member</th><th>Purpose</th></tr></thead>
           <tbody>
             <tr><td><code>.data</code></td><td>Reactive proxy (getter/setter). The setter replaces the whole tree and marks every top-level key dirty.</td></tr>
-            <tr><td><code>.update()</code></td><td>Process one frame: drain the warm queue, then re-render dirty components if it is time. Re-schedules itself when <code>renderLoop: true</code>.</td></tr>
-            <tr><td><code>.forceUpdate()</code></td><td>Immediately re-render every dirty component and clear the dirty set. Bypasses the FPS throttle.</td></tr>
+            <tr><td><code>.forceUpdate()</code></td><td>Immediately mount-check, then re-render every dirty component and clear the dirty set. Bypasses the FPS throttle -- the manual render call when <code>autoRender</code> is off.</td></tr>
             <tr><td><code>.sameState()</code></td><td><code>true</code> if nothing is dirty.</td></tr>
             <tr><td><code>.warmImages(uris)</code></td><td>Queue base64 data URIs for off-screen decode.</td></tr>
-            <tr><td><code>.mountCheck()</code></td><td>Reconcile mount state with the DOM: dismount if the target is gone, mount if it's available. Call it yourself when <code>renderLoop</code> is off.</td></tr>
+            <tr><td><code>.mountCheck()</code></td><td>Reconcile mount state with the DOM: dismount if the target is gone, mount if it's available. Call it yourself when <code>autoRender</code> is off.</td></tr>
             <tr><td><code>.setMountTarget(t)</code></td><td>Dismount, set a new target (Element or selector), and re-mount if found.</td></tr>
             <tr><td><code>.togglePreserve(ssid, on?)</code></td><td>Preserve (or release) the element at <code>ssid</code> across re-renders. Used automatically by nested States.</td></tr>
             <tr><td><code>element.moveTo(target)</code> / <code>element.resetLocation()</code></td><td>Stamped on every <code>:preserve</code>d element. Relocate it to a different DOM parent without rebuilding, or return it to its natural template position. See <code>Templates &amp; Rendering &rarr; Preserving elements</code>.</td></tr>
-            <tr><td><code>.setRenderLoop(b)</code></td><td>Turn the rAF loop on/off at runtime (guarded against starting a second loop).</td></tr>
+            <tr><td><code>.setAutoRender(b)</code></td><td>Turn automatic rendering on/off at runtime.</td></tr>
             <tr><td><code>.setTargetFPS(n)</code> / <code>.setImgMemoryBudget(n)</code> / <code>.setImgWarmPerFrame(n)</code></td><td>Adjust the matching option at runtime.</td></tr>
             <tr><td><code>.destroy()</code></td><td>Dismount and unregister from the global state registry. Call it for transient States to avoid leaks.</td></tr>
           </tbody>
@@ -61,7 +60,7 @@ export function DocApi(_ctx: Ctx): string {
         <h2>Mounting &amp; lifecycle</h2>
         <p>By default the constructor mounts to <code>document.body</code> (it owns the target: clears it, appends the render). Pass <code>mountTarget</code> to mount elsewhere — an <code>Element</code> or a CSS-selector string:</p>
         <DocCode id="mount-target" label="mount target"/>
-        <p>For non-body targets, <code>mountOnAvailable</code> (default <code>true</code>) makes mounting a <strong>lifecycle</strong>: while the render loop runs, State waits for the target, mounts when it appears, dismounts if it's removed, and re-mounts when it returns. <code>State.data</code> survives a dismount — only the DOM is rebuilt — so a panel can come and go and keep its state. When <code>renderLoop</code> is off there's no loop, so you drive it with <code>mountCheck()</code>:</p>
+        <p>For non-body targets, <code>mountOnAvailable</code> (default <code>true</code>) makes mounting a <strong>lifecycle</strong>: while <code>autoRender</code> is on, State waits for the target, mounts when it appears, dismounts if it's removed, and re-mounts when it returns. <code>State.data</code> survives a dismount — only the DOM is rebuilt — so a panel can come and go and keep its state. When <code>autoRender</code> is off nothing renders or mounts implicitly, so you drive it with <code>forceUpdate()</code>:</p>
         <DocCode id="mount-lifecycle" label="lifecycle"/>
         <div class="callout"><span class="callout__tag">Note</span> A string <code>mountTarget</code> is a live selector — if it stops matching the mounted element (e.g. you toggle a class), State dismounts and waits. This lets you drive mounting from markup.</div>
       </section>
