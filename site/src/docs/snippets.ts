@@ -281,11 +281,10 @@ new State(template, data, components, methods, { mountTarget: panelEl });`,
 // when it returns. State.data survives a dismount — only the DOM is rebuilt.
 new State(tpl, data, comps, methods, { mountTarget: "#panel" });
 
-// renderLoop:false -> no loop -> drive the check yourself:
+// autoRender:false -> no automatic rendering -> drive it yourself:
 const s = new State(tpl, data, comps, methods,
-  { mountTarget: "#panel", renderLoop: false });
-s.mountCheck();        // mount/dismount as needed
-s.update();            // render once
+  { mountTarget: "#panel", autoRender: false });
+s.forceUpdate();              // mount/dismount as needed, then render
 s.setMountTarget("#other");   // dismount, move, re-mount`,
 
   "nested-states": `// A parent State, then a child mounted INTO one of the parent's elements.

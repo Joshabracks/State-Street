@@ -7,7 +7,7 @@
  */
 declare module "@state-street/state-street" {
   export interface StateOptions {
-    renderLoop?: boolean;
+    autoRender?: boolean;
     targetFPS?: number;
     imgMemoryBudget?: number;
     imgWarmPerFrame?: number;
@@ -30,7 +30,6 @@ declare module "@state-street/state-street" {
     root: Element | null;
     mounted: boolean;
     preserveSet: Set<string>;
-    update(): void;
     forceUpdate(): void;
     mountCheck(): void;
     setMountTarget(target: Element | string): void;
@@ -40,7 +39,7 @@ declare module "@state-street/state-street" {
     // called directly; prefer element.moveTo(target) / element.resetLocation().
     moveElement(ssid: string, element: Element, target: Element): void;
     resetElementLocation(ssid: string, element: Element): void;
-    setRenderLoop(on: boolean): void;
+    setAutoRender(on: boolean): void;
     setTargetFPS(n: number): void;
     setImgMemoryBudget(n: number): void;
     setImgWarmPerFrame(n: number): void;

@@ -65,7 +65,7 @@ export function StyleGuide(_ctx: Ctx): string {
               <caption>Render options</caption>
               <thead><tr><th>Option</th><th>Default</th></tr></thead>
               <tbody>
-                <tr><td>renderLoop</td><td>true</td></tr>
+                <tr><td>autoRender</td><td>true</td></tr>
                 <tr><td>targetFPS</td><td>60</td></tr>
                 <tr><td>imgWarmPerFrame</td><td>4</td></tr>
               </tbody>

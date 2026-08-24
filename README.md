@@ -469,27 +469,26 @@ new State(template, data, components, methods, options?)
 
 | Option | Default | Purpose |
 |---|---|---|
-| `renderLoop` | `true` | When `true`, an internal `requestAnimationFrame` loop calls `update()` continuously. When `false`, you call `state.update()` (or `state.forceUpdate()`) yourself after mutations. Useful in apps with a lot of state where you want manual control. |
-| `targetFPS` | `60` | When the render loop is on, throttle to roughly this many updates per second. |
+| `autoRender` | `true` | When `true`, mutations are rendered automatically (batched, throttled to `targetFPS`). When `false`, nothing renders implicitly — call `state.forceUpdate()` yourself after mutations. Useful in apps with a lot of state where you want manual control. |
+| `targetFPS` | `60` | When `autoRender` is on, throttle to roughly this many updates per second. |
 | `imgMemoryBudget` | `256 MB` | Max bytes of cached image blobs from base64 → blob URL conversion. LRU eviction over this budget; blobs still in the DOM are never evicted. |
 | `imgWarmPerFrame` | `4` | When `warmImages()` queues data URIs, how many to decode per idle frame. |
 | `mountTarget` | `document.body` | Where to mount: an `Element`, or a CSS-selector string (re-resolved over time). State **owns** the target (clears it on mount); `document.title` is set from `data.title` only when the target is `<body>`. |
-| `mountOnAvailable` | `true` | For non-body targets: while the render loop runs, auto-mount when the target appears, dismount if it's removed, re-mount when it returns. When `false`, mounting is manual (see `mountCheck()`). |
+| `mountOnAvailable` | `true` | For non-body targets: while `autoRender` is on, auto-mount when the target appears, dismount if it's removed, re-mount when it returns. When `false`, mounting is manual (see `mountCheck()`). |
 
 ### Instance properties + methods
 
 | Member | Type | Purpose |
 |---|---|---|
 | `.data` | getter / setter | Reactive proxy. Reads + writes go through it. The setter replaces the whole tree and marks every top-level key dirty. |
-| `.update()` | `() => void` | One render tick: drain the warm queue, mount-check, then re-render dirty components (throttled to the target FPS when the loop is on). The internal loop drives this; call it yourself when `renderLoop` is off. |
-| `.forceUpdate()` | `() => void` | Immediately re-render every dirty component and clear the dirty set. Bypasses the FPS throttle. |
+| `.forceUpdate()` | `() => void` | Immediately mount-check, then re-render every dirty component and clear the dirty set. Bypasses the FPS throttle — the manual render call when `autoRender` is off. |
 | `.sameState()` | `() => boolean` | `true` if nothing is dirty. |
 | `.warmImages(uris)` | `(string[]) => void` | Queue base64 data URIs for off-screen decode. See [Image cache](#image-cache). |
-| `.mountCheck()` | `() => void` | Reconcile mount state with the DOM: dismount if the target is gone, mount if available. Call it yourself when `renderLoop` is off. |
+| `.mountCheck()` | `() => void` | Reconcile mount state with the DOM: dismount if the target is gone, mount if available. Call it yourself when `autoRender` is off. |
 | `.setMountTarget(t)` | `(Element \| string) => void` | Dismount, set a new target, re-mount if found. |
 | `.togglePreserve(ssid, on?)` | `(string, boolean?) => void` | Preserve/release the element at `ssid` across re-renders (used automatically by nested States). |
 | `element.moveTo(target)` / `element.resetLocation()` | stamped on `:preserve`d elements | Relocate a preserved element to a different DOM parent without rebuilding it, or return it to its natural template position. See [`:preserve`](#preserving-elements-preserve). |
-| `.setRenderLoop(b)` / `.setTargetFPS(n)` / `.setImgMemoryBudget(n)` / `.setImgWarmPerFrame(n)` | setters | Adjust the matching option at runtime. `setRenderLoop` is guarded against starting a second loop. |
+| `.setAutoRender(b)` / `.setTargetFPS(n)` / `.setImgMemoryBudget(n)` / `.setImgWarmPerFrame(n)` | setters | Adjust the matching option at runtime. |
 | `.destroy()` | `() => void` | Dismount and unregister from the global state registry. Call it for transient States to avoid leaks. |
 
 ### Mounting & lifecycle
@@ -500,12 +499,11 @@ By default the constructor mounts to `document.body` (it owns the target: clears
 new State(template, data, components, methods, { mountTarget: "#app" });
 ```
 
-For non-body targets, `mountOnAvailable` (default `true`) makes mounting a **lifecycle**: while the render loop runs, State waits for the target, mounts when it appears, dismounts if it's removed, and re-mounts when it returns. `state.data` survives a dismount — only the DOM is rebuilt, so a panel can come and go and keep its state. With `renderLoop: false` there's no loop, so you drive it yourself:
+For non-body targets, `mountOnAvailable` (default `true`) makes mounting a **lifecycle**: while `autoRender` is on, State waits for the target, mounts when it appears, dismounts if it's removed, and re-mounts when it returns. `state.data` survives a dismount — only the DOM is rebuilt, so a panel can come and go and keep its state. With `autoRender: false` nothing renders or mounts implicitly, so you drive it yourself:
 
 ```js
-const s = new State(tpl, data, comps, methods, { mountTarget: "#panel", renderLoop: false });
-s.mountCheck();              // mount/dismount as needed
-s.update();                 // render once
+const s = new State(tpl, data, comps, methods, { mountTarget: "#panel", autoRender: false });
+s.forceUpdate();             // mount/dismount as needed, then render
 s.setMountTarget("#other"); // dismount, move, re-mount
 ```
 
