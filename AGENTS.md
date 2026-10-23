@@ -152,6 +152,9 @@ function Cart({ state }) {
   mid-interaction loses focus/clicks). Example: a stopwatch splits `<Time/>` from `<Controls/>`.
 - **Color pickers / range sliders: use `:change`, not `:input`.** `:input` fires every tick; the
   re-render rebuilds the `<input>` and the drag "disengages." `:change` commits on release.
+- **Don't use `&nbsp;` for ordinary spaces.** Same-line whitespace is kept (`<b>bold</b> text`
+  renders its space); only whitespace containing a newline (indentation) is dropped at element
+  edges and between tags. A newline inside running text becomes one space.
 - **RAWTEXT does not decode HTML entities.** Inside `<code>`/`<script>`/`<style>`, write a literal
   `<`, not `&lt;` (see Raw content).
 

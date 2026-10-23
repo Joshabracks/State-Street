@@ -48,6 +48,7 @@ export const DOC_GROUPS: DocGroup[] = [
       { id: "events", label: "Event directives" },
       { id: "coercion", label: "Attribute coercion" },
       { id: "no-directives", label: "No if / for / bind" },
+      { id: "whitespace", label: "Whitespace" },
       { id: "raw", label: "Raw content & formatters" },
       { id: "svg", label: "Inline SVG & namespaces" },
       { id: "preserve", label: "Preserving elements" },
