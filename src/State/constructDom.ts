@@ -1,5 +1,6 @@
 import State from "./State.js";
 import constructElement from "./constructElement.js";
+import { generateSSID } from "./const.js";
 
 // Build the template into state.root (the resolved mount target). The caller
 // (State.mount) owns clearing the target, resetting maps, and the document.title
@@ -9,7 +10,7 @@ function constructDOM(state: State) {
   if (!root) return;
   const elements = [];
   for (let i = 0; i < template.length; i++) {
-    const element = constructElement(template[i], `${i}`, state);
+    const element = constructElement(template[i], generateSSID(i), state);
     elements.push(element);
   }
   elements.forEach((element: any) => root.appendChild(element));
