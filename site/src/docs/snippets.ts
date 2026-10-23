@@ -194,10 +194,10 @@ function go({ view, state }) {
 //        -> onMutate("scene")  (the root key, not scene.beatCount)
 // Every component reading "scene" re-runs.`,
 
-  "marker-html": `<!--ss:012:Counter-->
+  "marker-html": `<!--ss:0.0.1.2:Counter-->
 <p>Count: 3</p>
 <button>+1</button>
-<!--/ss:012-->`,
+<!--/ss:0.0.1.2-->`,
 
   "update-loop": `on each requestAnimationFrame:
   drain image warm queue

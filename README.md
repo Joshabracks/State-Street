@@ -636,13 +636,13 @@ walks: get `scene` (returns a cached wrapper proxy) → set `beatCount = 3` → 
 A component adds **no wrapper element** to the DOM. Its rendered nodes become direct children of the parent, bracketed by a pair of invisible HTML comment markers:
 
 ```html
-<!--ss:012:Counter-->
+<!--ss:0.0.1.2:Counter-->
 <p>Count: 3</p>
 <button>+1</button>
-<!--/ss:012-->
+<!--/ss:0.0.1.2-->
 ```
 
-- The markers encode the component's hierarchical instance path (`ssid`) — the parent's path plus this child's index (e.g. `"0"`, `"01"`, `"012"`), used internally for dep tracking, node reuse, and as a stable re-render anchor.
+- The markers encode the component's hierarchical instance path (`ssid`) — the parent's path plus `.` plus this child's index (e.g. `"0.0"`, `"0.0.1"`, `"0.0.1.2"`), used internally for dep tracking, node reuse, and as a stable re-render anchor.
 - Comment nodes are **not elements**, so they never affect CSS layout (grid/flex tracks, `min-height: 0` propagation, percentage heights) or structural selectors (`:nth-child`, `>`, `:first-child`). A component's real root element(s) sit exactly where you wrote `<Component/>`.
 
 ### No CSS rule needed

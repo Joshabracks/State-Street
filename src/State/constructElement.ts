@@ -1,5 +1,5 @@
 import State from "./State.js";
-import { SSID, STID } from "./const.js";
+import { SSID, STID, generateSSID } from "./const.js";
 import { parseSST } from "../Template/parseSST.js";
 import { resolveImageSrc, isBase64DataUri } from "./imageCache.js";
 import { makeDepTracker } from "./trackDeps.js";
@@ -129,7 +129,7 @@ function constructElement(data: any, parentSSID: string, state: State, ns?: stri
     const frag = document.createDocumentFragment();
     frag.appendChild(startMarker);
     for (let i = 0; i < parsedBody.length; i++) {
-      const ssid = `${currentSSID}${i}`;
+      const ssid = generateSSID(currentSSID, i);
       const subElement: any = constructElement(parsedBody[i], ssid, state, ns);
       if (subElement) frag.appendChild(subElement);
     }
@@ -250,7 +250,7 @@ function constructElement(data: any, parentSSID: string, state: State, ns?: stri
   for (let i = 0; i < content.length; i++) {
     const child = content[i];
     const type = typeof child;
-    const ssid = `${currentSSID}${i}`;
+    const ssid = generateSSID(currentSSID, i);
     if (type === "object" && type !== null) {
       // Still constructed unconditionally -- attribute diffing and nested-children
       // updates must keep applying to this ssid's live element even when it has been

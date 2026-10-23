@@ -1,5 +1,5 @@
 import State from "./State.js";
-import { SSID } from "./const.js";
+import { SSID, generateSSID } from "./const.js";
 import constructElement, { getValue, decodeEntities, unescapeQuotes, runComponent, parseComponentBody, setAttr, childNamespaceOf } from "./constructElement.js";
 import { resolveImageSrc, isBase64DataUri } from "./imageCache.js";
 
@@ -25,7 +25,7 @@ function captureScroll(componentSSID: string, state: State): Map<string, [number
   if (scrolledSSIDs.size === 0) return null;
   let stash: Map<string, [number, number]> | null = null;
   scrolledSSIDs.forEach((id) => {
-    if (!id.startsWith(componentSSID)) return;
+    if (id !== componentSSID && !id.startsWith(componentSSID + ".")) return;
     const el = state.idMap[id];
     if (!(el instanceof Element)) {
       scrolledSSIDs.delete(id);
@@ -59,7 +59,7 @@ function captureFocus(componentSSID: string): FocusSnapshot | null {
   const active = document.activeElement;
   if (!(active instanceof Element)) return null;
   const id = active.getAttribute(SSID);
-  if (!id || !id.startsWith(componentSSID)) return null;
+  if (!id || (id !== componentSSID && !id.startsWith(componentSSID + "."))) return null;
   let selectionStart: number | null = null;
   let selectionEnd: number | null = null;
   if (active instanceof HTMLInputElement || active instanceof HTMLTextAreaElement) {
@@ -116,7 +116,7 @@ function rebuildComponentRange(rec: any, ssid: string, state: State): boolean {
   // so their value/checked/selection/pixels/playback survive.
   const frag = document.createDocumentFragment();
   for (let i = 0; i < parsedBody.length; i++) {
-    const childSSID = `${ssid}${i}`;
+    const childSSID = generateSSID(ssid, i);
     // Still constructed unconditionally so a moveTo()'d node's attributes/children keep
     // updating -- only the natural-position insertion is redirected to a placeholder.
     const subElement: any = constructElement(parsedBody[i], childSSID, state, ns);
@@ -144,7 +144,7 @@ function rebuildComponentRange(rec: any, ssid: string, state: State): boolean {
 function updateDOM(state: State) {
   ensureScrollListener();
   state.tick++;
-  // Visit every component outer -> inner (a parent's ssid is a strict prefix of its
+  // Visit every component outer -> inner (a parent's ssid + "." is a prefix of its
   // children's, so sorting by length then lexicographically puts parents first) so
   // nested components are independently dep-gated and updated in place.
   const ssids = Object.keys(state.componentMap)
