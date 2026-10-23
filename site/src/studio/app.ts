@@ -86,7 +86,7 @@ function edit(state: any, name: string, value: string) {
 function StudioApp(): string {
   return `
     <div class="st-app">
-      <div class="st-banner">⚠ This restyles the <b>live site&nbsp</b> by overwriting its CSS variables. Things can look broken or unreadable. That's half the fun. Your theme is <b>remembered across visits</b>; pick <b>State Street&nbsp</b> to restore the original.</div>
+      <div class="st-banner">⚠ This restyles the <b>live site</b> by overwriting its CSS variables. Things can look broken or unreadable. That's half the fun. Your theme is <b>remembered across visits</b>; pick <b>State Street</b> to restore the original.</div>
       <div class="st-stage"><StudioStatus/><StudioPrompt/></div>
       <StudioStyles/>
       <div class="st-manual"><div class="eyebrow">Manual tokens</div><StudioPanel/></div>

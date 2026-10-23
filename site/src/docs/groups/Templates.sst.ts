@@ -52,6 +52,17 @@ export function DocTemplates(_ctx: Ctx): string {
         <DocCode id="no-directives" label="plain JS"/>
       </section>
 
+      <section class="docs-section" id="whitespace">
+        <h2>Whitespace</h2>
+        <p>Write spaces naturally — no <code>&nbsp;</code> needed. The rule: <strong>whitespace on the same line is content, whitespace containing a newline is formatting.</strong></p>
+        <ul>
+          <li>Same-line spaces are kept (runs collapse to one space, as in HTML): <code><b>bold</b> text</code> renders <em>bold text</em>, and <code><b>a</b> <i>b</i></code> keeps its space.</li>
+          <li>Newline + indentation between tags, or right inside an element's opening/closing tag, is dropped — indented templates don't create stray text nodes.</li>
+          <li>A line break inside running text becomes a single space, so wrapping long text across lines reads as normal prose.</li>
+        </ul>
+        <div class="callout"><span class="callout__tag">Note</span> Whitespace-only text at the very top level of a template or component body is always dropped. Raw content (<code><code></code>, <code>:raw</code>, <code><textarea></code>, …) is never touched.</div>
+      </section>
+
       <section class="docs-section" id="raw">
         <h2>Raw content &amp; formatters</h2>
         <p>Some elements opt out of template parsing so you can show literal markup (code samples, user text) or post-process content:</p>

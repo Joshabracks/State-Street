@@ -10,7 +10,6 @@ const REGEX = {
   SELF_CLOSING_TAG: /^<(?:"(?:[^"\\]|\\.)*"|'(?:[^'\\]|\\.)*'|`(?:[^`\\]|\\.)*`|[^>"'`])*\/>/,
   CLOSE_TAG: /^<\/\w+>/,
   TEXT: /^[^<]+/,
-  WHITE_SPACE_TRIM: /\n\s+/g,
   ATTRIBUTE: /([\w-]+(?::[\w-]+)?)(?:=("(?:[^"\\]|\\.)*"|'(?:[^'\\]|\\.)*'|`(?:[^`\\]|\\.)*`|[^\s/>"'`]+))?(?=[\s/>])/g,
   EVENT: /:(\w+)=(\w+)\(((?:"(?:[^"\\]|\\.)*"|'(?:[^'\\]|\\.)*'|`(?:[^`\\]|\\.)*`|[^)"'`])*)\)/g,
   PROP: /([\w-]+)\s*=\s*("(?:[^"\\]|\\.)*"|'(?:[^'\\]|\\.)*'|`(?:[^`\\]|\\.)*`|[^,]*)/g,
@@ -27,8 +26,21 @@ const STICKY = {
   TEXT: new RegExp(REGEX.TEXT.source.replace(/^\^/, ""), "y"),
 };
 
-function isWhitespace(code: number): boolean {
-  return code === 32 || (code >= 9 && code <= 13);
+// Whitespace rule: whitespace containing a newline is template formatting
+// (indentation) and is dropped at element edges; same-line whitespace is content
+// and is kept (collapsed to one space), so `<b>bold</b> text` renders its space.
+// Root-level whitespace-only text is always dropped: top-level strings are not
+// rendered as text nodes (they would become empty elements). Returns "" to skip.
+function normalizeText(text: string, isFirst: boolean, isLast: boolean, isRoot: boolean): string {
+  if (!/\S/.test(text)) {
+    return isRoot || text.includes("\n") ? "" : " ";
+  }
+  const lead = text.match(/^\s+/)?.[0];
+  const trail = text.match(/\s+$/)?.[0];
+  let body = text.trim().replace(/\s*\n\s*/g, " ");
+  if (lead) body = (isFirst && lead.includes("\n") ? "" : " ") + body;
+  if (trail) body = body + (isLast && trail.includes("\n") ? "" : " ");
+  return body;
 }
 
 function getAttributes(tag: string): any[] {
@@ -86,13 +98,9 @@ function getTagName(tag: string) {
 
 // Single-pass parser: scans `data` with a moving cursor `pos` (no slicing or
 // per-token re-copying of the remaining string -> O(n) instead of O(n^2)).
-function getElements(data: string, components: any, pos: number, content: any[], stash: any[]): { content: any[]; pos: number } {
+function getElements(data: string, components: any, pos: number, content: any[], stash: any[], isRoot = false): { content: any[]; pos: number } {
   const len = data.length;
   while (pos < len) {
-    // Skip whitespace between tokens (replaces the old per-iteration .trim()).
-    while (pos < len && isWhitespace(data.charCodeAt(pos))) pos++;
-    if (pos >= len) break;
-
     let elementType: ELEMENT_TYPE;
     let match: RegExpExecArray | null;
     STICKY.SELF_CLOSING.lastIndex = pos;
@@ -143,7 +151,7 @@ function getElements(data: string, components: any, pos: number, content: any[],
       const events = getEvents(elementString);
       const child = getElements(data, components, pos, [], stash);
       // Raw / RCDATA placeholder: its inner content was stashed verbatim before
-      // the comment/whitespace pre-passes (see extractRaw). Restore it here.
+      // the comment pre-pass and whitespace normalization (see extractRaw). Restore it here.
       const rawIdx = attributes.findIndex((a: any) => a.name === 'data-ssrawid');
       if (rawIdx !== -1) {
         const entry = stash[Number(attributes[rawIdx].value)];
@@ -170,7 +178,9 @@ function getElements(data: string, components: any, pos: number, content: any[],
     if (elementType === ELEMENT_TYPE.CLOSING) {
       return { content, pos };
     }
-    content.push(elementString);
+    const isLast = pos >= len || data.startsWith("</", pos);
+    const text = normalizeText(elementString, content.length === 0, isLast, isRoot);
+    if (text) content.push(text);
   }
   return { content, pos };
 }
@@ -227,9 +237,8 @@ function parseSST(data: string, components: any = {}) {
   );
   // Strip remaining HTML comments
   processed = processed.replace(/<!--[\s\S]*?-->/g, '');
-  // Collapse newline-indentation runs once up front (was applied per-token before).
-  processed = processed.replace(REGEX.WHITE_SPACE_TRIM, " ");
-  const result = getElements(processed, components, 0, [], stash);
+  // Whitespace is normalized per text token in getElements (see normalizeText).
+  const result = getElements(processed, components, 0, [], stash, true);
   return result.content;
 }
 
